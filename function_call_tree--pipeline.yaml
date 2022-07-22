@@ -1,0 +1,20 @@
+main
+  run_subject
+    load_files
+    update_colnames
+    agg_data
+    clip_data
+    plot_data
+    train_models
+      get_dftrain
+      htm_streamer.run_batch
+      save_models
+        save_data_as_pickle
+    get_testtypes_anomscores
+      get_testtypes_alldata
+      load_models
+        load_pickle_object_as_data
+      htm_streamer.run_batch
+    plot_boxplot
+    get_ttypesdiffs
+  get_ttypesdf
