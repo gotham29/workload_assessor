@@ -11,7 +11,7 @@ from source.utils.utils import make_dir
 
 
 def plot_data(filenames_data: dict, file_type: str, dir_output: str):
-    dir_out = os.path.join(dir_output, 'data_olots')
+    dir_out = os.path.join(dir_output, 'data_plots')
     make_dir(dir_out)
     for fname, data in filenames_data.items():
         fname = fname.replace(f".{file_type}", "")

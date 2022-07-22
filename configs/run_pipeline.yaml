@@ -7,7 +7,7 @@ columns_model:
   - steering angle
 hzs:
   baseline: 100
-  convertto: 10
+  convertto: 15
 clip_percents:
   start: 20
   end: 20
