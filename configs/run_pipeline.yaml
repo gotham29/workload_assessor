@@ -1,87 +1,290 @@
-file_type: xls
-colnames:
-  - timestep
-  - steering angle
-  - brake pressure
-columns_model:
-  - steering angle
+alg: HTM
+#HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, VARIMA
+
 hzs:
   baseline: 100
-  convertto: 15
-clip_percents:
-  start: 20
-  end: 20
+  convertto: 3
+
+train_models: True
+data_cap: 100000
+do_gridsearch: False
+eval_metric: rmse
+features:
+  in:
+    - steering angle
+  pred:
+    - steering angle
+forecast_horizon: 1
+test_prop: 0.3
+time_col: timestamp
+file_type: xls
+scale: False
 
 dirs:
   input: /Users/samheiserman/Desktop/repos/workload_assessor/data
   output: /Users/samheiserman/Desktop/repos/workload_assessor/results
 
+colnames:
+  - timestamp
+  - steering angle
+  - brake pressure
+
+columns_model:
+  - steering angle
+
+clip_percents:
+  start: 0
+  end: 0
+
 testtypes_filenames:
   training:
+    - training1.xls
+    - training2.xls
     - training3.xls
     - training4.xls
     - training5.xls
     - training6.xls
     - training7.xls
     - training8.xls
-  test_level_0:
     - training9.xls
     - training10.xls
-  test_level_1a:
-    - level1.xls
-  test_level_1b:
-    - level2.xls
-  test_level_2:
-    - level3.xls
+  Level 0:
+    - test7-L0.xls
+    - test8-L0.xls
+  Level 1:
+    - test1-L1.xls
+    - test2-L1.xls
+  Level 2:
+    - test3-L2.xls
+    - test4-L2.xls
+  Level 3:
+    - test5-L3.xls
+    - test6-L3.xls
+
+modnames_grids:
+  VARIMA:
+    p:
+      - 1
+      # - 3
+    d:
+      - 0
+    q:
+      - 0
+      # - 3
+    # trend: 'c' ['', '', '']
+  NBEATSModel:
+    # output_chunk_length: int,
+    input_chunk_length:
+      - 5
+    num_stacks:
+      - 30
+    num_blocks:
+      - 1
+    num_layers:
+      - 4
+    layer_widths:
+      - 256
+    dropout:
+      - 0.0
+    generic_architecture:
+      - True
+    expansion_coefficient_dim:
+      - 5
+    trend_polynomial_degree:
+      - 2
+    activation:
+      - "ReLU"  ## ['ReLU','RReLU', 'PReLU', 'Softplus', 'Tanh', 'SELU', 'LeakyReLU',  'Sigmoid']
+  TCNModel:
+    # output_chunk_length: int,
+    input_chunk_length:
+      - 5
+    num_filters:
+      - 3
+    kernel_size:
+      - 3
+    dilation_base:
+      - 2
+    weight_norm:
+      - False
+    dropout:
+      - 0.2
+    # num_layers: int,
+    # dropout_fn,
+  TransformerModel:
+    # output_chunk_length: int,
+    input_chunk_length:
+      - 5
+    d_model:
+      - 64
+    nhead:
+      - 4
+    num_encoder_layers:
+      - 3
+    num_decoder_layers:
+      - 3
+    dim_feedforward:
+      - 512
+    dropout:
+      - 0.1
+    activation:
+      - "relu"  ## ["relu", "gelu"]
+    # custom_encoder: Optional[nn.Module] = None,
+    # custom_decoder: Optional[nn.Module] = None,
+  RNNModel:
+    # input_chunk_length: int,
+    input_chunk_length:
+      - 5
+    training_length:
+      - 5
+      # - 10
+    model: ## ["RNN", "LSTM", "GRU"]
+      # - RNN
+      - LSTM
+    hidden_dim:
+      - 25
+    n_rnn_layers:
+      - 1
+    dropout:
+      - 0.0
+  LightGBMModel:
+    lags:
+      - 1
+      # - 5
+      # - 10
+    # lags_past_covariates: Union[int, List[int]] = None,
+    # lags_future_covariates: Union[Tuple[int, int], List[int]] = None,
+    # output_chunk_length: int = 1,
+    # quantiles: List[float] = None,
+    # random_state: Optional[int] = None,
+    # add_encoders: Optional[dict] = None,
+      # = {
+      # 'cyclic': {'future': ['month']},
+      # 'datetime_attribute': {'future': ['hour', 'dayofweek']},
+      # 'position': {'past': ['absolute'], 'future': ['relative']},
+      # 'custom': {'past': [lambda idx: (idx.year - 1950) / 50]},
+      # 'transformer': Scaler()
+      # }
+    # likelihood: str = None,
+    #   = ['quantile', 'poisson']
 
 htm_config:
   features:
-    - steering angle
-  models_encoders:
-    minmax_percentiles:
+    steering angle:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+  models_state:
+    model_for_each_feature: false
+    return_pred_count: true
+    use_sp: true
+  models_predictor:
+    enable: false
+    resolution: 1
+    steps_ahead:
       - 1
-      - 99
-    n: 700
-    n_buckets: 140
-    sparsity: 0.02
-    timestamp:
-      enable: false
-      feature: satellite_time
-      timeOfDay:
-        - 30
-        - 1
-      weekend: 21
+      - 2
+  timesteps_stop:
+    learning:  #100000
+    running:  #110000
+    sampling:  #10000
+  models_encoders:
+    n: 400
+    w: 21
+    n_buckets: 130
+    p_padding: 0
+    # minmax_percentiles:
+    #   - 1
+    #   - 99
+    # n: 700
+    # sparsity: 0.02
+    # timestamp:
+    #   enable: false
+    #   feature: satellite_time
+    #   timeOfDay:
+    #     - 30
+    #     - 1
+    #   weekend: 21
   models_params:
     anomaly:
       period: 1000
     predictor:
       sdrc_alpha: 0.1
     sp:
-      boostStrength: 2.0
-      columnCount: 2048
-      localAreaDensity: 0.04395604395604396
       potentialPct: 0.8
-      synPermActiveInc: 0.05  #0.003
-      synPermConnected: 0.1  #0.2
-      synPermInactiveDec: 0.085  #0.0005
+      columnCount: 2048
+      globalInhibition: true  #nupic: 1
+      boostStrength: 0.0
+      localAreaDensity: 0.0
+      numActiveColumnsPerInhArea: 40
+      synPermActiveInc: 0.003
+      synPermConnected: 0.2
+      synPermInactiveDec: 0.0005
     tm:
-      activationThreshold: 13
+      activationThreshold: 20
       cellsPerColumn: 32
+      columnDimensions: 2048
       initialPerm: 0.21
       maxSegmentsPerCell: 128
-      maxSynapsesPerSegment: 32
-      minThreshold: 10
-      newSynapseCount: 20
-      permanenceConnected: 0.3
+      maxSynapsesPerSegment: 128
+      minThreshold: 13
+      newSynapseCount: 31
       permanenceDec: 0.1
       permanenceInc: 0.1
-  models_state:
-    model_for_each_feature: false
-    save_outputs_accumulated: true
-    use_sp: false
-    track_iter: 10
-    track_tm: false
-  timesteps_stop:
-    learning: 100000
-    running: 110000
-    sampling: 30
+      permanenceConnected: 0.5
+    # sp:
+    #   boostStrength: 2.0
+    #   columnCount: 2048
+    #   localAreaDensity: 0.04395604395604396
+    #   potentialPct: 0.8
+    #   synPermActiveInc: 0.05  #0.003
+    #   synPermConnected: 0.1  #0.2
+    #   synPermInactiveDec: 0.085  #0.0005
+    # tm:
+    #   activationThreshold: 13
+    #   cellsPerColumn: 32
+    #   initialPerm: 0.21
+    #   maxSegmentsPerCell: 128
+    #   maxSynapsesPerSegment: 32
+    #   minThreshold: 10
+    #   newSynapseCount: 20
+    #   permanenceConnected: 0.3
+    #   permanenceDec: 0.1
+    #   permanenceInc: 0.1
+
+subjects_wllevels_tlx:
+  zaychik:
+    Level 0: 0.1
+    Level 1: 1.1
+    Level 2: 2.1
+    Level 3: 3.1
+  rian:
+    Level 0: 0.2
+    Level 1: 1.2
+    Level 2: 2.2
+    Level 3: 3.2
+  miller:
+    Level 0: 1.3
+    Level 1: 2.3
+    Level 2: 3.3
+    Level 3: 3.3
+  jeremy:
+    Level 0: 0.4
+    Level 1: 1.4
+    Level 2: 2.4
+    Level 3: 3.4
+  jacob:
+    Level 0: 0.5
+    Level 1: 1.5
+    Level 2: 2.5
+    Level 3: 3.5
+  hiroki:
+    Level 0: 0.6
+    Level 1: 1.6
+    Level 2: 2.6
+    Level 3: 3.6
+  heiserman:
+    Level 0: 0.7
+    Level 1: 1.7
+    Level 2: 2.7
+    Level 3: 3.7

@@ -3,52 +3,79 @@ import sys
 
 import numpy as np
 import pandas as pd
-from htm_source.pipeline.htm_batch_runner import run_batch
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+_TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
+_HTM_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'htm_streamer')
+
 sys.path.append(_SOURCE_DIR)
+sys.path.append(_TS_SOURCE_DIR)
+sys.path.append(_HTM_SOURCE_DIR)
 
 from source.preprocess.preprocess import get_testtypes_alldata
-from source.utils.utils import load_models, make_dir
+from htm_source.pipeline.htm_batch_runner import run_batch
+from ts_source.utils.utils import make_dir, add_timecol
+from ts_source.model.model import get_preds_rolling, LAG_MIN, get_model_lag, get_modname, MODNAMES_LAGPARAMS, \
+    MODNAMES_MODELS
 
 
-def get_testtypes_anomscores(subj, htm_config, features_models, columns_model: list, filenames_data: dict,
-                             testtypes_filenames: dict, dir_output: str):
+def get_testtypes_outputs(alg, htm_config, features_models, columns_model: list,
+                          filenames_data: dict, testtypes_filenames: dict, dir_output: str,
+                          time_col: str = 'timestamp', forecast_horizon: int = 1) -> dict:
     testtypes_anomscores = {ttype: [] for ttype in testtypes_filenames if ttype != 'training'}
+    testtypes_predcounts = {ttype: [] for ttype in testtypes_filenames if ttype != 'training'}
     # split test data into testtpyes
     testtypes_alldata = get_testtypes_alldata(testtypes_anomscores=testtypes_anomscores,
                                               testtypes_filenames=testtypes_filenames,
                                               filenames_data=filenames_data,
                                               columns_model=columns_model,
                                               dir_output=dir_output)
-    # Load model(s)
-    dir_models = os.path.join(dir_output, 'models')
-    features_models = load_models(dir_models)
-
-    # get & save anomscores
+    # get & save anomscores by testtype
     dir_out = os.path.join(dir_output, "anomaly")
-    make_dir(dir_out)
     testtypes_features_anomscores = {}
     for ttype, data in testtypes_alldata.items():
-        testtypes_features_anomscores[ttype] = {f: [] for f in features_models}
-        feats_mods, features_outputs = run_batch(cfg=htm_config,
-                                                 config_path=None,
-                                                 learn=False,
-                                                 data=data,
-                                                 iter_print=1000,
-                                                 features_models=features_models)
-        for f, outs in features_outputs.items():
-            testtypes_features_anomscores[ttype][f] = outs['anomaly_score']
-            testtypes_anomscores[ttype] += outs['anomaly_score']
-
+        data = add_timecol(data, time_col)
+        if alg == 'HTM':
+            feats_models, features_outputs = run_batch(cfg=htm_config,
+                                                       config_path=None,
+                                                       learn=False,
+                                                       data=data,
+                                                       iter_print=1000,
+                                                       features_models=features_models)
+            testtypes_features_anomscores[ttype] = {f: [] for f in features_outputs}
+            for f, outs in features_outputs.items():
+                testtypes_features_anomscores[ttype][f] = outs['anomaly_score']
+                testtypes_anomscores[ttype] += outs['anomaly_score']
+                testtypes_predcounts[ttype] += outs['pred_count']
+        else:  # ts_source alg
+            testtypes_features_anomscores[ttype] = {f: [] for f in columns_model}
+            for feat, model in features_models.items():  # Assumes single model
+                break
+            mod_name = get_modname(model)
+            features = model.training_series.components
+            preds = get_preds_rolling(model=model,
+                                      df=data,
+                                      features=features,
+                                      LAG=max(LAG_MIN, get_model_lag(mod_name, model)),
+                                      time_col=time_col,
+                                      forecast_horizon=forecast_horizon)
+            preds_df = pd.DataFrame(preds, columns=list(features))
+            data_ = data.tail(preds_df.shape[0])
+            for f in features:
+                ascores = list(abs(data_[f].values - preds_df[f].values))
+                testtypes_features_anomscores[ttype][f] = ascores
+                testtypes_anomscores[ttype] += ascores
+        # Save anomaly score by testtype
         path_out = os.path.join(dir_out, f"{ttype}.csv")
         ttype_anom = pd.DataFrame(testtypes_features_anomscores[ttype])
         ttype_anom.to_csv(path_out)
+    if testtypes_predcounts == {ttype: [] for ttype in testtypes_filenames if ttype != 'training'}:
+        testtypes_predcounts = {}
+    return testtypes_anomscores, testtypes_predcounts, testtypes_alldata
 
-    return testtypes_anomscores
 
-
-def get_ttypesdiffs(testtypes_anomscores):
+def get_testtypes_diffs(testtypes_anomscores):
+    # Get difference in median anomaly score between testtypes
     ttypesdiffs = {}
     ttype_combos_done = []
     for ttype, ascores in testtypes_anomscores.items():

@@ -1,18 +1,32 @@
 import argparse
+import sys
 import os
 
-import yaml
-from htm_source.utils.utils import load_pickle_object_as_data, save_data_as_pickle
+_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+_TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
+_HTM_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'htm_streamer')
+
+sys.path.append(_SOURCE_DIR)
+sys.path.append(_TS_SOURCE_DIR)
+sys.path.append(_HTM_SOURCE_DIR)
+
+from ts_source.utils.utils import make_dir, load_config
+from htm_source.utils.fs import load_models, load_pickle_object_as_data, save_data_as_pickle
 
 
-# from yaml import Loader
-
-
-def get_args():
+def get_args(
+    args_add = [{'name_abbrev': '-cp',
+                'name': '--config_path',
+                'required': True,
+                'help': 'path to config'}]
+    ):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-c', '--config_path', required=True,
-                        help='path to config')
+    for arg_add in args_add:
+        parser.add_argument(arg_add['name_abbrev'], arg_add['name'],
+                            required=arg_add['required'], help=arg_add['help'])
+    # parser.add_argument('-cp', '--config_path', required=True,
+    #                     help='path to config')
     args = parser.parse_args()
     return args
 
@@ -28,76 +42,15 @@ def load_files(dir_input: str, file_type: str, read_func: str):
     return filenames_data
 
 
-def save_models(features_models, dir_output):
-    dir_out = os.path.join(dir_output, 'models')
-    make_dir(dir_out)
-    print('  save models...')
-    for feat, mod in features_models.items():
-        path_out = os.path.join(dir_out, f"{feat}.pkl")
-        save_data_as_pickle(mod, path_out)
-        print(f"    {feat}")
+def make_dirs_subj(config_dirs, meta_data, subj, outputs=['anomaly','data_files','data_plots','models','scalers']):
+    dir_subj_in = os.path.join(config_dirs['input'], subj)
+    dir_subj_out = os.path.join(config_dirs['output'], subj)
+    make_dir(dir_subj_out)
+    dir_meta = os.path.join(dir_subj_out, meta_data)
+    make_dir(dir_meta)
+    for out in outputs:
+        dir_out = os.path.join(dir_meta, out)
+        make_dir( dir_out )
+    return dir_subj_in, dir_meta
 
 
-# def load_pickle_object_as_data(file_path):
-#     """
-#     Loads a pickle object from path
-#     :param file_path: file path to load pickle object from
-#     :return: Returns object
-#     """
-#     with open(file_path, 'rb') as f_handle:
-#         data = pickle.load(f_handle)
-#     return data
-
-
-def load_models(dir_models):
-    """
-    Purpose:
-        Load pkl models for each feature from dir
-    Inputs:
-        dir_models
-            type: str
-            meaning: path to dir where pkl models are loaded from
-    Outputs:
-        features_models
-            type: dict
-            meaning: model obj for each feature
-    """
-    pkl_files = [f for f in os.listdir(dir_models) if '.pkl' in f]
-    print(f"\nLoading {len(pkl_files)} models...")
-    features_models = {}
-    for f in pkl_files:
-        pkl_path = os.path.join(dir_models, f)
-        model = load_pickle_object_as_data(pkl_path)
-        features_models[f.replace('.pkl', '')] = model
-    return features_models
-
-
-def make_dir(mydir):
-    if not os.path.exists(mydir):
-        os.mkdir(mydir)
-
-
-def load_config(yaml_path):
-    """
-    Purpose:
-        Load config from path
-    Inputs:
-        yaml_path
-            type: str
-            meaning: .yaml path to load from
-    Outputs:
-        cfg
-            type: dict
-            meaning: config (yaml) -- loaded
-    """
-    with open(yaml_path, 'r') as yamlfile:
-        cfg = yaml.load(yamlfile, Loader=yaml.FullLoader)
-    return cfg
-
-
-def make_dirs(dir_input_subj, dir_output_subj, subj, meta_data):
-    make_dir(dir_input_subj)
-    make_dir(dir_output_subj)
-    dir_output_subj = os.path.join(dir_output_subj, meta_data)
-    make_dir(dir_output_subj)
-    return dir_output_subj

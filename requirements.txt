@@ -3,11 +3,12 @@
 pandas>=1.2.4
 numpy>=1.15
 PyYAML==6.0
-setuptools>=34.4.0 # needed for Windows with MSVC
+setuptools>=34.4.0
 pip>=19.3.1
 argparse
 matplotlib
-htm_source
+seaborn
+xlrd
 
 ## optional dependencies, such as for visualizations, running examples
 # should be placed in setup.py section extras_require. Install those by
