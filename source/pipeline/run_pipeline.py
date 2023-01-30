@@ -369,7 +369,7 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(columns_model, file_type, wl_changepoints_detected):
+def plot_wlchangepoints(columns_model, file_type, data_test, dir_out_subj, wl_changepoints_detected):
     for feat in columns_model:
         path_out = os.path.join(dir_out_subj,
                                 f"{feat}--{testfile.replace(file_type,'')}--timeplot.png")
@@ -383,6 +383,35 @@ def plot_wlchangepoints(columns_model, file_type, wl_changepoints_detected):
             plt.axvspan(window[0], window[1], alpha=0.5, color='red')
         plt.savefig(path_out)
         plt.cla()
+
+
+def get_ascore_entropy(_, row, feat, model, data_test, pred_prev, LAG=3):
+    aScore, do_pred = 0, True
+    if _ < LAG:
+        pred_prev, do_pred = None, False
+    if pred_prev:
+        aScore = abs(pred_prev - row[feat])
+    if do_pred:
+        lag1, lag2, lag3 = data_test[feat][_ - 3], data_test[feat][_ - 2], data_test[feat][_ - 1]
+        pred_prev = model.predict(lag1, lag2, lag3)
+    return aScore, pred_prev
+
+
+def get_entropy_ts(model, row, data_test, config, pred_prev, LAG_MIN):
+    aScore, do_pred = 0, True
+    features_model = list(model.training_series.components)
+    features = features_model + [config['time_col']]
+    LAG = max(LAG_MIN, get_model_lag(config['alg'], model))
+    if _ < LAG:
+        pred_prev, do_pred = None, False
+    if pred_prev:
+        aScore = abs(pred_prev - row[features_model])
+    if do_pred:
+        df_lag = data_test[features][_ - LAG:_]
+        ts = TimeSeries.from_dataframe(df_lag, time_col=config['time_col'])
+        pred = model.predict(n=config['forecast_horizon'], series=ts)
+        pred_prev = reshape_datats(ts=pred, shape=(len(features_model)))
+    return aScore, pred_prev
 
 
 if __name__ == '__main__':
@@ -490,26 +519,9 @@ if __name__ == '__main__':
                         if config['alg'] == 'HTM':
                             aScore,aLikl,pCount,sPreds = model.run(features_data=dict(row), timestep=_+1, learn=False)
                         elif config['alg'] == 'Entropy-Steering':
-                            LAG = 3
-                            if _ < LAG:
-                                continue
-                            if pred_prev:
-                                aScore = abs(pred_prev - row[feat])
-                            lag1, lag2, lag3 = data_test[feat][_ - 3], data_test[feat][_ - 2], data_test[feat][_ - 1]
-                            pred_prev = model.predict(lag1, lag2, lag3)
+                            aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
                         else:
-                            features_model = list(model.training_series.components)
-                            features = features_model + [config['time_col']]
-                            LAG = max(LAG_MIN, get_model_lag(config['alg'], model))
-                            if _ < LAG:
-                                continue
-                            if pred_prev:
-                                aScore = abs(pred_prev - row[features_model])
-                            df_lag = data_test[features][_ - LAG:_]
-                            ts = TimeSeries.from_dataframe(df_lag, time_col=config['time_col'])
-                            pred = model.predict(n=config['forecast_horizon'], series=ts)
-                            pred_prev = reshape_datats(ts=pred, shape=(len(features_model)))
-
+                            aScore, pred_prev = get_entropy_ts(model, row, data_test, config, pred_prev, LAG_MIN)
                         aScores.append(aScore)
                         if _ < config['windows_ascore']['previous'] + config['windows_ascore']['recent']:
                             continue
@@ -530,5 +542,9 @@ if __name__ == '__main__':
                     pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
 
                     # plot detected wl-changepoints over changepoint windows
-                    plot_wlchangepoints(config['columns_model'], config['file_type'], wl_changepoints_detected)
+                    plot_wlchangepoints(config['columns_model'],
+                                        config['file_type'],
+                                        data_test,
+                                        dir_out_subj,
+                                        wl_changepoints_detected)
 

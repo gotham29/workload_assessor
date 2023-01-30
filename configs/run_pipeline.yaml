@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: Entropy-Steering
+alg: LightGBMModel
 #HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA, Entropy-Steering
 do_gridsearch: false  #true
 train_models: true  #true
