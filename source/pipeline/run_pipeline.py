@@ -1,6 +1,10 @@
 import os
 import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -10,18 +14,31 @@ sys.path.append(_SOURCE_DIR)
 sys.path.append(_TS_SOURCE_DIR)
 sys.path.append(_HTM_SOURCE_DIR)
 
+from darts import TimeSeries
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
 from source.preprocess.preprocess import update_colnames, agg_data, get_dftrain, clip_data, get_ttypesdf
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
-from ts_source.utils.utils import make_dir, add_timecol, load_models as load_models_darts
+from ts_source.utils.utils import add_timecol, load_models as load_models_darts
+from ts_source.preprocess.preprocess import reshape_datats
+from ts_source.model.model import get_model_lag, LAG_MIN
 from htm_source.utils.fs import load_models as load_models_htm
+
 
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
     'csv': pd.read_csv
 }
+
+
+def combine_dicts(dicts):
+    d1 = dicts[0]
+    d_comb = {k: [] for k in d1}
+    for d_ in dicts:
+        for k, v in d_.items():
+            d_comb[k] += v
+    return d_comb
 
 
 def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
@@ -38,11 +55,11 @@ def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
         wl = filenames_wllevels[fn]
         feats_means = wllevels_means[wl]
         for feat, mean in feats_means.items():
-            data[feat] = data[feat]-mean
-    return filenames_data  #filenames_data_normed
+            data[feat] = data[feat] - mean
+    return filenames_data
 
 
-def run_subject(config, dir_input, dir_output, wllevels_tlx, time_col='timestamp'):
+def run_subject(config, dir_input, dir_output, wllevels_tlx, time_col='timestamp', save_results=True):
     # Load data
     filenames_data = load_files(dir_input=dir_input, file_type=config['file_type'], read_func=config['read_func'])
     # Update columns
@@ -55,85 +72,317 @@ def run_subject(config, dir_input, dir_output, wllevels_tlx, time_col='timestamp
     # Norm data
     filenames_data = norm_data(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                time_col=time_col)
-    # Plot data
-    plot_data(filenames_data=filenames_data, file_type=config['file_type'], dir_output=dir_output)
     # Train models
     df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
-                           columns_model=config['columns_model'], dir_output=dir_output)
+                           columns_model=config['columns_model'], dir_output=dir_output, save_results=save_results)
     # Add timecol
     df_train = add_timecol(df_train, time_col)
     # Train model(s)
     if config['train_models']:
-        features_models = train_save_models(df_train, alg=config['alg'], dir_output=dir_output, config=config,
-                                            htm_config=config['htm_config'])
+        features_models = train_save_models(df_train=df_train,
+                                            alg=config['alg'],
+                                            dir_output=dir_output,
+                                            config=config,
+                                            do_save_models=config['save_models'],
+                                            htm_config_user=config['htm_config_user'],
+                                            htm_config_model=config['htm_config_model'])
     # Load model(s)
-    dir_models = os.path.join(dir_output, 'models')
-    if config['alg'] == 'HTM':
-        features_models = load_models_htm(dir_models)
     else:
-        features_models = load_models_darts(dir_models, alg=config['alg'])
+        dir_models = os.path.join(dir_output, 'models')
+        if config['alg'] == 'HTM':
+            features_models = load_models_htm(dir_models)
+        else:
+            features_models = load_models_darts(dir_models, alg=config['alg'])
     # Get WL results (levels 0-3)
     wllevels_anomscores, wllevels_predcounts, wllevels_alldata = get_testtypes_outputs(alg=config['alg'],
-                                                                                       htm_config=config[
-                                                                                           'htm_config'],
+                                                                                       htm_config_user=config[
+                                                                                           'htm_config_user'],
+                                                                                       htm_config_model=config[
+                                                                                           'htm_config_model'],
                                                                                        dir_output=dir_output,
                                                                                        columns_model=config[
                                                                                            'columns_model'],
                                                                                        filenames_data=filenames_data,
                                                                                        features_models=features_models,
                                                                                        testtypes_filenames=config[
-                                                                                           'testtypes_filenames'])
-    # Write outputs
-    print(f"  Writing outputs to --> {dir_output}")
-    print("    Boxplots...")
-    plot_boxes(data_plot1=wllevels_anomscores,
-                  data_plot2=wllevels_predcounts,
-                  title_1=f"Anomaly Scores by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
-                  title_2=f"Prediction Counts by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
-                  out_dir=os.path.join(dir_output, 'anomaly'),
-                  xlabel='MWL Levels',
-                  ylabel='HTM Metric')
-    print("    Lineplots...")
-    plot_lines(wllevels_anomscores=wllevels_anomscores,
-                   wllevels_predcounts=wllevels_predcounts,
-                   wllevels_alldata=wllevels_alldata,
-                   columns_model=config['columns_model'],
-                   out_dir=os.path.join(dir_output, 'anomaly'))
-    print("    Barplots...")
-    plot_bars(wllevels_tlx=wllevels_tlx,
-              title='NASA TLX vs Task WL',
-              xlabel='Task WL',
-              ylabel='NASA TLX',
-              out_dir=os.path.join(dir_output, 'anomaly'))
+                                                                                           'testtypes_filenames'],
+                                                                                       save_results=save_results)
     # Get WL diffs btwn testtypes
     wllevels_diffs = get_testtypes_diffs(testtypes_anomscores=wllevels_anomscores)
+    if save_results:
+        # Plot data
+        plot_data(filenames_data=filenames_data, file_type=config['file_type'], dir_output=dir_output)
+        # Write outputs
+        print(f"  Writing outputs to --> {dir_output}")
+        print("    Boxplots...")
+        plot_boxes(data_plot1=wllevels_anomscores,
+                   data_plot2=wllevels_predcounts,
+                   title_1=f"Anomaly Scores by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
+                   title_2=f"Prediction Counts by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
+                   out_dir=os.path.join(dir_output, 'anomaly'),
+                   xlabel='MWL Levels',
+                   ylabel='HTM Metric')
+        print("    Lineplots...")
+        plot_lines(wllevels_anomscores=wllevels_anomscores,
+                   wllevels_predcounts=wllevels_predcounts,
+                   wllevels_alldata=wllevels_alldata,
+                   get_pcounts=True if config['alg'] == 'HTM' else False,
+                   df_train=df_train,
+                   columns_model=config['columns_model'],
+                   out_dir=os.path.join(dir_output, 'anomaly'))
+        print("    Barplots...")
+        plot_bars(mydict=wllevels_tlx,
+                  title='NASA TLX vs Task WL',
+                  xlabel='Task WL',
+                  ylabel='NASA TLX',
+                  path_out=os.path.join(dir_output, 'bars--TLXs.png'))
     return wllevels_anomscores, wllevels_diffs, filenames_data
 
 
-def main(config):
+def get_subjects_wldiffs(subjects_ttypesascores):
+    subjects_wldiffs = {}
+    for subj, wllevels_anomscores in subjects_ttypesascores.items():
+        wlmean_l0 = np.mean(wllevels_anomscores['Level 0'])
+        diff_pct_total = 0
+        for wllevel, ascores in wllevels_anomscores.items():
+            if wllevel == 'Level 0':
+                continue
+            diff_l0 = (np.mean(ascores) - wlmean_l0)
+            diff_pct = (diff_l0 / wlmean_l0) * 100
+            diff_pct_total += diff_pct
+        subjects_wldiffs[subj] = round(diff_pct_total, 1)
+    return subjects_wldiffs
+
+
+def main(config, dir_out, subjects, save_results):
     # Run WL assessor for all subjects found
-    subjects = [f for f in os.listdir(config['dirs']['input']) if
-                os.path.isdir(os.path.join(config['dirs']['input'], f))]
-    meta_data = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}; FEATURES={config['columns_model']}"
-    print(f"{meta_data}")
-    print(f"Subjects Found = {len(subjects)}")
-    subjects_ttypesdiffs = []
+    os.makedirs(dir_out, exist_ok=True)
+    print(f"  Subjects Found = {len(subjects)}")
+    dfs_ttypesdiffs = []
+    subjects_ttypesdiffs = {}
     subjects_filenamesdata = {}
     subjects_ttypesascores = {}
+    # Gather results
     for subj in subjects:
-        print(f"\n subj = {subj}")
-        dir_input_subj, dir_output_subj = make_dirs_subj(config['dirs'], meta_data, subj)
+        dir_input_subj = os.path.join(config['dirs']['input'], subj)
+        dir_output_subj = os.path.join(dir_out, subj)
+        make_dirs_subj(dir_output_subj)
         ttypes_ascores, ttypes_diffs, filenames_data = run_subject(config=config,
+                                                                   save_results=save_results,
                                                                    dir_input=dir_input_subj,
                                                                    dir_output=dir_output_subj,
                                                                    wllevels_tlx=config['subjects_wllevels_tlx'][subj])
-        df_ttypesdiffs = get_ttypesdf(subj, ttypes_diffs)
-        subjects_ttypesdiffs.append(df_ttypesdiffs)
+        dfs_ttypesdiffs.append(get_ttypesdf(subj, ttypes_diffs))
+        subjects_ttypesdiffs[subj] = ttypes_diffs
         subjects_filenamesdata[subj] = filenames_data
         subjects_ttypesascores[subj] = ttypes_ascores
-    df_ttypesdiffs = pd.concat(subjects_ttypesdiffs, axis=0)
-    path_out = os.path.join(config['dirs']['output'], f"subjects_ttypesdiffs--{','.join(subjects)}--{meta_data}.csv")
+    # Get Score
+    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores)
+    print(f"\nsubjects_wldiffs...")
+    for subj, wld in subjects_wldiffs.items():
+        print(f"  {subj} --> {wld}")
+    print()
+    diff_from_WL0 = sum(subjects_wldiffs.values())
+    # Save Results
+    dir_out_summary = os.path.join(dir_out, f'SUMMARY (score={round(diff_from_WL0, 3)})')
+    os.makedirs(dir_out_summary, exist_ok=True)
+    if save_results:
+        make_save_plots(dir_out=dir_out_summary,
+                        dfs_ttypesdiffs=dfs_ttypesdiffs,
+                        subjects_wldiffs=subjects_wldiffs,
+                        diff_from_WL0=diff_from_WL0,
+                        subjects_ttypesascores=subjects_ttypesascores)
+    return diff_from_WL0
+
+
+def make_save_plots(dir_out,
+                    dfs_ttypesdiffs,
+                    subjects_wldiffs,
+                    diff_from_WL0,
+                    subjects_ttypesascores):
+    # df_ttypesdiffs
+    df_ttypesdiffs = pd.concat(dfs_ttypesdiffs, axis=0)
+    path_out = os.path.join(dir_out, f"WL_Diffs.csv")
     df_ttypesdiffs.to_csv(path_out)
+    # subjects WLdiffs
+    plot_bars(mydict=subjects_wldiffs,
+              title=f'WL Change from WL Levels 0 to 1-3\n  Total % Change={round(diff_from_WL0, 3)}',
+              xlabel='Subjects',
+              ylabel='WL % Change from Level 0 to 1-3',
+              path_out=os.path.join(dir_out, f'WL_Diffs.png'))
+    # WL across Task WL (agg. all subjects)
+    fname = 'TaskWL_aScores'
+    title = "Perceived WL vs Task WL"
+    xlabel = 'Task WL'
+    ylabel = 'Perceived WL'
+    ## box
+    ttypes_ascores = combine_dicts(dicts=list(subjects_ttypesascores.values()))
+    plt.cla()
+    fig, ax = plt.subplots()
+    ax.boxplot(ttypes_ascores.values())
+    ax.set_xticklabels(ttypes_ascores.keys(), rotation=90)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.yaxis.grid(True)
+    out_path = os.path.join(dir_out, f'{fname}--box.png')
+    plt.title(title)
+    plt.savefig(out_path, bbox_inches="tight")
+    ## violin
+    dfdict = {'Task WL': [], 'Anomaly Score': []}
+    for ttype, ascores in ttypes_ascores.items():
+        dfdict['Task WL'] += [ttype for _ in range(len(ascores))]
+        dfdict['Anomaly Score'] += ascores
+    df = pd.DataFrame(dfdict)
+    plt.cla()
+    vplot_anom = sns.violinplot(data=df,
+                                x="Task WL",
+                                y='Anomaly Score')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.ylim(0, 1.0)
+    plt.xticks(rotation=90)
+    out_path = os.path.join(dir_out, f'{fname}--violin.png')
+    plt.title(title)
+    plt.savefig(out_path, bbox_inches="tight")
+
+
+def gridsearch_htm(config, save_results, HZS, SPS, PERMDECS, PADDINGS):
+    modtypes_scores = {}
+    for hz in HZS:
+        print(f"\nHZ = {hz}")
+        for sp in SPS:
+            print(f"  SP = {sp}")
+            for permdec in PERMDECS:
+                print(f"    PERMDEC = {permdec}")
+                for padding in PADDINGS:
+                    print(f"      PADDING = {padding}")
+                    modtype = f"HZ={hz}; SP={sp}; PERMDEC={permdec}; PADDING={padding}"
+                    config['hzs']['convertto'] = hz
+                    config['htm_config_user']['models_state']['use_sp'] = sp
+                    config['htm_config_model']['models_encoders']['p_padding'] = padding
+                    config['htm_config_model']['models_params']['tm']['permanenceDec'] = permdec
+
+                    meta = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}"
+                    if config['alg'] == 'HTM':
+                        config_tm = config['htm_config_model']['models_params']['tm']
+                        config_enc = config['htm_config_model']['models_encoders']
+                        meta = meta.replace(f"HZ={config['hzs']['convertto']}",
+                                            f"HZ={config['hzs']['convertto']}; SP={config['htm_config_user']['models_state']['use_sp']}; ENC_PADDING%={config_enc['p_padding']}; TM_PERMDEC={config_tm['permanenceDec']};")
+                    # Make output dir
+                    dir_out = os.path.join(config['dirs']['output'], meta)
+                    if not os.path.exists(dir_out):
+                        eval = main(config, dir_out=dir_out, subjects=subjects, save_results=save_results)
+                    else:
+                        print(f"dir_out     --> {dir_out}")
+                        dir_summary = [f for f in os.listdir(dir_out) if 'SUMMARY' in f][0]
+                        eval = float(dir_summary.split('score=')[-1].replace(')', ''))
+                    modtypes_scores[modtype] = eval
+    modtypes_scores = dict(sorted(modtypes_scores.items(), key=lambda item: item[1]))
+    return modtypes_scores
+
+
+def gather_scores(dir_results, features_vals):
+    dir_files = [f for f in os.listdir(dir_results) if f != '.DS_Store']
+    features_vals_scores = {f: {} for f in features_vals}
+    for feat, vals in features_vals.items():
+        print(f"\n\nfeat = {feat}")
+        for v in vals:
+            print(f"\n  v = {v}")
+            fv_files = [os.path.join(dir_results, f) for f in dir_files if f"{feat}{v}" in f]
+            fv_scores = []
+            for fd in fv_files:
+                fd_files = [f for f in os.listdir(fd)]
+                if not any("SUMMARY" in fd for fd in fd_files):
+                    continue
+                f_sum = [f for f in fd_files if 'SUMMARY' in f][0]
+                score = f_sum.split('SUMMARY (score=')[1].replace(')', '')
+                print(f"    ** score = {score}")
+                fv_scores.append(float(score))
+            features_vals_scores[feat][v] = fv_scores
+    return features_vals_scores
+
+
+def plot_features_scores(features_vals_scores, dir_out):
+    for feat, vals_scores in features_vals_scores.items():
+        print(f"\n{feat}")
+        path_out = os.path.join(dir_out, f'Score Summary - {feat}')
+        fig, ax = plt.subplots()
+        ax.boxplot(vals_scores.values())
+        ax.set_xticklabels(vals_scores.keys(), rotation=90)
+        ax.set_xlabel(feat)
+        ax.set_ylabel('WL Scores')
+        ax.yaxis.grid(True)
+        plt.savefig(path_out, bbox_inches="tight")
+
+
+def is_wl_detected(aScores, change_thresh_percent, window_recent, window_previous):
+    wl_detected = False
+    aScores_recent = aScores[-window_recent:]
+    aScores_previous = aScores[-window_previous:-window_recent]
+    percent_change = ((np.mean(aScores_recent) - np.mean(aScores_previous)) / np.mean(aScores_recent)) * 100
+    if percent_change >= change_thresh_percent:
+        wl_detected = True
+    return wl_detected
+
+
+def make_training(paths_train, read_func, colnames):
+    datas_train = list()
+    for path_t in paths_train:
+        data = read_func(path_t)
+        data.columns = colnames
+        datas_train.append(data)
+    data_train = pd.concat(datas_train, axis=0)
+    return data_train
+
+
+def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, change_detection_window):
+    scores = {'true_pos': 0, 'false_pos': 0, 'true_neg': 0, 'false_neg': 0}
+    # check if known changepoints detected
+    wl_changepoints_windows = {}
+    for cp in wl_changepoints:
+        cp_detected = False
+        cp_window = [cp + 1, cp + change_detection_window]
+        cp_detected_in_window = [v for v in wl_changepoints_detected if v in range(cp_window[0], cp_window[1])]
+        wl_changepoints_windows[cp] = cp_window
+        if len(cp_detected_in_window):
+            cp_detected = True
+        if cp_detected:
+            scores['true_pos'] += 1
+        else:
+            scores['false_neg'] += 1
+    # check for false pos
+    for cp in wl_changepoints_detected:
+        cp_in_detection_window = False
+        for cp_, window in wl_changepoints_windows.items():
+            if cp in range(window[0], window[1]):
+                cp_in_detection_window = True
+        if not cp_in_detection_window:
+            scores['false_pos'] += 1
+    # check for true neg
+    rows_neg = [_ for _ in range(data_size)]
+    for wl, cp_window in wl_changepoints_windows.items():
+        for _ in range(cp_window[0], cp_window[1]):
+            rows_neg.remove(_)
+    true_neg = [v for v in rows_neg if v not in wl_changepoints_detected]
+    scores['true_neg'] = len(true_neg)
+
+    return scores, wl_changepoints_windows
+
+
+def plot_wlchangepoints(columns_model, file_type, wl_changepoints_detected):
+    for feat in columns_model:
+        path_out = os.path.join(dir_out_subj,
+                                f"{feat}--{testfile.replace(file_type,'')}--timeplot.png")
+        plt.cla()
+        plt.plot(data_test[feat])
+        plt.xlabel('time')
+        plt.ylabel(feat)
+        for cp in wl_changepoints_detected:
+            plt.axvline(cp, color='green', lw=0.5, alpha=0.3)
+        for cp, window in wl_changepoints_windows.items():
+            plt.axvspan(window[0], window[1], alpha=0.5, color='red')
+        plt.savefig(path_out)
+        plt.cla()
 
 
 if __name__ == '__main__':
@@ -142,19 +391,144 @@ if __name__ == '__main__':
                  'required': True,
                  'help': 'path to config'}]
     config = load_config(get_args(args_add).config_path)
-    # print(f"\nCONFIG")
-    # for k, v in config.items():
-    #     print(f"  {k}")
-    #     try:
-    #         for k_, v_ in v.items():
-    #             print(f"    {k_} = {v_}")
-    #             try:
-    #                 for k__, v__ in v_.items():
-    #                     print(f"    {k__} = {v__}")
-    #             except:
-    #                 print(f"    {v_}")
-    #     except:
-    #         print(f"    {v}")
-    # config = validate_config(config)
     config['read_func'] = FILETYPES_READFUNCS[config['file_type']]
-    main(config)
+
+    meta = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}"
+    dir_out = os.path.join(config['dirs']['output'], config['mode'], meta)
+
+    subjects = [f for f in os.listdir(config['dirs']['input']) if
+                os.path.isdir(os.path.join(config['dirs']['input'], f))]
+    print(f"  Subjects Found = {len(subjects)}")
+
+    """ Post-hoc mode """
+    if config['mode'] == 'post-hoc':
+        print('MODE = post-hoc')
+        if config['alg'] != 'HTM':
+            eval = main(config, dir_out=dir_out, subjects=subjects,
+                        save_results=config['htm_gridsearch']['save_results'])
+        else:
+            config_tm = config['htm_config_model']['models_params']['tm']
+            config_enc = config['htm_config_model']['models_encoders']
+            meta = meta.replace(f"HZ={config['hzs']['convertto']}",
+                                f"HZ={config['hzs']['convertto']}; SP={config['htm_config_user']['models_state']['use_sp']}; ENC_PADDING%={config_enc['p_padding']}; TM_PERMDEC={config_tm['permanenceDec']};")
+            dir_out = os.path.join(config['dirs']['output'], config['mode'], meta)
+            if not config['do_gridsearch']:
+                eval = main(config, dir_out=dir_out, subjects=subjects,
+                            save_results=config['htm_gridsearch']['save_results'])
+            else:
+                modtypes_scores = gridsearch_htm(config=config,
+                                                 SPS=config['htm_gridsearch']['features_vals']['SP='],
+                                                 HZS=config['htm_gridsearch']['features_vals']['HZ='],
+                                                 PERMDECS=config['htm_gridsearch']['features_vals']['PERMDEC='],
+                                                 PADDINGS=config['htm_gridsearch']['features_vals']['PADDING%='],
+                                                 save_results=config['htm_gridsearch']['save_results'])
+                for mt, score in modtypes_scores.items():
+                    print(f"{mt} = {round(score, 3)}")
+                df_modtypes_scores = pd.DataFrame(modtypes_scores, index=['Score']).T
+                df_modtypes_scores.sort_values(by='Score', ascending=True, inplace=True)
+                path_out_csv = os.path.join(config['dirs']['output'], "GRIDSEARCH.csv")
+                path_out_png = os.path.join(config['dirs']['output'], "GRIDSEARCH.png")
+                df_modtypes_scores.to_csv(path_out_csv, index=True)
+                plot_bars(mydict=modtypes_scores,
+                          title='Gridsearch Performance',
+                          xlabel='Model Setting',
+                          ylabel='Performance',
+                          path_out=path_out_png)
+                feats_vals_scores = gather_scores(config['dirs']['output'], config['htm_gridsearch']['features_vals'])
+                plot_features_scores(feats_vals_scores, config['dirs']['output'])
+
+    else:
+        """ Real-time mode """
+        print('MODE = real-time')
+        # train model & test WL detection for each subject
+        for subj in subjects:
+            print(f"  subj = {subj}")
+            # make output dir
+            dir_out_subj = os.path.join(dir_out, subj)
+            os.makedirs(dir_out_subj, exist_ok=True)
+
+            # gather & combine training files
+            dir_in_subj = os.path.join(config['dirs']['input'], subj)
+            paths_train = [os.path.join(dir_in_subj, f) for f in os.listdir(dir_in_subj) if 'training' in f]
+            data_train = make_training(paths_train, config['read_func'], config['colnames'])
+            data_train.drop(columns=[config['time_col']], inplace=True)
+            data_train = add_timecol(data_train, config['time_col'])
+
+            # train model
+            print("    training...")
+            features_models = train_save_models(df_train=data_train,
+                                                alg=config['alg'],
+                                                do_save_models=config['save_models'],
+                                                dir_output=dir_out_subj,
+                                                config=config,
+                                                htm_config_user=config['htm_config_user'],
+                                                htm_config_model=config['htm_config_model'])
+
+            # run test files thru model(s) & gather detected wl-changepoints
+            print("    testing...")
+            for feat, model in features_models.items():
+                print(f"      feat = {feat}")
+                for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
+                    print(f"        testfile = {testfile}")
+                    aScores, wl_changepoints_detected = list(), list()
+                    scores = {'true_pos': [], 'false_pos': [], 'true_neg': [], 'false_neg': []}
+                    path_test = os.path.join(dir_in_subj, testfile)
+                    data_test = config['read_func'](path_test)
+                    data_test.columns = config['colnames']
+                    data_test.drop(columns=[config['time_col']], inplace=True)
+                    data_test = add_timecol(data_test, config['time_col'])
+
+                    # get wl_changepoints
+                    wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
+                                       times['times_wltoggle']]
+                    print(f"        wl_changepoints = {wl_changepoints}")
+
+                    # run data thru model
+                    pred_prev = None
+                    for _, row in data_test[config['columns_model']].iterrows():
+                        aScore = 0
+                        if config['alg'] == 'HTM':
+                            aScore,aLikl,pCount,sPreds = model.run(features_data=dict(row), timestep=_+1, learn=False)
+                        elif config['alg'] == 'Entropy-Steering':
+                            LAG = 3
+                            if _ < LAG:
+                                continue
+                            if pred_prev:
+                                aScore = abs(pred_prev - row[feat])
+                            lag1, lag2, lag3 = data_test[feat][_ - 3], data_test[feat][_ - 2], data_test[feat][_ - 1]
+                            pred_prev = model.predict(lag1, lag2, lag3)
+                        else:
+                            features_model = list(model.training_series.components)
+                            features = features_model + [config['time_col']]
+                            LAG = max(LAG_MIN, get_model_lag(config['alg'], model))
+                            if _ < LAG:
+                                continue
+                            if pred_prev:
+                                aScore = abs(pred_prev - row[features_model])
+                            df_lag = data_test[features][_ - LAG:_]
+                            ts = TimeSeries.from_dataframe(df_lag, time_col=config['time_col'])
+                            pred = model.predict(n=config['forecast_horizon'], series=ts)
+                            pred_prev = reshape_datats(ts=pred, shape=(len(features_model)))
+
+                        aScores.append(aScore)
+                        if _ < config['windows_ascore']['previous'] + config['windows_ascore']['recent']:
+                            continue
+                        wl_change_detected = is_wl_detected(aScores,
+                                                            config['windows_ascore']['change_thresh_percent'],
+                                                            config['windows_ascore']['recent'],
+                                                            config['windows_ascore']['previous'])
+                        if wl_change_detected:
+                            wl_changepoints_detected.append(_)
+
+                    # score detected wl-changepoints
+                    scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
+                                                                          wl_changepoints,
+                                                                          wl_changepoints_detected,
+                                                                          config['windows_ascore']['change_detection'])
+                    path_out = os.path.join(dir_out_subj,
+                                            f"{feat}--{testfile.replace(config['file_type'],'')}--confusion_matrix.csv")
+                    pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
+
+                    # plot detected wl-changepoints over changepoint windows
+                    plot_wlchangepoints(config['columns_model'], config['file_type'], wl_changepoints_detected)
+

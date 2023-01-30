@@ -1,24 +1,34 @@
-alg: HTM
-#HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, VARIMA
+mode: real-time
+#post-hoc, real-time
+alg: Entropy-Steering
+#HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA, Entropy-Steering
+do_gridsearch: false  #true
+train_models: true  #true
+save_models: false  #true
+
+windows_ascore:
+  recent: 7
+  previous: 21
+  change_detection: 21
+  change_thresh_percent: 30
 
 hzs:
   baseline: 100
-  convertto: 3
+  convertto: 6.67  #5
 
-train_models: True
 data_cap: 100000
-do_gridsearch: False
 eval_metric: rmse
+forecast_horizon: 1
+test_prop: 0.3
+time_col: timestamp
+file_type: xls
+scale: false
+
 features:
   in:
     - steering angle
   pred:
     - steering angle
-forecast_horizon: 1
-test_prop: 0.3
-time_col: timestamp
-file_type: xls
-scale: False
 
 dirs:
   input: /Users/samheiserman/Desktop/repos/workload_assessor/data
@@ -35,6 +45,96 @@ columns_model:
 clip_percents:
   start: 0
   end: 0
+
+subjects_testfiles_wltogglepoints:
+  zaychik:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  rian:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  miller:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  jeremy:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  jacob:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  mike:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  hiroki:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
+  heiserman:
+    test1-L1.xls:
+      time_total: 60
+      times_wltoggle:
+        - 20
+        - 45
+    test2-L1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 35
+        - 65
 
 testtypes_filenames:
   training:
@@ -62,6 +162,18 @@ testtypes_filenames:
     - test6-L3.xls
 
 modnames_grids:
+  ARIMA:
+    p:
+      - 1
+      - 3
+    d:
+      - 0
+      - 1
+    q:
+      - 0
+      - 1
+      - 3
+    # trend: 'c' ['', '', '']
   VARIMA:
     p:
       - 1
@@ -131,14 +243,11 @@ modnames_grids:
     # custom_encoder: Optional[nn.Module] = None,
     # custom_decoder: Optional[nn.Module] = None,
   RNNModel:
-    # input_chunk_length: int,
     input_chunk_length:
       - 5
     training_length:
       - 5
-      # - 10
     model: ## ["RNN", "LSTM", "GRU"]
-      # - RNN
       - LSTM
     hidden_dim:
       - 25
@@ -149,8 +258,8 @@ modnames_grids:
   LightGBMModel:
     lags:
       - 1
-      # - 5
-      # - 10
+      - 5
+      - 10
     # lags_past_covariates: Union[int, List[int]] = None,
     # lags_future_covariates: Union[Tuple[int, int], List[int]] = None,
     # output_chunk_length: int = 1,
@@ -167,7 +276,62 @@ modnames_grids:
     # likelihood: str = None,
     #   = ['quantile', 'poisson']
 
-htm_config:
+htm_config_model:
+  models_encoders:
+    n: 400
+    w: 21
+    n_buckets: 130
+    p_padding: 10
+    seed: 0
+  models_params:
+    anomaly_likelihood:
+      probationaryPeriod: 500
+      reestimationPeriod: 100
+    sp:
+      potentialPct: 0.8
+      columnCount: 2048
+      globalInhibition: true
+      boostStrength: 0.0
+      localAreaDensity: 0.0  #0.1
+      stimulusThreshold: 0.0
+      numActiveColumnsPerInhArea: 40  #0
+      synPermActiveInc: 0.003
+      synPermConnected: 0.2
+      synPermInactiveDec: 0.0005
+      wrapAround: true
+      minPctOverlapDutyCycle: 0.001
+      dutyCyclePeriod: 1000
+      seed: 0  #1956
+    tm:
+      activationThreshold: 20
+      cellsPerColumn: 32
+      columnDimensions: 2048
+      initialPerm: 0.21  #0.24
+      maxSegmentsPerCell: 128
+      maxSynapsesPerSegment: 128
+      minThreshold: 13
+      newSynapseCount: 31
+      permanenceDec: 0.0  #0.008
+      permanenceInc: 0.10  #0.04
+      permanenceConnected: 0.5
+      predictedSegmentDecrement: 0.001
+      seed: 0  #1960
+  models_predictor:
+    enable: false
+    resolution: 1
+    sdrc_alpha: 0.1
+    steps_ahead:
+    - 1
+    - 2
+  spatial_anomaly:
+    enable: false  #true
+    tolerance: 0.05
+    perc_min: 0
+    perc_max: 100
+    anom_prop: 0.3
+    window: 100000
+
+htm_config_user:
   features:
     steering angle:
       type: float
@@ -178,79 +342,10 @@ htm_config:
     model_for_each_feature: false
     return_pred_count: true
     use_sp: true
-  models_predictor:
-    enable: false
-    resolution: 1
-    steps_ahead:
-      - 1
-      - 2
   timesteps_stop:
     learning:  #100000
     running:  #110000
     sampling:  #10000
-  models_encoders:
-    n: 400
-    w: 21
-    n_buckets: 130
-    p_padding: 0
-    # minmax_percentiles:
-    #   - 1
-    #   - 99
-    # n: 700
-    # sparsity: 0.02
-    # timestamp:
-    #   enable: false
-    #   feature: satellite_time
-    #   timeOfDay:
-    #     - 30
-    #     - 1
-    #   weekend: 21
-  models_params:
-    anomaly:
-      period: 1000
-    predictor:
-      sdrc_alpha: 0.1
-    sp:
-      potentialPct: 0.8
-      columnCount: 2048
-      globalInhibition: true  #nupic: 1
-      boostStrength: 0.0
-      localAreaDensity: 0.0
-      numActiveColumnsPerInhArea: 40
-      synPermActiveInc: 0.003
-      synPermConnected: 0.2
-      synPermInactiveDec: 0.0005
-    tm:
-      activationThreshold: 20
-      cellsPerColumn: 32
-      columnDimensions: 2048
-      initialPerm: 0.21
-      maxSegmentsPerCell: 128
-      maxSynapsesPerSegment: 128
-      minThreshold: 13
-      newSynapseCount: 31
-      permanenceDec: 0.1
-      permanenceInc: 0.1
-      permanenceConnected: 0.5
-    # sp:
-    #   boostStrength: 2.0
-    #   columnCount: 2048
-    #   localAreaDensity: 0.04395604395604396
-    #   potentialPct: 0.8
-    #   synPermActiveInc: 0.05  #0.003
-    #   synPermConnected: 0.1  #0.2
-    #   synPermInactiveDec: 0.085  #0.0005
-    # tm:
-    #   activationThreshold: 13
-    #   cellsPerColumn: 32
-    #   initialPerm: 0.21
-    #   maxSegmentsPerCell: 128
-    #   maxSynapsesPerSegment: 32
-    #   minThreshold: 10
-    #   newSynapseCount: 20
-    #   permanenceConnected: 0.3
-    #   permanenceDec: 0.1
-    #   permanenceInc: 0.1
 
 subjects_wllevels_tlx:
   zaychik:
@@ -278,6 +373,11 @@ subjects_wllevels_tlx:
     Level 1: 1.5
     Level 2: 2.5
     Level 3: 3.5
+  mike:
+    Level 0: 0.5
+    Level 1: 1.5
+    Level 2: 2.5
+    Level 3: 3.5
   hiroki:
     Level 0: 0.6
     Level 1: 1.6
@@ -288,3 +388,57 @@ subjects_wllevels_tlx:
     Level 1: 1.7
     Level 2: 2.7
     Level 3: 3.7
+
+htm_gridsearch:
+  save_results: true
+  features_vals:
+    SP=:
+      - false
+      - true
+    HZ=:
+#      - 1
+#      - 3
+#      - 5
+      - 10
+#      - 100
+    PERMDEC=:
+      - 0.0
+      - 0.025
+      - 0.05
+      - 0.075
+      - 0.1
+    PADDING%=:
+#      - -40
+      - -30
+      - -20
+      - -10
+      - 0
+      - 10
+      - 20
+      - 30
+
+#arima = [18.4,14.4,-8.2,-42.8,-16.7,-98.1,40.4,41.3,53.1,-1.3,-63.6,29.5,-0.5,1.1,-9.5,-31.7,-17.9,-51.0,-9.1,-16.3,-34.8,6.9,-30.5,0.9]
+#htm = [80.0,78.8,28.5,-34.8,-3.8,81.7,38.6,65.1,72.6,42.9,-215.5,-30.5,49.2,36.8,5.0,80.4,-16.3,-33.8,30.3,20.1,-31.1,49.0,-32.1,34.6]
+#lgbm = [66.9,54.1,-0.5,-3.1,-1.6,69.1,43.4,61.6,73.8,-6.9,-70.5,10.8,36.7,39.5,12.0,65.8,-28.5,-46.4,0.2,2.9,-31.9,17.0,-21.2,-3.6]
+#lstm = [55.4,40.6,-9.3,-17.0,-8.9,55.4,39.6,52.0,60.3,24.1,-52.6,-7.9,47.2,47.8,0,62.7,-28.6,-38.1,13.4,14.2,3.6,-3.1,-4.3,-6.7]
+#tcn = [32.7,21.9,-8.7,-24.4,-9.8,19.4,34.3,32.0,49.1,-3.5,-53.9,21.3,18.7,20.5,0.9,30.8,-25.8,-42.3,-1.0,-11.6,-20.6,6.1,-15.0,7.4]
+#
+#algs_scores = [arima, htm, lgbm, lstm, tcn]
+#
+#subjs_inds = {
+#    '1': [0,3],
+#    '2': [3,6],
+#    '3': [6,9],
+#    '4': [9,12],
+#    '5': [12,15],
+#    '6': [15,18],
+#    '7': [18,21],
+#    '8': [21,24],
+#}
+#
+#for subj, inds in subjs_inds.items():
+#  scores = []
+#  for alg in algs_scores:
+#    scores += alg[inds[0]:inds[1]]
+#  mean = np.mean(scores)
+#  print(f"{subj} = {mean}")

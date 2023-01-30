@@ -27,19 +27,19 @@ def plot_data(filenames_data: dict, file_type: str, dir_output: str):
 
 
 def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
-    outtypes_paths = {'aScores': os.path.join(out_dir, 'MWLLevels_aScores.png'),
-                      'pCounts': os.path.join(out_dir, 'MWLLevels_pCounts.png'),
-                      'WLScores': os.path.join(out_dir, 'MWLLevels_WLScores.png')}
+    outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
+                      'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png'),
+                      'WLScores': os.path.join(out_dir, 'TaskWL_aggScore.png')}
     # Plot -- Violin
     outtypes_data = {ot: [] for ot in outtypes_paths if ot != 'WLScores'}
     for testlevel, ascores in data_plot1.items():
-        df_dict_1 = {'Task Difficulty Level': [testlevel for _ in range(len(ascores))],
+        df_dict_1 = {'Task WL': [testlevel for _ in range(len(ascores))],
                      'Anomaly Score': ascores}
         df1 = pd.DataFrame(df_dict_1)
         outtypes_data['aScores'].append(df1)
         if data_plot2 != {}:
             pcounts = data_plot2[testlevel]
-            df_dict_2 = {'Task Difficulty Level': [testlevel for _ in range(len(pcounts))],
+            df_dict_2 = {'Task WL': [testlevel for _ in range(len(pcounts))],
                          'Prediction Count': pcounts}
             df2 = pd.DataFrame(df_dict_2)
             outtypes_data['pCounts'].append(df2)
@@ -48,7 +48,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         df_2 = pd.concat(outtypes_data['pCounts'], axis=0)
     plt.cla()
     vplot_anom = sns.violinplot(data=df_1,
-                                x="Task Difficulty Level",
+                                x="Task WL",
                                 y='Anomaly Score')
     plt.title(title_1)
     plt.xlabel(xlabel)
@@ -58,7 +58,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     plt.cla()
     if data_plot2 != {}:
         vplot_pred = sns.violinplot(data=df_2,
-                                    x="Task Difficulty Level",
+                                    x="Task WL",
                                     y='Prediction Count')
         plt.title(title_2)
         plt.xlabel(xlabel)
@@ -94,66 +94,127 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
 
 
 def plot_lines(wllevels_anomscores: dict,
-                   wllevels_predcounts: dict,
-                   wllevels_alldata: dict,
-                   columns_model: dict,
-                   out_dir: str):
-    # Gather data to plot
-    x = []
-    ascores_all, predcounts_all = [], []
-    ascores_accum, predcounts_accum = [], []
-    features_alldata = {f: [] for f in columns_model}
-    wllevels_indsend, wllevel_i = {}, 0
+               wllevels_predcounts: dict,
+               wllevels_alldata: dict,
+               df_train: pd.DataFrame,
+               get_pcounts: bool,
+               columns_model: dict,
+               out_dir: str):
+
+    # TRAIN
+    ## plot - columns_model
+    for feat in columns_model:
+        plt.cla()
+        plt.plot(df_train[feat].values)
+        plt.title(f'Behavior - Training')
+        plt.xlabel('time')
+        plt.ylabel(feat)
+        out_path = os.path.join(out_dir, f'time--training--{feat}.png')
+        plt.savefig(out_path)
+
+    # TEST
+    ## get data & wl inds
+    alldata_task = pd.concat(list(wllevels_alldata.values()), axis=0)
+    ascores_accum, pcounts_accum = [], []
+    wllevels_indsend, wllevels_ascoresaccum, wllevel_i = {}, {}, 0
     for wllevel, ascores in wllevels_anomscores.items():
-        pcounts = wllevels_predcounts[wllevel]
-        # accum x for line plot
-        x += [len(x) + _ for _ in range(len(ascores))]
-        # find indices separating wl levels
         wllevel_i += len(ascores)
         wllevels_indsend[wllevel] = wllevel_i
-        # accum ascores & predcounts
-        ascores_all += ascores
-        predcounts_all += pcounts
-        wllevel_accum_ascores = get_accum(ascores)
-        wllevel_accum_pcounts = get_accum(pcounts)
-        ascores_accum += wllevel_accum_ascores
-        predcounts_accum += wllevel_accum_pcounts
-        # accum data for all columns_model
-        for feat in columns_model:
-            features_alldata[feat] += list(wllevels_alldata[wllevel][feat].values)
-    # Make plots
-    data_plot = {
-        'AScores': {'accum': ascores_accum, 'all': ascores_all},
-        'PCounts': {'accum': predcounts_accum, 'all': predcounts_all}
-    }
-    for feat, fdata in features_alldata.items():
-        data_plot[feat] = {'accum': fdata}
-    for feat, fdata in data_plot.items():
+        ascores_accum_wllevel = get_accum(ascores)
+        ascores_accum += ascores_accum_wllevel
+        wllevels_ascoresaccum[wllevel] = ascores_accum_wllevel
+        if get_pcounts:
+            pcounts_accum += get_accum(wllevels_predcounts[wllevel])
+
+    ## plot - behavior (total)
+    levels_colors = {'Level 0': 'black', 'Level 1': 'blue', 'Level 2': 'purple', 'Level 3': 'aqua'}
+    for feat in columns_model:
         plt.cla()
-        plt.plot(fdata['accum'])
-        plt.title(feat)
+        plt.plot(alldata_task[feat].values)
+        plt.title(f'Behavior - Validation')
+        plt.xlabel('time')
+        plt.ylabel(feat)
+        for wllevel, ind in wllevels_indsend.items():
+            plt.axvline(x=ind, color='r', label=wllevel)
+        out_path = os.path.join(out_dir, f'time--validation--{feat}.png')
+        plt.savefig(out_path)
+        ## by level
+        for level, data in wllevels_alldata.items():
+            d_feat = data[feat].values
+            plt.cla()
+            plt.plot(d_feat, color=levels_colors[level])
+            # plt.xlabel('time')
+            plt.ylabel(feat)
+            # plt.title(f'Behavior - {feat} - {level}')
+            out_path = os.path.join(out_dir, f'time--validation--{feat}--{level}.png')
+            plt.savefig(out_path)
+
+    ## plot - aScores
+    plt.cla()
+    plt.plot(ascores_accum)
+    plt.title("Perceived WL")
+    plt.xlabel('Time')
+    plt.ylabel('Accumulated Anomaly Scores')
+    prev_ind = 0
+    for wllevel, ind in wllevels_indsend.items():
+        plt.axvline(x=ind, color='r', label=wllevel)
+        fdata_level = wllevels_anomscores[wllevel]
+        loc_x = np.percentile([ind, prev_ind], 25)
+        loc_y = np.percentile(fdata_level, 25)
+        fdata_mean = round(np.mean(fdata_level), 2)
+        plt.text(loc_x, loc_y, f"avg:{fdata_mean}")
+        prev_ind = ind
+    out_path = os.path.join(out_dir, f'time--validation--aScores.png')
+    plt.savefig(out_path)
+
+    ## plot - aScpres overlapped
+    plt.cla()
+    plt_ymax = 50
+    max_ascoreaccum = 0
+    for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
+        wllevel_ascores_mean = round(np.mean(wllevels_anomscores[wllevel]), 2)
+        plt.plot(ascoresaccum, label=f"{wllevel} (avg={wllevel_ascores_mean})", color=levels_colors[wllevel])
+        max_ascoreaccum = max(max_ascoreaccum, max(ascoresaccum))
+        # loc_x = len(ascoresaccum)
+        # loc_y = ascoresaccum[-1]
+        # plt.text(loc_x, loc_y, f"avg={wllevel_ascores_mean}")
+    max_ascoreaccum = max(max_ascoreaccum, plt_ymax)
+    plt.ylim(0, max_ascoreaccum)
+    plt.title("Perceived WL by Task Level")
+    plt.xlabel('Time')
+    plt.ylabel('Accumulated Anomaly Scores')
+    plt.legend()
+    out_path = os.path.join(out_dir, f'levels--validation--aScores.png')
+    plt.savefig(out_path)
+
+    ## plot - pCounts
+    if get_pcounts:
+        plt.cla()
+        plt.plot(pcounts_accum)
+        plt.title("Perceived WL")
+        plt.xlabel('Time')
+        plt.ylabel('Accumulated Prediction Counts')
         prev_ind = 0
         for wllevel, ind in wllevels_indsend.items():
             plt.axvline(x=ind, color='r', label=wllevel)
-            if feat in ["AScores", "PCounts"]:
-                fdata_level = fdata['all'][prev_ind:ind]
-                fdata_mean = round(np.mean(fdata_level), 2)
-                loc_x, loc_y = np.mean([ind, prev_ind]), fdata_mean
-                plt.text(loc_x, fdata_mean, f"{fdata_mean}")
+            fdata_level = wllevels_predcounts[wllevel]
+            loc_x = np.percentile([ind, prev_ind], 25)
+            loc_y = np.percentile(fdata_level, 25)
+            fdata_mean = round(np.mean(fdata_level), 2)
+            plt.text(loc_x, loc_y, f"avg:{fdata_mean}")
             prev_ind = ind
-        out_path = os.path.join(out_dir, f'lines--{feat}.png')
+        out_path = os.path.join(out_dir, f'time--validation--pCounts.png')
         plt.savefig(out_path)
 
 
-def plot_bars(wllevels_tlx, title, xlabel, ylabel, out_dir):
+def plot_bars(mydict, title, xlabel, ylabel, path_out):
     plt.cla()
-    plt.bar(range(len(wllevels_tlx)), list(wllevels_tlx.values()), align='center')
-    plt.xticks(range(len(wllevels_tlx)), list(wllevels_tlx.keys()))
+    plt.bar(range(len(mydict)), list(mydict.values()), align='center')
+    plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=90)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    path_out = os.path.join(out_dir, 'bars--TLXs.png')
-    plt.savefig(path_out)
+    plt.savefig(path_out,bbox_inches="tight")
 
 
 def get_accum(values):

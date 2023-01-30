@@ -1,5 +1,6 @@
 import os
 import sys
+import pandas as pd
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -14,7 +15,15 @@ from htm_source.pipeline.htm_batch_runner import run_batch
 from ts_source.pipeline.pipeline import run_pipeline
 
 
-def train_save_models(df_train, alg, dir_output: str, config: dict, htm_config: dict):
+class SteeringEntropy:
+    def __init__(self):
+        pass
+    def predict(self, lag1, lag2, lag3):
+        return lag1 + (lag1 - lag2) + 0.5 * ((lag1 - lag2) - (lag2 - lag3))
+
+
+def train_save_models(df_train: pd.DataFrame, alg: str, do_save_models: bool, dir_output: str, config: dict,
+                      htm_config_user: dict, htm_config_model: dict):
     """
     Purpose:
         Train models (using 'htm_source' or 'ts_source' modules)
@@ -39,27 +48,32 @@ def train_save_models(df_train, alg, dir_output: str, config: dict, htm_config: 
     dir_output_models = os.path.join(dir_output, 'models')
     if alg == 'HTM':
         # htm_source
-        features_models, features_outputs = run_batch(cfg=htm_config,
-                                                    config_path=None,
-                                                    learn=True,
-                                                    data=df_train[htm_config['features'].keys()],
-                                                    iter_print=1000,
-                                                    features_models={})
-        save_models(features_models, dir_output_models)
+        features_models, features_outputs = run_batch(cfg_user=htm_config_user,
+                                                      cfg_model=htm_config_model,
+                                                      config_path_user=None,
+                                                      config_path_model=None,
+                                                      learn=True,
+                                                      data=df_train[htm_config_user['features'].keys()],
+                                                      iter_print=1000,
+                                                      features_models={})
+    elif alg == 'Entropy-Steering':
+        features_models = {feat: SteeringEntropy() for feat in htm_config_user['features'].keys()}
     else:
         # ts_source
-        config_ts = {k:v for k,v in config.items()}
+        config_ts = {k: v for k, v in config.items()}
         config_ts['train_models'] = True
-        config_ts['modnames_grids'] = {k:v for k,v in config_ts['modnames_grids'].items() if k == alg}
+        config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
         output_dirs = {'data': os.path.join(dir_output, 'data_files'),
-                        'results': os.path.join(dir_output, 'anomaly'),
-                        'models': dir_output_models,
-                        'scalers': os.path.join(dir_output, 'scalers')}
+                       'results': os.path.join(dir_output, 'anomaly'),
+                       'models': dir_output_models,
+                       'scalers': os.path.join(dir_output, 'scalers')}
         modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
                                                                      data=df_train,
                                                                      data_path=False,
                                                                      output_dir=False,
                                                                      output_dirs=output_dirs)
         features_models = {modname_best: modnames_models[modname_best]}
-    return features_models
+    if do_save_models:
+        save_models(features_models, dir_output_models)
 
+    return features_models
