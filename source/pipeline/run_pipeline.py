@@ -17,7 +17,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 from darts import TimeSeries
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
-from source.preprocess.preprocess import update_colnames, agg_data, get_dftrain, clip_data, get_ttypesdf
+from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
 from ts_source.utils.utils import add_timecol, load_models as load_models_darts
@@ -59,41 +59,7 @@ def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
     return filenames_data
 
 
-def run_subject(config, dir_input, dir_output, wllevels_tlx, time_col='timestamp', save_results=True):
-    # Load data
-    filenames_data = load_files(dir_input=dir_input, file_type=config['file_type'], read_func=config['read_func'])
-    # Update columns
-    filenames_data = update_colnames(filenames_data=filenames_data, colnames=config['colnames'])
-    # Agg data
-    filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
-                              hz_convertto=config['hzs']['convertto'])
-    # Clip data
-    filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
-    # Norm data
-    filenames_data = norm_data(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
-                               time_col=time_col)
-    # Train models
-    df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
-                           columns_model=config['columns_model'], dir_output=dir_output, save_results=save_results)
-    # Add timecol
-    df_train = add_timecol(df_train, time_col)
-    # Train model(s)
-    if config['train_models']:
-        features_models = train_save_models(df_train=df_train,
-                                            alg=config['alg'],
-                                            dir_output=dir_output,
-                                            config=config,
-                                            do_save_models=config['save_models'],
-                                            htm_config_user=config['htm_config_user'],
-                                            htm_config_model=config['htm_config_model'])
-    # Load model(s)
-    else:
-        dir_models = os.path.join(dir_output, 'models')
-        if config['alg'] == 'HTM':
-            features_models = load_models_htm(dir_models)
-        else:
-            features_models = load_models_darts(dir_models, alg=config['alg'])
-    # Get WL results (levels 0-3)
+def run_subject(config, dir_output, wllevels_tlx, filenames_data, features_models, save_results=True):
     wllevels_anomscores, wllevels_predcounts, wllevels_alldata = get_testtypes_outputs(alg=config['alg'],
                                                                                        htm_config_user=config[
                                                                                            'htm_config_user'],
@@ -136,7 +102,7 @@ def run_subject(config, dir_input, dir_output, wllevels_tlx, time_col='timestamp
                   xlabel='Task WL',
                   ylabel='NASA TLX',
                   path_out=os.path.join(dir_output, 'bars--TLXs.png'))
-    return wllevels_anomscores, wllevels_diffs, filenames_data
+    return wllevels_anomscores, wllevels_diffs
 
 
 def get_subjects_wldiffs(subjects_ttypesascores):
@@ -154,27 +120,24 @@ def get_subjects_wldiffs(subjects_ttypesascores):
     return subjects_wldiffs
 
 
-def main(config, dir_out, subjects, save_results):
+def run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models, save_results):
     # Run WL assessor for all subjects found
     os.makedirs(dir_out, exist_ok=True)
-    print(f"  Subjects Found = {len(subjects)}")
     dfs_ttypesdiffs = []
     subjects_ttypesdiffs = {}
-    subjects_filenamesdata = {}
     subjects_ttypesascores = {}
     # Gather results
-    for subj in subjects:
-        dir_input_subj = os.path.join(config['dirs']['input'], subj)
+    for subj, filenames_data in subjects_filenames_data.items():
         dir_output_subj = os.path.join(dir_out, subj)
         make_dirs_subj(dir_output_subj)
-        ttypes_ascores, ttypes_diffs, filenames_data = run_subject(config=config,
-                                                                   save_results=save_results,
-                                                                   dir_input=dir_input_subj,
-                                                                   dir_output=dir_output_subj,
-                                                                   wllevels_tlx=config['subjects_wllevels_tlx'][subj])
+        ttypes_ascores, ttypes_diffs = run_subject(config=config,
+                                                   dir_output=dir_output_subj,
+                                                   wllevels_tlx=config['subjects_wllevels_tlx'][subj],
+                                                   filenames_data=filenames_data,
+                                                   features_models=subjects_features_models[subj],
+                                                   save_results=True)
         dfs_ttypesdiffs.append(get_ttypesdf(subj, ttypes_diffs))
         subjects_ttypesdiffs[subj] = ttypes_diffs
-        subjects_filenamesdata[subj] = filenames_data
         subjects_ttypesascores[subj] = ttypes_ascores
     # Get Score
     subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores)
@@ -193,6 +156,67 @@ def main(config, dir_out, subjects, save_results):
                         diff_from_WL0=diff_from_WL0,
                         subjects_ttypesascores=subjects_ttypesascores)
     return diff_from_WL0
+
+
+def run_realtime(config, dir_out, subjects_features_models):
+    for subj, features_models in subjects_features_models.items():
+        print(f"  subj = {subj}")
+        dir_out_subj = os.path.join(dir_out, subj)
+        dir_in_subj = os.path.join(config['dirs']['input'], subj)
+        print("    testing...")
+        for feat, model in features_models.items():
+            print(f"      feat = {feat}")
+            for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
+                print(f"        testfile = {testfile}")
+                aScores, wl_changepoints_detected = list(), list()
+                scores = {'true_pos': [], 'false_pos': [], 'true_neg': [], 'false_neg': []}
+                path_test = os.path.join(dir_in_subj, testfile)
+                data_test = config['read_func'](path_test)
+                data_test.columns = config['colnames']
+                data_test.drop(columns=[config['time_col']], inplace=True)
+                data_test = add_timecol(data_test, config['time_col'])
+
+                # get wl_changepoints
+                wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
+                                   times['times_wltoggle']]
+                print(f"        wl_changepoints = {wl_changepoints}")
+
+                # run data thru model
+                pred_prev = None
+                for _, row in data_test[config['columns_model']].iterrows():
+                    if config['alg'] == 'HTM':
+                        aScore,aLikl,pCount,sPreds = model.run(features_data=dict(row), timestep=_+1, learn=False)
+                    elif config['alg'] == 'Entropy-Steering':
+                        aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
+                    else:
+                        aScore, pred_prev = get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN)
+                    aScores.append(aScore)
+                    if _ < config['windows_ascore']['previous'] + config['windows_ascore']['recent']:
+                        continue
+                    wl_change_detected = is_wl_detected(aScores,
+                                                        config['windows_ascore']['change_thresh_percent'],
+                                                        config['windows_ascore']['recent'],
+                                                        config['windows_ascore']['previous'])
+                    if wl_change_detected:
+                        wl_changepoints_detected.append(_)
+
+                # score detected wl-changepoints
+                scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
+                                                                      wl_changepoints,
+                                                                      wl_changepoints_detected,
+                                                                      config['windows_ascore']['change_detection'])
+                path_out = os.path.join(dir_out_subj,
+                                        f"{feat}--{testfile.replace(config['file_type'],'')}--confusion_matrix.csv")
+                pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
+
+                # plot detected wl-changepoints over changepoint windows
+                plot_wlchangepoints(config['columns_model'],
+                                    config['file_type'],
+                                    testfile,
+                                    data_test,
+                                    dir_out_subj,
+                                    wl_changepoints_windows,
+                                    wl_changepoints_detected)
 
 
 def make_save_plots(dir_out,
@@ -271,7 +295,7 @@ def gridsearch_htm(config, save_results, HZS, SPS, PERMDECS, PADDINGS):
                     # Make output dir
                     dir_out = os.path.join(config['dirs']['output'], meta)
                     if not os.path.exists(dir_out):
-                        eval = main(config, dir_out=dir_out, subjects=subjects, save_results=save_results)
+                        eval = run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models, save_results)
                     else:
                         print(f"dir_out     --> {dir_out}")
                         dir_summary = [f for f in os.listdir(dir_out) if 'SUMMARY' in f][0]
@@ -369,7 +393,7 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(columns_model, file_type, data_test, dir_out_subj, wl_changepoints_detected):
+def plot_wlchangepoints(columns_model, file_type, testfile, data_test, dir_out_subj, wl_changepoints_windows, wl_changepoints_detected):
     for feat in columns_model:
         path_out = os.path.join(dir_out_subj,
                                 f"{feat}--{testfile.replace(file_type,'')}--timeplot.png")
@@ -397,7 +421,7 @@ def get_ascore_entropy(_, row, feat, model, data_test, pred_prev, LAG=3):
     return aScore, pred_prev
 
 
-def get_entropy_ts(model, row, data_test, config, pred_prev, LAG_MIN):
+def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
     aScore, do_pred = 0, True
     features_model = list(model.training_series.components)
     features = features_model + [config['time_col']]
@@ -415,34 +439,96 @@ def get_entropy_ts(model, row, data_test, config, pred_prev, LAG_MIN):
 
 
 if __name__ == '__main__':
-    args_add = [{'name_abbrev': '-cp',
-                 'name': '--config_path',
-                 'required': True,
-                 'help': 'path to config'}]
+
+    # Load config
+    args_add = [{'name_abbrev': '-cp', 'name': '--config_path', 'required': True, 'help': 'path to config'}]
     config = load_config(get_args(args_add).config_path)
     config['read_func'] = FILETYPES_READFUNCS[config['file_type']]
 
+    # Set output dir
     meta = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}"
     dir_out = os.path.join(config['dirs']['output'], config['mode'], meta)
+    os.makedirs(dir_out, exist_ok=True)
 
+    # Collect subjects
     subjects = [f for f in os.listdir(config['dirs']['input']) if
                 os.path.isdir(os.path.join(config['dirs']['input'], f))]
     print(f"  Subjects Found = {len(subjects)}")
 
-    """ Post-hoc mode """
+    # Get subjects data
+    print('Gathering subjects data...')
+    subjects_filenames_data = dict()
+    subjects_dfs_train = dict()
+    for subj in subjects:
+        print(f"  --> {subj}")
+        """ df_train, filenames_data = prep_subj_data()"""
+        dir_input = os.path.join(config['dirs']['input'], subj)
+        dir_output = os.path.join(dir_out, subj)
+        os.makedirs(dir_output, exist_ok=True)
+        # Load data
+        filenames_data = load_files(dir_input=dir_input, file_type=config['file_type'], read_func=config['read_func'])
+        # Update columns
+        filenames_data = update_colnames(filenames_data=filenames_data, colnames=config['colnames'])
+        # Agg data
+        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
+                                  hz_convertto=config['hzs']['convertto'])
+        # Clip data
+        filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
+        # Norm data
+        filenames_data = norm_data(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
+                                   time_col=config['time_col'])
+        # Train models
+        df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
+                               columns_model=config['columns_model'], dir_output=dir_output, save_results=config['htm_gridsearch']['save_results'])
+        # Add timecol
+        df_train = add_timecol(df_train, config['time_col'])
+        # Store data
+        subjects_dfs_train[subj] = df_train
+        subjects_filenames_data[subj] = filenames_data
+
+    # Train subjects models
+    print('Training subjects models...')
+    subjects_features_models = dict()
+    for subj in subjects:
+        print(f"  --> {subj}")
+        """ features_models = train_subj_model()"""
+        dir_output = os.path.join(dir_out, subj)
+        # Train model(s)
+        if config['train_models']:
+            features_models = train_save_models(df_train=subjects_dfs_train[subj],
+                                                alg=config['alg'],
+                                                dir_output=dir_output,
+                                                config=config,
+                                                do_save_models=config['save_models'],
+                                                htm_config_user=config['htm_config_user'],
+                                                htm_config_model=config['htm_config_model'])
+        # Load model(s)
+        else:
+            dir_models = os.path.join(dir_output, 'models')
+            if config['alg'] == 'HTM':
+                features_models = load_models_htm(dir_models)
+            else:
+                features_models = load_models_darts(dir_models, alg=config['alg'])
+
+        # Store data & models
+        subjects_features_models[subj] = features_models
+
+
+    # Run WL pipeline
     if config['mode'] == 'post-hoc':
-        print('MODE = post-hoc')
+        print('\nMODE = post-hoc')
+        eval = run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models, config['htm_gridsearch']['save_results'])
+        """
         if config['alg'] != 'HTM':
-            eval = main(config, dir_out=dir_out, subjects=subjects,
+            eval = run_posthoc(config, dir_out=dir_out, subjects=subjects,
                         save_results=config['htm_gridsearch']['save_results'])
         else:
             config_tm = config['htm_config_model']['models_params']['tm']
             config_enc = config['htm_config_model']['models_encoders']
             meta = meta.replace(f"HZ={config['hzs']['convertto']}",
                                 f"HZ={config['hzs']['convertto']}; SP={config['htm_config_user']['models_state']['use_sp']}; ENC_PADDING%={config_enc['p_padding']}; TM_PERMDEC={config_tm['permanenceDec']};")
-            dir_out = os.path.join(config['dirs']['output'], config['mode'], meta)
             if not config['do_gridsearch']:
-                eval = main(config, dir_out=dir_out, subjects=subjects,
+                eval = run_posthoc(config, dir_out=dir_out, subjects=subjects,
                             save_results=config['htm_gridsearch']['save_results'])
             else:
                 modtypes_scores = gridsearch_htm(config=config,
@@ -465,86 +551,9 @@ if __name__ == '__main__':
                           path_out=path_out_png)
                 feats_vals_scores = gather_scores(config['dirs']['output'], config['htm_gridsearch']['features_vals'])
                 plot_features_scores(feats_vals_scores, config['dirs']['output'])
+        """
 
     else:
-        """ Real-time mode """
-        print('MODE = real-time')
-        # train model & test WL detection for each subject
-        for subj in subjects:
-            print(f"  subj = {subj}")
-            # make output dir
-            dir_out_subj = os.path.join(dir_out, subj)
-            os.makedirs(dir_out_subj, exist_ok=True)
-
-            # gather & combine training files
-            dir_in_subj = os.path.join(config['dirs']['input'], subj)
-            paths_train = [os.path.join(dir_in_subj, f) for f in os.listdir(dir_in_subj) if 'training' in f]
-            data_train = make_training(paths_train, config['read_func'], config['colnames'])
-            data_train.drop(columns=[config['time_col']], inplace=True)
-            data_train = add_timecol(data_train, config['time_col'])
-
-            # train model
-            print("    training...")
-            features_models = train_save_models(df_train=data_train,
-                                                alg=config['alg'],
-                                                do_save_models=config['save_models'],
-                                                dir_output=dir_out_subj,
-                                                config=config,
-                                                htm_config_user=config['htm_config_user'],
-                                                htm_config_model=config['htm_config_model'])
-
-            # run test files thru model(s) & gather detected wl-changepoints
-            print("    testing...")
-            for feat, model in features_models.items():
-                print(f"      feat = {feat}")
-                for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
-                    print(f"        testfile = {testfile}")
-                    aScores, wl_changepoints_detected = list(), list()
-                    scores = {'true_pos': [], 'false_pos': [], 'true_neg': [], 'false_neg': []}
-                    path_test = os.path.join(dir_in_subj, testfile)
-                    data_test = config['read_func'](path_test)
-                    data_test.columns = config['colnames']
-                    data_test.drop(columns=[config['time_col']], inplace=True)
-                    data_test = add_timecol(data_test, config['time_col'])
-
-                    # get wl_changepoints
-                    wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
-                                       times['times_wltoggle']]
-                    print(f"        wl_changepoints = {wl_changepoints}")
-
-                    # run data thru model
-                    pred_prev = None
-                    for _, row in data_test[config['columns_model']].iterrows():
-                        aScore = 0
-                        if config['alg'] == 'HTM':
-                            aScore,aLikl,pCount,sPreds = model.run(features_data=dict(row), timestep=_+1, learn=False)
-                        elif config['alg'] == 'Entropy-Steering':
-                            aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
-                        else:
-                            aScore, pred_prev = get_entropy_ts(model, row, data_test, config, pred_prev, LAG_MIN)
-                        aScores.append(aScore)
-                        if _ < config['windows_ascore']['previous'] + config['windows_ascore']['recent']:
-                            continue
-                        wl_change_detected = is_wl_detected(aScores,
-                                                            config['windows_ascore']['change_thresh_percent'],
-                                                            config['windows_ascore']['recent'],
-                                                            config['windows_ascore']['previous'])
-                        if wl_change_detected:
-                            wl_changepoints_detected.append(_)
-
-                    # score detected wl-changepoints
-                    scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
-                                                                          wl_changepoints,
-                                                                          wl_changepoints_detected,
-                                                                          config['windows_ascore']['change_detection'])
-                    path_out = os.path.join(dir_out_subj,
-                                            f"{feat}--{testfile.replace(config['file_type'],'')}--confusion_matrix.csv")
-                    pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
-
-                    # plot detected wl-changepoints over changepoint windows
-                    plot_wlchangepoints(config['columns_model'],
-                                        config['file_type'],
-                                        data_test,
-                                        dir_out_subj,
-                                        wl_changepoints_detected)
+        print('\nMODE = real-time')
+        run_realtime(config, dir_out, subjects_features_models)
 
