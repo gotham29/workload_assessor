@@ -22,7 +22,7 @@ class SteeringEntropy:
         return lag1 + (lag1 - lag2) + 0.5 * ((lag1 - lag2) - (lag2 - lag3))
 
 
-def train_save_models(df_train: pd.DataFrame, alg: str, do_save_models: bool, dir_output: str, config: dict,
+def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config: dict,
                       htm_config_user: dict, htm_config_model: dict):
     """
     Purpose:
@@ -73,7 +73,6 @@ def train_save_models(df_train: pd.DataFrame, alg: str, do_save_models: bool, di
                                                                      output_dir=False,
                                                                      output_dirs=output_dirs)
         features_models = {modname_best: modnames_models[modname_best]}
-    if do_save_models:
-        save_models(features_models, dir_output_models)
+    save_models(features_models, dir_output_models)
 
     return features_models

@@ -22,18 +22,13 @@ def agg_data(filenames_data:dict, hz_baseline:int, hz_convertto:int):
     return filenames_data
 
 
-def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_output, save_results=False):
-    dir_out = os.path.join(dir_output, 'data_files')
-    make_dir(dir_out)
-    path_out = os.path.join(dir_out, 'train.csv')
+def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_data):
+    path_out = os.path.join(dir_data, 'train.csv')
     dfs_train = []
-    # print(f'  train data...')
     for fname in wllevels_filenames['training']:
         dfs_train.append(filenames_data[fname])
-        # print(f"    {fname}")
     df_train = pd.concat(dfs_train, axis=0)[columns_model]
-    if save_results:
-        df_train.to_csv(path_out)
+    df_train.to_csv(path_out)
     return df_train
 
 
