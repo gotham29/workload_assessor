@@ -1,8 +1,7 @@
 mode: post-hoc  #post-hoc, real-time
 alg: HTM  #HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA, Entropy-Steering
-train_models: true
-#do_gridsearch: false
-learn_in_testing: true
+do_gridsearch: false
+learn_in_testing: false
 
 windows_ascore:
   recent: 7
@@ -108,18 +107,18 @@ htm_gridsearch:
     - 6.67
   PERMDEC=:
     - 0.0
-    - 0.025
-    - 0.05
-    - 0.075
+#    - 0.025
+#    - 0.05
+#    - 0.075
     - 0.1
   PADDING%=:
-    - -30
-    - -20
-    - -10
+#    - -30
+#    - -20
+#    - -10
     - 0
-    - 10
-    - 20
-    - 30
+#    - 10
+#    - 20
+#    - 30
 
 features:
   in:
@@ -400,6 +399,7 @@ subjects_wllevels_tlx:
     Level 2: 2.7
     Level 3: 3.7
 
+train_models: true
 data_cap: 100000
 eval_metric: rmse
 forecast_horizon: 1

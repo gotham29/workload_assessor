@@ -25,7 +25,6 @@ from ts_source.preprocess.preprocess import reshape_datats
 from ts_source.model.model import get_model_lag, LAG_MIN
 from htm_source.utils.fs import load_models as load_models_htm
 
-
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
     'csv': pd.read_csv
@@ -66,7 +65,8 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
                                                                                        htm_config_model=config[
                                                                                            'htm_config_model'],
                                                                                        dir_output=dir_output,
-                                                                                       learn_in_testing=config['learn_in_testing'],
+                                                                                       learn_in_testing=config[
+                                                                                           'learn_in_testing'],
                                                                                        columns_model=config[
                                                                                            'columns_model'],
                                                                                        filenames_data=filenames_data,
@@ -122,26 +122,23 @@ def get_subjects_wldiffs(subjects_ttypesascores):
 
 
 def get_f1score(tp, fp, fn):
-    precision = tp / (tp+fp)
-    recall = tp / (tp+fn)
-    denom = (precision+recall)
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    denom = (precision + recall)
     if denom == 0:
         f1 = 0
     else:
-        f1 = (2*precision*recall) / denom
+        f1 = (2 * precision * recall) / denom
     return round(f1, 3)
 
 
 def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models):
-    # Run WL assessor for all subjects found
-    os.makedirs(dir_out, exist_ok=True)
     dfs_ttypesdiffs = []
     subjects_ttypesdiffs = {}
     subjects_ttypesascores = {}
-    # Gather results
+    # Gather WL results
     for subj, filenames_data in subjects_filenames_data.items():
         dir_output_subj = os.path.join(dir_out, subj)
-        make_dirs_subj(dir_output_subj)
         ttypes_ascores, ttypes_diffs = run_subject(config=config,
                                                    df_train=subjects_dfs_train[subj],
                                                    dir_output=dir_output_subj,
@@ -157,7 +154,6 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
     print(f"\nsubjects_wldiffs...")
     for subj, wld in subjects_wldiffs.items():
         print(f"  {subj} --> {wld}")
-    print()
     diff_from_WL0 = sum(subjects_wldiffs.values())
     # Save Results
     dir_out_summary = os.path.join(dir_out, f'SUMMARY (score={round(diff_from_WL0, 3)})')
@@ -197,7 +193,8 @@ def run_realtime(config, dir_out, subjects_features_models):
                 pred_prev = None
                 for _, row in data_test[config['columns_model']].iterrows():
                     if config['alg'] == 'HTM':
-                        aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_+1, learn=config['learn_in_testing'])
+                        aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
+                                                                  learn=config['learn_in_testing'])
                     elif config['alg'] == 'Entropy-Steering':
                         aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
                     else:
@@ -219,7 +216,7 @@ def run_realtime(config, dir_out, subjects_features_models):
                                                                       config['windows_ascore']['change_detection'])
                 f1 = get_f1score(scores['true_pos'], scores['false_pos'], scores['false_neg'])
                 path_out = os.path.join(dir_out_subj,
-                                        f"{feat}--{testfile.replace(config['file_type'],'')}--confusion_matrix.csv")
+                                        f"{feat}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")
                 pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
 
                 # plot detected wl-changepoints over changepoint windows
@@ -288,7 +285,8 @@ def make_save_plots(dir_out,
     plt.savefig(out_path, bbox_inches="tight")
 
 
-def gridsearch_htm(config, HZS, SPS, PERMDECS, PADDINGS):
+def gridsearch_htm(config, dir_out, HZS, SPS, PERMDECS, PADDINGS):
+    # Get scores
     modtypes_scores = {}
     for hz in HZS:
         print(f"\nHZ = {hz}")
@@ -298,35 +296,40 @@ def gridsearch_htm(config, HZS, SPS, PERMDECS, PADDINGS):
                 print(f"    PERMDEC = {permdec}")
                 for padding in PADDINGS:
                     print(f"      PADDING = {padding}")
-                    modtype = f"HZ={hz}; SP={sp}; PERMDEC={permdec}; PADDING={padding}"
                     config['hzs']['convertto'] = hz
                     config['htm_config_user']['models_state']['use_sp'] = sp
                     config['htm_config_model']['models_encoders']['p_padding'] = padding
                     config['htm_config_model']['models_params']['tm']['permanenceDec'] = permdec
-
-                    meta = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}"
-                    if config['alg'] == 'HTM':
-                        config_tm = config['htm_config_model']['models_params']['tm']
-                        config_enc = config['htm_config_model']['models_encoders']
-                        meta = meta.replace(f"HZ={config['hzs']['convertto']}",
-                                            f"HZ={config['hzs']['convertto']}; SP={config['htm_config_user']['models_state']['use_sp']}; ENC_PADDING%={config_enc['p_padding']}; TM_PERMDEC={config_tm['permanenceDec']};")
                     # Make output dir
-                    dir_out = os.path.join(config['dirs']['output'], meta)
-                    if not os.path.exists(dir_out):
-                        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
-                    else:
-                        print(f"dir_out     --> {dir_out}")
-                        dir_summary = [f for f in os.listdir(dir_out) if 'SUMMARY' in f][0]
-                        diff_from_WL0 = float(dir_summary.split('score=')[-1].replace(')', ''))
-                    modtypes_scores[modtype] = diff_from_WL0
+                    meta = f"HZ={hz}; SP={sp}; PERMDEC={permdec}, PADDING={padding}"
+                    dir_out_meta = os.path.join(dir_out, meta)
+                    os.makedirs(dir_out_meta, exist_ok=True)
+                    # Run WL
+                    score = run_wl(config=config, dir_in=config['dirs']['input'], dir_out=dir_out_meta)
+                    modtypes_scores[meta] = score
+    # Save scores
     modtypes_scores = dict(sorted(modtypes_scores.items(), key=lambda item: item[1]))
+    for mt, score in modtypes_scores.items():
+        print(f"{mt} = {round(score, 3)}")
+    df_modtypes_scores = pd.DataFrame(modtypes_scores, index=['Score']).T
+    df_modtypes_scores.sort_values(by='Score', ascending=True, inplace=True)
+    path_out_csv = os.path.join(dir_out, "GRIDSEARCH.csv")
+    path_out_png = os.path.join(dir_out, "GRIDSEARCH.png")
+    df_modtypes_scores.to_csv(path_out_csv, index=True)
+    plot_bars(mydict=modtypes_scores,
+              title='Gridsearch Performance',
+              xlabel='Model Setting',
+              ylabel='Performance',
+              path_out=path_out_png)
+    feats_vals_scores = gather_scores(dir_out, config['htm_gridsearch'])
+    plot_features_scores(feats_vals_scores, dir_out)
     return modtypes_scores
 
 
-def gather_scores(dir_results, features_vals):
+def gather_scores(dir_results, htm_gridsearch):
     dir_files = [f for f in os.listdir(dir_results) if f != '.DS_Store']
-    features_vals_scores = {f: {} for f in features_vals}
-    for feat, vals in features_vals.items():
+    grid_scores = {f: {} for f in htm_gridsearch}
+    for feat, vals in htm_gridsearch.items():
         print(f"\n\nfeat = {feat}")
         for v in vals:
             print(f"\n  v = {v}")
@@ -340,8 +343,8 @@ def gather_scores(dir_results, features_vals):
                 score = f_sum.split('SUMMARY (score=')[1].replace(')', '')
                 print(f"    ** score = {score}")
                 fv_scores.append(float(score))
-            features_vals_scores[feat][v] = fv_scores
-    return features_vals_scores
+            grid_scores[feat][v] = fv_scores
+    return grid_scores
 
 
 def plot_features_scores(features_vals_scores, dir_out):
@@ -411,10 +414,11 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(columns_model, file_type, testfile, data_test, dir_out_subj, wl_changepoints_windows, wl_changepoints_detected):
+def plot_wlchangepoints(columns_model, file_type, testfile, data_test, dir_out_subj, wl_changepoints_windows,
+                        wl_changepoints_detected):
     for feat in columns_model:
         path_out = os.path.join(dir_out_subj,
-                                f"{feat}--{testfile.replace(file_type,'')}--timeplot.png")
+                                f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
         plt.cla()
         plt.plot(data_test[feat])
         plt.xlabel('time')
@@ -482,7 +486,7 @@ def get_subjects_data(config, subjects, dir_out):
                                    time_col=config['time_col'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
-                               columns_model=config['columns_model'], dir_data=os.path.join(dir_output,'data'))
+                               columns_model=config['columns_model'], dir_data=os.path.join(dir_output, 'data'))
         # Add timecol
         df_train = add_timecol(df_train, config['time_col'])
         # Store data
@@ -497,7 +501,6 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
     subjects_features_models = dict()
     for subj, df_train in subjects_dfs_train.items():
         print(f"  --> {subj}")
-        """ features_models = train_subj_model()"""
         dir_output = os.path.join(dir_out, subj)
         # Train model(s)
         if config['train_models']:
@@ -519,22 +522,15 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
     return subjects_features_models
 
 
-if __name__ == '__main__':
-
-    # Load config
-    args_add = [{'name_abbrev': '-cp', 'name': '--config_path', 'required': True, 'help': 'path to config'}]
-    config = load_config(get_args(args_add).config_path)
-    config['read_func'] = FILETYPES_READFUNCS[config['file_type']]
-
-    # Set output dirs
-    meta = f"ALG={config['alg']}; HZ={config['hzs']['convertto']}"
-    dir_out = os.path.join(config['dirs']['output'], config['mode'], meta)
-    os.makedirs(dir_out, exist_ok=True)
+def run_wl(config, dir_in, dir_out):
 
     # Collect subjects
-    subjects = [f for f in os.listdir(config['dirs']['input']) if
-                os.path.isdir(os.path.join(config['dirs']['input'], f))]
+    subjects = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
     print(f"  Subjects Found = {len(subjects)}")
+
+    # Make subjects' output dirs
+    for subj in subjects:
+        make_dirs_subj(os.path.join(dir_out, subj))
 
     # Get subjects data
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, dir_out)
@@ -542,43 +538,33 @@ if __name__ == '__main__':
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
 
-    # Run WL pipeline
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
-        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
-        """
-        if config['alg'] != 'HTM':
-            diff_from_WL0 = run_posthoc(config, dir_out=dir_out, subjects=subjects)
-        else:
-            config_tm = config['htm_config_model']['models_params']['tm']
-            config_enc = config['htm_config_model']['models_encoders']
-            meta = meta.replace(f"HZ={config['hzs']['convertto']}",
-                                f"HZ={config['hzs']['convertto']}; SP={config['htm_config_user']['models_state']['use_sp']}; ENC_PADDING%={config_enc['p_padding']}; TM_PERMDEC={config_tm['permanenceDec']};")
-            if not config['do_gridsearch']:
-                diff_from_WL0 = run_posthoc(config, dir_out=dir_out, subjects=subjects)
-            else:
-                modtypes_scores = gridsearch_htm(config=config,
-                                                 SPS=config['htm_gridsearch']['SP='],
-                                                 HZS=config['htm_gridsearch']['HZ='],
-                                                 PERMDECS=config['htm_gridsearch']['PERMDEC='],
-                                                 PADDINGS=config['htm_gridsearch']['PADDING%='])
-                for mt, score in modtypes_scores.items():
-                    print(f"{mt} = {round(score, 3)}")
-                df_modtypes_scores = pd.DataFrame(modtypes_scores, index=['Score']).T
-                df_modtypes_scores.sort_values(by='Score', ascending=True, inplace=True)
-                path_out_csv = os.path.join(config['dirs']['output'], "GRIDSEARCH.csv")
-                path_out_png = os.path.join(config['dirs']['output'], "GRIDSEARCH.png")
-                df_modtypes_scores.to_csv(path_out_csv, index=True)
-                plot_bars(mydict=modtypes_scores,
-                          title='Gridsearch Performance',
-                          xlabel='Model Setting',
-                          ylabel='Performance',
-                          path_out=path_out_png)
-                feats_vals_scores = gather_scores(config['dirs']['output'], config['htm_gridsearch']['features_vals'])
-                plot_features_scores(feats_vals_scores, config['dirs']['output'])
-        """
-
+        score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
     else:
         print('\nMODE = real-time')
-        df_f1 = run_realtime(config, dir_out, subjects_features_models)
+        score = np.mean(run_realtime(config, dir_out, subjects_features_models)['f1'])
 
+    return score
+
+
+if __name__ == '__main__':
+
+    # Load config
+    args_add = [{'name_abbrev': '-cp', 'name': '--config_path', 'required': True, 'help': 'path to config'}]
+    config = load_config(get_args(args_add).config_path)
+    config['read_func'] = FILETYPES_READFUNCS[config['file_type']]
+
+    # Set output dir
+    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'])
+    os.makedirs(dir_out, exist_ok=True)
+
+    if config['alg'] == 'HTM' and config['do_gridsearch']:
+        modtypes_scores = gridsearch_htm(config=config,
+                                         dir_out=dir_out,
+                                         SPS=config['htm_gridsearch']['SP='],
+                                         HZS=config['htm_gridsearch']['HZ='],
+                                         PERMDECS=config['htm_gridsearch']['PERMDEC='],
+                                         PADDINGS=config['htm_gridsearch']['PADDING%='])
+    else:
+        run_wl(config=config, dir_in=config['dirs']['input'], dir_out=dir_out)
