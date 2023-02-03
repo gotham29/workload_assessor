@@ -86,7 +86,10 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         ttypes_scores = {}
         for ttype, ascores in data_plot1.items():
             pcounts = data_plot2[ttype]
-            score = 1 / (np.median(pcounts) / np.median(ascores))
+            if np.median(ascores) == 0:
+                score = 0
+            else:
+                score = 1 / (np.median(pcounts) / np.median(ascores))
             ttypes_scores[ttype] = score
         plt.bar(range(len(ttypes_scores)), list(ttypes_scores.values()), align='center')
         plt.xticks(range(len(ttypes_scores)), list(ttypes_scores.keys()))

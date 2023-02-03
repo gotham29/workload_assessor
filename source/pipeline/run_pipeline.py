@@ -362,9 +362,15 @@ def plot_features_scores(features_vals_scores, dir_out):
 
 def is_wl_detected(aScores, change_thresh_percent, window_recent, window_previous):
     wl_detected = False
+    # Get percent change (recent from previous)
     aScores_recent = aScores[-window_recent:]
     aScores_previous = aScores[-window_previous:-window_recent]
-    percent_change = ((np.mean(aScores_recent) - np.mean(aScores_previous)) / np.mean(aScores_recent)) * 100
+    recent_diff = np.mean(aScores_recent) - np.mean(aScores_previous)
+    if np.mean(aScores_previous) == 0:
+        percent_change = recent_diff * 100
+    else:
+        percent_change = (recent_diff / np.mean(aScores_previous)) * 100
+    # Decide if WL change detected
     if percent_change >= change_thresh_percent:
         wl_detected = True
     return wl_detected

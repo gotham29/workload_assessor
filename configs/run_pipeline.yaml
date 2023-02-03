@@ -1,4 +1,4 @@
-mode: post-hoc  #post-hoc, real-time
+mode: real-time  #post-hoc, real-time
 alg: HTM  #HTM, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA, Entropy-Steering
 do_gridsearch: false
 learn_in_testing: false
