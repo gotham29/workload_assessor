@@ -35,7 +35,7 @@ def get_ascores_entropy(data):
 
 
 def get_testtypes_outputs(alg, htm_config_user, htm_config_model, features_models, columns_model: list,
-                          filenames_data: dict, testtypes_filenames: dict, dir_output: str,
+                          filenames_data: dict, testtypes_filenames: dict, dir_output: str, learn_in_testing: bool,
                           time_col: str = 'timestamp', forecast_horizon: int = 1, save_results: bool = True) -> dict:
     testtypes_anomscores = {ttype: [] for ttype in testtypes_filenames if ttype != 'training'}
     testtypes_predcounts = {ttype: [] for ttype in testtypes_filenames if ttype != 'training'}
@@ -56,7 +56,7 @@ def get_testtypes_outputs(alg, htm_config_user, htm_config_model, features_model
                                                        cfg_model=htm_config_model,
                                                        config_path_user=None,
                                                        config_path_model=None,
-                                                       learn=False,
+                                                       learn=learn_in_testing,
                                                        data=data,
                                                        iter_print=1000,
                                                        features_models=features_models)

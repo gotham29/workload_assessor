@@ -59,13 +59,14 @@ def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
     return filenames_data
 
 
-def run_subject(config, dir_output, wllevels_tlx, filenames_data, features_models, save_results=True):
+def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, features_models, save_results=True):
     wllevels_anomscores, wllevels_predcounts, wllevels_alldata = get_testtypes_outputs(alg=config['alg'],
                                                                                        htm_config_user=config[
                                                                                            'htm_config_user'],
                                                                                        htm_config_model=config[
                                                                                            'htm_config_model'],
                                                                                        dir_output=dir_output,
+                                                                                       learn_in_testing=config['learn_in_testing'],
                                                                                        columns_model=config[
                                                                                            'columns_model'],
                                                                                        filenames_data=filenames_data,
@@ -131,7 +132,7 @@ def get_f1score(tp, fp, fn):
     return round(f1, 3)
 
 
-def run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models):
+def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models):
     # Run WL assessor for all subjects found
     os.makedirs(dir_out, exist_ok=True)
     dfs_ttypesdiffs = []
@@ -142,6 +143,7 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_mode
         dir_output_subj = os.path.join(dir_out, subj)
         make_dirs_subj(dir_output_subj)
         ttypes_ascores, ttypes_diffs = run_subject(config=config,
+                                                   df_train=subjects_dfs_train[subj],
                                                    dir_output=dir_output_subj,
                                                    wllevels_tlx=config['subjects_wllevels_tlx'][subj],
                                                    filenames_data=filenames_data,
@@ -195,7 +197,7 @@ def run_realtime(config, dir_out, subjects_features_models):
                 pred_prev = None
                 for _, row in data_test[config['columns_model']].iterrows():
                     if config['alg'] == 'HTM':
-                        aScore,aLikl,pCount,sPreds = model.run(features_data=dict(row), timestep=_+1, learn=False)
+                        aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_+1, learn=config['learn_in_testing'])
                     elif config['alg'] == 'Entropy-Steering':
                         aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
                     else:
@@ -311,7 +313,7 @@ def gridsearch_htm(config, HZS, SPS, PERMDECS, PADDINGS):
                     # Make output dir
                     dir_out = os.path.join(config['dirs']['output'], meta)
                     if not os.path.exists(dir_out):
-                        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models)
+                        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
                     else:
                         print(f"dir_out     --> {dir_out}")
                         dir_summary = [f for f in os.listdir(dir_out) if 'SUMMARY' in f][0]
@@ -543,7 +545,7 @@ if __name__ == '__main__':
     # Run WL pipeline
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
-        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_features_models)
+        diff_from_WL0 = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
         """
         if config['alg'] != 'HTM':
             diff_from_WL0 = run_posthoc(config, dir_out=dir_out, subjects=subjects)
