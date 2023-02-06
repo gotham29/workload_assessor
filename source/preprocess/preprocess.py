@@ -41,8 +41,8 @@ def get_ttypesdf(subj, subj_ttypesdiffs):
 
 def clip_data(filenames_data:dict, clip_percents:dict):
     for fname, data in filenames_data.items():
-        clip_count_start = int(data.shape[0] * (clip_percents['start']/100) )
-        clip_count_end = data.shape[0] - int(data.shape[0] * (clip_percents['end']/100) )
+        clip_count_start = int(data.shape[0] * (clip_percents['start']/100))
+        clip_count_end = data.shape[0] - int(data.shape[0] * (clip_percents['end']/100))
         filenames_data[fname] = data[clip_count_start:clip_count_end]
     return filenames_data
 

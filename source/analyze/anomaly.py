@@ -25,13 +25,26 @@ def get_ascores_entropy(data):
             continue
         lag1, lag2, lag3 = data[_-3], data[_-2], data[_-1]
         pred = lag1 + (lag1-lag2) + 0.5*((lag1-lag2) - (lag2-lag3))
-        # θ (n-1)   +   (θ(n-1) - θ(n-2))   +   1/2 ( (θ(n-1)-θ(n-2)) - (θ(n-2)-θ(n-3)) )
         preds.append(pred)
     ascores = []
     for _, p in enumerate(preds):
         ascore = abs(p - data[_+3])
         ascores.append(ascore)
     return ascores
+
+
+def get_ascore_pyod(_, data, model):
+    aScore = [0]
+    if _ > 0:
+        aScore = model.decision_function(data[(_-1):_])  # outlier scores
+    return abs(aScore[0])
+
+
+def get_ascores_pyod(data, model):
+    aScores = list()
+    for _ in range(data.shape[0]):
+        aScores.append(get_ascore_pyod(_, data, model))
+    return aScores
 
 
 def get_testtypes_outputs(alg, htm_config_user, htm_config_model, features_models, columns_model: list,
@@ -66,10 +79,17 @@ def get_testtypes_outputs(alg, htm_config_user, htm_config_model, features_model
                 testtypes_anomscores[ttype] += outs['anomaly_score']
                 testtypes_predcounts[ttype] += outs['pred_count']
 
-        elif 'Entropy' in alg:
+        elif alg == 'SteeringEntropy':
             testtypes_features_anomscores[ttype] = {f: [] for f in columns_model}
             for f in columns_model:
                 ascores = get_ascores_entropy(data[f].values)
+                testtypes_features_anomscores[ttype][f] = ascores
+                testtypes_anomscores[ttype] += ascores
+
+        elif alg in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+            testtypes_features_anomscores[ttype] = {f: [] for f in columns_model}
+            for f in columns_model:
+                ascores = get_ascores_pyod(data[[f]], features_models[f])
                 testtypes_features_anomscores[ttype][f] = ascores
                 testtypes_anomscores[ttype] += ascores
 

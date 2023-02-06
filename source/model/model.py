@@ -14,6 +14,23 @@ from htm_source.utils.fs import save_models
 from htm_source.pipeline.htm_batch_runner import run_batch
 from ts_source.pipeline.pipeline import run_pipeline
 
+from pyod.models.iforest import IForest
+from pyod.models.ocsvm import OCSVM
+from pyod.models.knn import KNN
+# from pyod.models.lof import LOF
+# from pyod.models.auto_encoder import AutoEncoder
+# from pyod.models.vae import VAE
+from pyod.models.kde import KDE
+
+PYOD_MODNAMES_MODELS = {
+    'IForest': IForest(),
+    'OCSVM': OCSVM(),
+    'KNN': KNN(),
+    # 'LOF': LOF(),
+    # 'AE': AutoEncoder(),
+    # 'VAE': VAE(),
+    # 'KDE': KDE()
+}
 
 class SteeringEntropy:
     def __init__(self):
@@ -46,6 +63,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
             meaning: keys are pred features (or 'megamodel_features={featurecount}'), values are models
     """
     dir_output_models = os.path.join(dir_output, 'models')
+    features_model = list(htm_config_user['features'].keys())
     if alg == 'HTM':
         # htm_source
         features_models, features_outputs = run_batch(cfg_user=htm_config_user,
@@ -53,11 +71,14 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                       config_path_user=None,
                                                       config_path_model=None,
                                                       learn=True,
-                                                      data=df_train[htm_config_user['features'].keys()],
+                                                      data=df_train[features_model],
                                                       iter_print=1000,
                                                       features_models={})
-    elif alg == 'Entropy-Steering':
-        features_models = {feat: SteeringEntropy() for feat in htm_config_user['features'].keys()}
+    elif alg == 'SteeringEntropy':
+        features_models = {feat: SteeringEntropy() for feat in features_model}
+    elif alg in PYOD_MODNAMES_MODELS:
+        model = PYOD_MODNAMES_MODELS[alg]
+        features_models = {feat: model.fit(df_train[features_model]) for feat in features_model}
     else:
         # ts_source
         config_ts = {k: v for k, v in config.items()}

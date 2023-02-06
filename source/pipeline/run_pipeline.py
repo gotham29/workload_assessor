@@ -195,8 +195,10 @@ def run_realtime(config, dir_out, subjects_features_models):
                     if config['alg'] == 'HTM':
                         aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
                                                                   learn=config['learn_in_testing'])
-                    elif config['alg'] == 'Entropy-Steering':
+                    elif config['alg'] == 'SteeringEntropy':
                         aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
+                    elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+                        aScore = get_ascore_pyod(_, data_test[config['columns_model']], model)
                     else:
                         aScore, pred_prev = get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN)
                     aScores.append(aScore)
@@ -449,6 +451,13 @@ def get_ascore_entropy(_, row, feat, model, data_test, pred_prev, LAG=3):
     return aScore, pred_prev
 
 
+def get_ascore_pyod(_, data, model):
+    aScore = [0]
+    if _ > 0:
+        aScore = model.decision_function(data[(_-1):_])  # outlier scores
+    return abs(aScore[0])
+
+
 def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
     aScore, do_pred = 0, True
     features_model = list(model.training_series.components)
@@ -485,6 +494,9 @@ def get_subjects_data(config, subjects, dir_out):
         # Agg data
         filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
                                   hz_convertto=config['hzs']['convertto'])
+
+        """ preprocess - (detrending/differencing/seasonal differencing) """
+
         # Clip data
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
         # Norm data
