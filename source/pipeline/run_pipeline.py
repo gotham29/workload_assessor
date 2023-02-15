@@ -23,7 +23,7 @@ from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
 from ts_source.utils.utils import add_timecol, load_models as load_models_darts
 from ts_source.preprocess.preprocess import reshape_datats
 from ts_source.model.model import get_model_lag, LAG_MIN
-from htm_source.utils.fs import load_models as load_models_htm
+
 
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
@@ -40,7 +40,7 @@ def combine_dicts(dicts):
     return d_comb
 
 
-def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
+def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
     filenames_wllevels = {}
     wllevels_means = {}
     for wl, filenames in wllevels_filenames.items():
@@ -499,8 +499,8 @@ def get_subjects_data(config, subjects, dir_out):
 
         # Clip data
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
-        # Norm data
-        filenames_data = norm_data(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
+        # Subtract mean
+        filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                    time_col=config['time_col'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,

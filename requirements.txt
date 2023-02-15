@@ -1,7 +1,7 @@
 #See http://www.pip-installer.org/en/latest/requirements.html for details
 
 pandas>=1.2.4
-numpy>=1.15
+numpy>=1.23
 PyYAML==6.0
 setuptools>=34.4.0
 pip>=19.3.1
@@ -9,6 +9,8 @@ argparse
 matplotlib
 seaborn
 xlrd
+pyod
+darts>=0.23.1
 
 ## optional dependencies, such as for visualizations, running examples
 # should be placed in setup.py section extras_require. Install those by

@@ -1,8 +1,8 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
-alg: IForest
+alg: LightGBMModel  #HTM, OCSVM
 #HTM, SteeringEntropy, IForest, OCSVM, KNN
-#LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA
+#LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 do_gridsearch: false
 learn_in_testing: false
