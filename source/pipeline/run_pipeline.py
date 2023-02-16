@@ -499,7 +499,7 @@ def get_subjects_data(config, subjects, dir_out):
 
         # Clip data
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
-        # Subtract mean
+        # Norm data
         filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                    time_col=config['time_col'])
         # Train models
