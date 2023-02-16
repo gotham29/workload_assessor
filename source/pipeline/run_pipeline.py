@@ -40,7 +40,7 @@ def combine_dicts(dicts):
     return d_comb
 
 
-def norm_data(filenames_data, wllevels_filenames, time_col='timestamp'):
+def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
     filenames_wllevels = {}
     wllevels_means = {}
     for wl, filenames in wllevels_filenames.items():
@@ -500,7 +500,7 @@ def get_subjects_data(config, subjects, dir_out):
         # Clip data
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
         # Norm data
-        filenames_data = norm_data(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
+        filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                    time_col=config['time_col'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
