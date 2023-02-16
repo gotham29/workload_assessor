@@ -1,6 +1,6 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
-alg: LightGBMModel
+alg: HTM
 #HTM, SteeringEntropy, IForest, OCSVM, KNN
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA, VARIMA
 
