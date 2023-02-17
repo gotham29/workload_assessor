@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.preprocessing import StandardScaler
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -475,6 +476,47 @@ def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
     return aScore, pred_prev
 
 
+def diff_data(data, diff_lag):
+    df_dict = {}
+    for c in data:
+        c_diff = [data[c][i] - data[c][i - diff_lag] for i in range(diff_lag, len(data[c]))]
+        df_dict[c] = c_diff
+    return pd.DataFrame(df_dict)
+
+
+def standardize_data(data):
+    # fit transform
+    transformer = StandardScaler()
+    transformer.fit(data)
+    # difference transform
+    transformed = transformer.transform(data)
+    df = pd.DataFrame(transformed)
+    df.columns = data.columns
+    return df
+
+
+def movingavg_data(data, window):
+    df_dict = {}
+    for c in data:
+        rolling = data[c].rolling(window=window)
+        df_dict[c] = rolling.mean()
+    df = pd.DataFrame(df_dict)
+    return df.dropna(axis=0, how='all')
+
+
+def preprocess_data(filenames_data, cfg_prep, diff_lag=1, ma_window=7):
+    filenames_data2 = {}
+    for fn, data in filenames_data.items():
+        if cfg_prep['difference']:
+            data = diff_data(data, diff_lag)
+        if cfg_prep['standardize']:
+            data = standardize_data(data)
+        if cfg_prep['movingaverage']:
+            data = movingavg_data(data, ma_window)
+        filenames_data2[fn] = data
+    return filenames_data2
+
+
 def get_subjects_data(config, subjects, dir_out):
     print('Gathering subjects data...')
     subjects_filenames_data = dict()
@@ -494,14 +536,13 @@ def get_subjects_data(config, subjects, dir_out):
         # Agg data
         filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
                                   hz_convertto=config['hzs']['convertto'])
-
-        """ preprocess - (detrending/differencing/seasonal differencing) """
-
         # Clip data
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
-        # Norm data
+        # Subtract mean
         filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                    time_col=config['time_col'])
+        # Preprocess data
+        filenames_data = preprocess_data(filenames_data, config['preprocess'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
                                columns_model=config['columns_model'], dir_data=os.path.join(dir_output, 'data'))
