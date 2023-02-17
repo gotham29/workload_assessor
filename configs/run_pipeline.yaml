@@ -9,8 +9,8 @@ learn_in_testing: false
 
 preprocess:
   difference: true
-  standardize: false
-  movingaverage: true
+  standardize: true
+  movingaverage: false
 
 windows_ascore:
   recent: 7
