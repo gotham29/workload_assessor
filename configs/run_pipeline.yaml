@@ -8,8 +8,8 @@ do_gridsearch: false
 learn_in_testing: false
 
 preprocess:
-  difference: false
-  standardize: true
+  difference: true
+  standardize: false
   movingaverage: true
 
 windows_ascore:
