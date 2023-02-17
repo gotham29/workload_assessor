@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: NBEATSModel
 #HTM, SteeringEntropy, IForest, OCSVM, KNN
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -9,7 +9,7 @@ learn_in_testing: false
 
 preprocess:
   difference: false
-  standardize: false
+  standardize: true
   movingaverage: false
 
 windows_ascore:
