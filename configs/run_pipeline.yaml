@@ -1,7 +1,7 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: NBEATSModel
-#HTM, SteeringEntropy, IForest, OCSVM, KNN
+alg: KDE
+#HTM, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 do_gridsearch: false
