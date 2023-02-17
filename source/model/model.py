@@ -29,7 +29,7 @@ PYOD_MODNAMES_MODELS = {
     # 'LOF': LOF(),
     # 'AE': AutoEncoder(),
     # 'VAE': VAE(),
-    # 'KDE': KDE()
+    'KDE': KDE()
 }
 
 class SteeringEntropy:
