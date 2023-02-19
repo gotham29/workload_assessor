@@ -504,15 +504,15 @@ def movingavg_data(data, window):
     return df.dropna(axis=0, how='all')
 
 
-def preprocess_data(filenames_data, cfg_prep, diff_lag=1, ma_window=7):
+def preprocess_data(filenames_data, cfg_prep):
     filenames_data2 = {}
     for fn, data in filenames_data.items():
         if cfg_prep['difference']:
-            data = diff_data(data, diff_lag)
+            data = diff_data(data, cfg_prep['difference'])
         if cfg_prep['standardize']:
             data = standardize_data(data)
         if cfg_prep['movingaverage']:
-            data = movingavg_data(data, ma_window)
+            data = movingavg_data(data, cfg_prep['movingaverage'])
         filenames_data2[fn] = data
     return filenames_data2
 
@@ -529,26 +529,26 @@ def get_subjects_data(config, subjects, dir_out):
         dirs_out = [os.path.join(dir_output, f) for f in folders]
         for d in dirs_out:
             os.makedirs(d, exist_ok=True)
-        # Load data
+        # Load
         filenames_data = load_files(dir_input=dir_input, file_type=config['file_type'], read_func=config['read_func'])
         # Update columns
         filenames_data = update_colnames(filenames_data=filenames_data, colnames=config['colnames'])
-        # Agg data
+        # Agg
         filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
                                   hz_convertto=config['hzs']['convertto'])
-        # Clip data
+        # Clip
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
         # Subtract mean
         filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
                                    time_col=config['time_col'])
-        # Preprocess data
+        # Preprocess
         filenames_data = preprocess_data(filenames_data, config['preprocess'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=config['testtypes_filenames'], filenames_data=filenames_data,
                                columns_model=config['columns_model'], dir_data=os.path.join(dir_output, 'data'))
         # Add timecol
         df_train = add_timecol(df_train, config['time_col'])
-        # Store data
+        # Store
         subjects_dfs_train[subj] = df_train
         subjects_filenames_data[subj] = filenames_data
 

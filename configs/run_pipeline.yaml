@@ -8,9 +8,9 @@ do_gridsearch: false
 learn_in_testing: false
 
 preprocess:
-  difference: true
+  difference: 1
   standardize: true
-  movingaverage: true
+  movingaverage: 7
 
 windows_ascore:
   recent: 7
@@ -416,3 +416,9 @@ test_prop: 0.3
 time_col: timestamp
 file_type: xls
 scale: false
+
+
+#vals = [
+#]
+#vals = [abs(v) for v in vals]
+#print(f"mean = {np.mean(vals)}")
