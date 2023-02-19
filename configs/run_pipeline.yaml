@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: KDE
+alg: NBEATSModel
 #HTM, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -10,7 +10,7 @@ learn_in_testing: false
 preprocess:
   difference: false  #1
   standardize: false
-  movingaverage: 15
+  movingaverage: 3
 
 windows_ascore:
   recent: 7
