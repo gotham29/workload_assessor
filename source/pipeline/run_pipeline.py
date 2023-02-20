@@ -245,6 +245,8 @@ def make_save_plots(dir_out,
     # df_ttypesdiffs
     df_ttypesdiffs = pd.concat(dfs_ttypesdiffs, axis=0)
     df_ttypesdiffs.to_csv(os.path.join(dir_out, f"WL_Diffs.csv"))
+    print("df_ttypesdiffs COLS")
+    print(f"  --> {df_ttypesdiffs.columns}")
     img = sns.heatmap(df_ttypesdiffs, annot=True).get_figure()
     img.savefig(os.path.join(dir_out, f"WL_Diffs-heatmap.png"))
 
