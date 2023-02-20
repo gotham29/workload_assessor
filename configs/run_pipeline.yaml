@@ -8,9 +8,9 @@ do_gridsearch: false
 learn_in_testing: false
 
 preprocess:
-  difference: 1
-  standardize: true
-  movingaverage: 7
+  difference: false  #1
+  standardize: false
+  movingaverage: 23
 
 windows_ascore:
   recent: 7
