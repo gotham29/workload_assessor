@@ -33,6 +33,20 @@ def get_ascores_entropy(data):
     return ascores
 
 
+def get_ascores_naive(data):
+    preds = []
+    for _ in range(len(data)):
+        if _ == 0:
+            continue
+        pred = data[_-1]
+        preds.append(pred)
+    ascores = []
+    for _, p in enumerate(preds):
+        ascore = abs(p - data[_+3])
+        ascores.append(ascore)
+    return ascores
+
+
 def get_ascore_pyod(_, data, model):
     aScore = [0]
     if _ > 0:
@@ -83,6 +97,13 @@ def get_testtypes_outputs(alg, htm_config_user, htm_config_model, features_model
             testtypes_features_anomscores[ttype] = {f: [] for f in columns_model}
             for f in columns_model:
                 ascores = get_ascores_entropy(data[f].values)
+                testtypes_features_anomscores[ttype][f] = ascores
+                testtypes_anomscores[ttype] += ascores
+
+        elif alg == 'Naive':
+            testtypes_features_anomscores[ttype] = {f: [] for f in columns_model}
+            for f in columns_model:
+                ascores = get_ascores_naive(data[f].values)
                 testtypes_features_anomscores[ttype][f] = ascores
                 testtypes_anomscores[ttype] += ascores
 

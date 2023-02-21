@@ -32,6 +32,14 @@ PYOD_MODNAMES_MODELS = {
     'KDE': KDE()
 }
 
+
+class NaiveModel:
+    def __init__(self):
+        pass
+    def predict(self, lag1):
+        return lag1
+
+
 class SteeringEntropy:
     def __init__(self):
         pass
@@ -74,6 +82,8 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                       data=df_train[features_model],
                                                       iter_print=1000,
                                                       features_models={})
+    elif alg == 'Naive':
+        features_models = {feat: NaiveModel() for feat in features_model}
     elif alg == 'SteeringEntropy':
         features_models = {feat: SteeringEntropy() for feat in features_model}
     elif alg in PYOD_MODNAMES_MODELS:
