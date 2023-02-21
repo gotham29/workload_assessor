@@ -10,7 +10,7 @@ learn_in_testing: false
 preprocess:
   difference: false  #1
   standardize: false
-  movingaverage: 15  #false
+  movingaverage: 19  #false
 
 windows_ascore:
   recent: 7
