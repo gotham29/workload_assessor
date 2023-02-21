@@ -42,7 +42,7 @@ def get_ascores_naive(data):
         preds.append(pred)
     ascores = []
     for _, p in enumerate(preds):
-        ascore = abs(p - data[_+3])
+        ascore = abs(p - data[_+1])
         ascores.append(ascore)
     return ascores
 
