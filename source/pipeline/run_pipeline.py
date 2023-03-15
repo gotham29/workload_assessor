@@ -123,13 +123,25 @@ def get_subjects_wldiffs(subjects_ttypesascores):
 
 
 def get_f1score(tp, fp, fn):
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    denom = (precision + recall)
-    if denom == 0:
+    # get precision
+    denom_precision = (tp + fp)
+    if denom_precision == 0:
+        precision = 0
+    else:
+        precision = tp / denom_precision
+    # get recall
+    denom_recall = (tp + fn)
+    if denom_recall == 0:
+        recall = 0
+    else:
+        recall = tp / denom_recall
+    # get f1
+    denom_f1 = (precision + recall)
+    if denom_f1 == 0:
         f1 = 0
     else:
-        f1 = (2 * precision * recall) / denom
+        f1 = (2 * precision * recall) / denom_f1
+
     return round(f1, 3)
 
 

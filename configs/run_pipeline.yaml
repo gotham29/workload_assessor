@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: Naive
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -136,8 +136,8 @@ features:
     - steering angle
 
 dirs:
-  input: /home/ubuntu/workload_assessor/data  #/Users/samheiserman/Desktop/repos/workload_assessor/data
-  output: /home/ubuntu/workload_assessor/results  #/Users/samheiserman/Desktop/repos/workload_assessor/results
+  input: /Users/samheiserman/Desktop/repos/workload_assessor/data  #/home/ubuntu/workload_assessor/data
+  output: /Users/samheiserman/Desktop/repos/workload_assessor/results  #/home/ubuntu/workload_assessor/results
 
 colnames:
   - timestamp

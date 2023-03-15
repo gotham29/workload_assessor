@@ -4,6 +4,7 @@ pandas>=1.2.4
 numpy>=1.23
 PyYAML==6.0
 setuptools>=34.4.0
+matplotlib
 pip>=19.3.1
 argparse
 matplotlib
