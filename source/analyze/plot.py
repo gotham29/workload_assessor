@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import seaborn as sns
 
@@ -226,3 +227,108 @@ def get_accum(values):
         accum_vals.append(v + accum_sum)
         accum_sum += v
     return accum_vals
+
+
+def plot_subjects_timeserieses(dir_data, dir_out):
+    subjects_found = [f for f in os.listdir(dir_data) if '.DS' not in f]
+    for subj in subjects_found:
+        print(f"{subj}...")
+        dir_data_subj = os.path.join(dir_data, subj)
+        dir_out_subj = os.path.join(dir_out, subj)
+        os.makedirs(dir_out_subj, exist_ok=True)
+        plot_subject_timeserieses(dir_data_subj, dir_out_subj)
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+
+def plot_subject_timeserieses(dir_data, dir_out):
+    dir_files = [f for f in os.listdir(dir_data) if '.xls' in f]
+    files_train = [f for f in dir_files if 'training' in f]
+    files_static = [f for f in dir_files if 'static' in f]
+    files_realtime = [f for f in dir_files if 'realtime' in f]
+    files_train.sort(key=natural_keys)
+    files_static.sort(key=natural_keys)
+    files_realtime.sort(key=natural_keys)
+    # plot training
+    plot_timeseries(files=files_train, title='Training', dir_data=dir_data, dir_out=dir_out)
+    # plot static
+    plot_timeseries(files=files_static, title='Static', dir_data=dir_data, dir_out=dir_out)
+    # plot realtime
+    plot_timeseries(files=files_realtime, title='RealTime', dir_data=dir_data, dir_out=dir_out)
+
+
+def plot_timeseries(files, dir_data, dir_out, title='Training', hz_baseline=50, hz_convertto=6.67):
+    files_types = {'static1': 'rain',
+                   'static2': 'fog',
+                   'static3': 'pennies',
+                   'static4': 'baseline',
+                   'static5': 'fog',
+                   'static6': 'rain',
+                   'static7': 'pennies',
+                   'static8': 'fog',
+                   'static9': 'baseline',
+                   'static10': 'pennies',
+                   'static11': 'rain',
+                   'static12': 'baseline'
+                   }
+    types_colors = {'rain': 'blue',
+                    'fog': 'grey',
+                    'pennies': 'orange',
+                    'baseline': 'white'}
+    agg = int(hz_baseline / hz_convertto)
+    count = 0
+    filenames_vlineindices = {}
+    datas = []
+    for f in files:
+        dpath = os.path.join(dir_data, f)
+        data = pd.read_excel(dpath)
+        data.columns = ['time', 'steering angle', 'break']
+        # agg
+        data = data.groupby(data.index // agg).mean()
+        # subtract mean
+        mean_ = np.mean(data['steering angle'])
+        data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        datas.append(data)
+        vline_ind = len(data) + count
+        f = f.replace('.xls', '').replace('--', '').replace('crash', '')
+        filenames_vlineindices[f] = int(vline_ind)
+        count += len(data)
+    data_total = pd.concat(datas, axis=0)
+    steering_angles = data_total['steering angle'].values
+    plt.cla()
+    plt.plot(steering_angles)
+    # plot lines and color areas to separate runs and run types
+    ind_prev = 0
+    runtypes_labeled = []
+    for fn, vl in filenames_vlineindices.items():
+        plt.axvline(x=vl, color='r', linestyle='--')
+        if title == 'Static':
+            runtype = files_types[fn]
+            color = types_colors[runtype]
+            if runtype not in runtypes_labeled:
+                plt.axvspan(ind_prev, vl, facecolor=color, alpha=0.5, label=runtype)
+            else:
+                plt.axvspan(ind_prev, vl, facecolor=color, alpha=0.5)
+            runtypes_labeled.append(runtype)
+            ind_prev = vl
+    plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+    plt.title(title)
+    plt.tight_layout()
+    path_out = os.path.join(dir_out, f"{title}.png")
+    plt.savefig(path_out)
+
+
+if __name__ == "__main__":
+    plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
+                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda")
