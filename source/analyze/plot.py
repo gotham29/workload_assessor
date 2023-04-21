@@ -362,7 +362,8 @@ def plot_timeseries_combined(files, dir_data_subj, dir_out_subj, title='Training
         else:
             pass
         ind_prev = vl
-    plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+    if title == 'Static':
+        plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
     plt.title(title)
     plt.tight_layout()
     path_out = os.path.join(dir_out_subj, f"{title}.png")
