@@ -9,14 +9,12 @@ __pycache__/
 results/
 misc/
 data/
+eda/
 
 # Mac related
 .DS_Store
 **/.DS_Store
 .idea/
-
-# png files
-*.png
 
 # C extensions
 *.so
