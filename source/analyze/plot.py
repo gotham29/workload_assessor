@@ -7,15 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
-sys.path.append(_SOURCE_DIR)
-
-from source.utils.utils import make_dir
+# _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+# sys.path.append(_SOURCE_DIR)
 
 
 def plot_data(filenames_data: dict, file_type: str, dir_output: str):
     dir_out = os.path.join(dir_output, 'data_plots')
-    make_dir(dir_out)
+    os.makedirs(dir_out, exist_ok=True)
     for fname, data in filenames_data.items():
         fname = fname.replace(f".{file_type}", "")
         path_out = os.path.join(dir_out, f"{fname}.png")
@@ -230,13 +228,16 @@ def get_accum(values):
 
 
 def plot_subjects_timeserieses(dir_data, dir_out):
-    subjects_found = [f for f in os.listdir(dir_data) if '.DS' not in f]
+    subjects_found = [f for f in os.listdir(dir_data) if os.path.isdir(os.path.join(dir_data, f))]
+    path_realtimewl = os.path.join(dir_data, 'realtime_wl.csv')
+    realtime_wl = pd.read_csv(path_realtimewl)
     for subj in subjects_found:
         print(f"{subj}...")
         dir_data_subj = os.path.join(dir_data, subj)
         dir_out_subj = os.path.join(dir_out, subj)
+        realtime_wl_subj = realtime_wl[realtime_wl['Subject'] == subj]
         os.makedirs(dir_out_subj, exist_ok=True)
-        plot_subject_timeserieses(dir_data_subj, dir_out_subj)
+        plot_subject_timeserieses(dir_data_subj, dir_out_subj, realtime_wl_subj)
 
 
 def atoi(text):
@@ -252,23 +253,60 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
-def plot_subject_timeserieses(dir_data, dir_out):
-    dir_files = [f for f in os.listdir(dir_data) if '.xls' in f]
+def plot_subject_timeserieses(dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
+    dir_files = [f for f in os.listdir(dir_data_subj) if '.xls' in f]
     files_train = [f for f in dir_files if 'training' in f]
     files_static = [f for f in dir_files if 'static' in f]
     files_realtime = [f for f in dir_files if 'realtime' in f]
     files_train.sort(key=natural_keys)
     files_static.sort(key=natural_keys)
     files_realtime.sort(key=natural_keys)
-    # plot training
-    plot_timeseries(files=files_train, title='Training', dir_data=dir_data, dir_out=dir_out)
-    # plot static
-    plot_timeseries(files=files_static, title='Static', dir_data=dir_data, dir_out=dir_out)
-    # plot realtime
-    plot_timeseries(files=files_realtime, title='RealTime', dir_data=dir_data, dir_out=dir_out)
+    # training
+    plot_timeseries_combined(files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    # static
+    plot_timeseries_combined(files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    # realtime
+    plot_timeseries(files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
 
 
-def plot_timeseries(files, dir_data, dir_out, title='Training', hz_baseline=50, hz_convertto=6.67):
+def plot_timeseries(files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
+    agg = int(hz_baseline / hz_convertto)
+    # ind_prev = 0
+    for fn in files:
+        # import
+        dpath = os.path.join(dir_data_subj, fn)
+        fn = fn.replace('.xls', '')
+        data = pd.read_excel(dpath)
+        data.columns = ['time', 'steering angle', 'break']
+        # agg
+        data = data.groupby(data.index // agg).mean()
+        # subtract mean
+        mean_ = np.mean(data['steering angle'])
+        data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        # get times wl imposed
+        run_number = int(fn.split('realtime')[1])
+        wl_imposed1_col = f"Run {run_number}-1"
+        wl_imposed2_col = f"Run {run_number}-2"
+        wl_runtime_col = f"Run {run_number}-Total"
+        wl_imposed1_seconds = realtime_wl_subj[wl_imposed1_col].values[0]
+        wl_imposed2_seconds = realtime_wl_subj[wl_imposed2_col].values[0]
+        wl_total_seconds = realtime_wl_subj[wl_runtime_col].values[0]
+        wl_imposed1 = int((wl_imposed1_seconds/wl_total_seconds) * data.shape[0])
+        wl_imposed2 = int((wl_imposed2_seconds / wl_total_seconds) * data.shape[0])
+        # plot
+        steering_angles = data['steering angle'].values
+        plt.cla()
+        plt.plot(steering_angles)
+        plt.axvline(x=wl_imposed1, color='orange', linestyle='-.', linewidth=1, label='WL Imposed 1')
+        plt.axvline(x=wl_imposed2, color='green', linestyle='-.', linewidth=1, label='WL Imposed 2')
+        plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+        plt.title(title)
+        plt.tight_layout()
+        path_out = os.path.join(dir_out_subj, f"{title}--{fn}.png")
+        plt.savefig(path_out)
+
+
+def plot_timeseries_combined(files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
     files_types = {'static1': 'rain',
                    'static2': 'fog',
                    'static3': 'pennies',
@@ -291,7 +329,7 @@ def plot_timeseries(files, dir_data, dir_out, title='Training', hz_baseline=50, 
     filenames_vlineindices = {}
     datas = []
     for f in files:
-        dpath = os.path.join(dir_data, f)
+        dpath = os.path.join(dir_data_subj, f)
         data = pd.read_excel(dpath)
         data.columns = ['time', 'steering angle', 'break']
         # agg
@@ -321,11 +359,13 @@ def plot_timeseries(files, dir_data, dir_out, title='Training', hz_baseline=50, 
             else:
                 plt.axvspan(ind_prev, vl, facecolor=color, alpha=0.5)
             runtypes_labeled.append(runtype)
-            ind_prev = vl
+        else:
+            pass
+        ind_prev = vl
     plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
     plt.title(title)
     plt.tight_layout()
-    path_out = os.path.join(dir_out, f"{title}.png")
+    path_out = os.path.join(dir_out_subj, f"{title}.png")
     plt.savefig(path_out)
 
 
