@@ -216,7 +216,7 @@ def plot_bars(mydict, title, xlabel, ylabel, path_out):
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig(path_out,bbox_inches="tight")
+    plt.savefig(path_out, bbox_inches="tight")
 
 
 def get_accum(values):

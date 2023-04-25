@@ -110,10 +110,11 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
     return wllevels_anomscores, wllevels_diffs
 
 
-def get_subjects_wldiffs(subjects_ttypesascores):
+def get_subjects_wldiffs(subjects_ttypesascores, max_diff=500):
     subjects_wldiffs = {}
     for subj, wllevels_anomscores in subjects_ttypesascores.items():
         wlmean_l0 = np.mean(wllevels_anomscores['baseline'])
+        wlmean_l0 = max(wlmean_l0, 0.01)
         diff_pct_total = 0
         for wllevel, ascores in wllevels_anomscores.items():
             if wllevel == 'baseline':
@@ -121,7 +122,7 @@ def get_subjects_wldiffs(subjects_ttypesascores):
             diff_l0 = (np.mean(ascores) - wlmean_l0)
             diff_pct = (diff_l0 / wlmean_l0) * 100
             diff_pct_total += diff_pct
-        subjects_wldiffs[subj] = round(diff_pct_total, 1)
+        subjects_wldiffs[subj] = min(round(diff_pct_total, 1), max_diff)
     return subjects_wldiffs
 
 
@@ -166,7 +167,7 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         subjects_ttypesdiffs[subj] = ttypes_diffs
         subjects_ttypesascores[subj] = ttypes_ascores
     # Get Score
-    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores)
+    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores, max_diff=500)
     print(f"\nsubjects_wldiffs...")
     for subj, wld in subjects_wldiffs.items():
         print(f"  {subj} --> {wld}")
