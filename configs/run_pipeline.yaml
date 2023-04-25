@@ -153,7 +153,7 @@ clip_percents:
 
 hzs:
   baseline: 100
-  convertto: 6.67  #5
+  convertto: 3  #5, 6.67
 
 testtypes_filenames:
   training:
@@ -167,18 +167,22 @@ testtypes_filenames:
     - training8.xls
     - training9.xls
     - training10.xls
-  Level 0:
-    - test7-L0.xls
-    - test8-L0.xls
-  Level 1:
-    - test1-L1.xls
-    - test2-L1.xls
-  Level 2:
-    - test3-L2.xls
-    - test4-L2.xls
-  Level 3:
-    - test5-L3.xls
-    - test6-L3.xls
+  baseline:
+    - static4.xls
+    - static9.xls
+    - static12.xls
+  rain:
+    - static1.xls
+    - static6.xls
+    - static11.xls
+  fog:
+    - static2.xls
+    - static5.xls
+    - static8.xls
+  distraction:
+    - static3.xls
+    - static7.xls
+    - static10.xls
 
 modnames_grids:
   ARIMA:
