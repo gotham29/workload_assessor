@@ -1,5 +1,11 @@
 # Default ignored files
+/data/
+/eda/
+/results/
 /shelf/
+/.idea/
+.DS_Store
+*.pyc
 /workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
