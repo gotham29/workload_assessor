@@ -129,7 +129,7 @@ def plot_lines(wllevels_anomscores: dict,
             pcounts_accum += get_accum(wllevels_predcounts[wllevel])
 
     ## plot - behavior (total)
-    levels_colors = {'Level 0': 'black', 'Level 1': 'blue', 'Level 2': 'purple', 'Level 3': 'aqua'}
+    levels_colors = {'baseline': 'black', 'rain': 'blue', 'fog': 'grey', 'distraction': 'orange'}
     for feat in columns_model:
         plt.cla()
         plt.plot(alldata_task[feat].values)
