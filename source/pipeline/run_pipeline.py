@@ -1,3 +1,4 @@
+import itertools
 import os
 import sys
 
@@ -52,6 +53,8 @@ def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
         for f in filenames:
             filenames_wllevels[f] = wl
     for fn, data in filenames_data.items():
+        if fn not in filenames_wllevels:
+            continue
         wl = filenames_wllevels[fn]
         feats_means = wllevels_means[wl]
         for feat, mean in feats_means.items():
@@ -98,22 +101,22 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
                    df_train=df_train,
                    columns_model=config['columns_model'],
                    out_dir=os.path.join(dir_output, 'anomaly'))
-        print("    Barplots...")
-        plot_bars(mydict=wllevels_tlx,
-                  title='NASA TLX vs Task WL',
-                  xlabel='Task WL',
-                  ylabel='NASA TLX',
-                  path_out=os.path.join(dir_output, 'bars--TLXs.png'))
+        # print("    Barplots...")
+        # plot_bars(mydict=wllevels_tlx,
+        #           title='NASA TLX vs Task WL',
+        #           xlabel='Task WL',
+        #           ylabel='NASA TLX',
+        #           path_out=os.path.join(dir_output, 'bars--TLXs.png'))
     return wllevels_anomscores, wllevels_diffs
 
 
 def get_subjects_wldiffs(subjects_ttypesascores):
     subjects_wldiffs = {}
     for subj, wllevels_anomscores in subjects_ttypesascores.items():
-        wlmean_l0 = np.mean(wllevels_anomscores['Level 0'])
+        wlmean_l0 = np.mean(wllevels_anomscores['baseline'])
         diff_pct_total = 0
         for wllevel, ascores in wllevels_anomscores.items():
-            if wllevel == 'Level 0':
+            if wllevel == 'baseline':
                 continue
             diff_l0 = (np.mean(ascores) - wlmean_l0)
             diff_pct = (diff_l0 / wlmean_l0) * 100
@@ -155,7 +158,7 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         ttypes_ascores, ttypes_diffs = run_subject(config=config,
                                                    df_train=subjects_dfs_train[subj],
                                                    dir_output=dir_output_subj,
-                                                   wllevels_tlx=config['subjects_wllevels_tlx'][subj],
+                                                   wllevels_tlx=None,  #config['subjects_wllevels_tlx'][subj],
                                                    filenames_data=filenames_data,
                                                    features_models=subjects_features_models[subj],
                                                    save_results=True)
@@ -535,7 +538,7 @@ def get_subjects_data(config, subjects, dir_out):
     print('Gathering subjects data...')
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
-    for subj in subjects:
+    for subj in sorted(subjects):
         print(f"  --> {subj}")
         dir_input = os.path.join(config['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
@@ -595,11 +598,29 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
     return subjects_features_models
 
 
+def has_expected_files(dir_in, files_exp):
+    files_found = [f for f in os.listdir(dir_in)]
+    files_missing = [f for f in files_exp if f not in files_found]
+    if len(files_missing) == 0:
+        return True
+    else:
+        return False
+
+
 def run_wl(config, dir_in, dir_out):
 
     # Collect subjects
-    subjects = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
-    print(f"  Subjects Found = {len(subjects)}")
+    subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
+    files_exp = list(config['testtypes_filenames'].values())
+    files_exp = list(itertools.chain.from_iterable(files_exp))
+    subjects = [s for s in subjects_all if has_expected_files( os.path.join(dir_in, s), files_exp)]
+    subjects_invalid = [s for s in subjects_all if s not in subjects]
+    print(f"Subjects Found (valid) = {len(subjects)}")
+    for s in sorted(subjects):
+        print(f"  --> {s}")
+    print(f"Subjects Found (invalid) = {len(subjects_invalid)}")
+    for s in sorted(subjects_invalid):
+        print(f"  --> {s}")
 
     # Make subjects' output dirs
     for subj in subjects:
