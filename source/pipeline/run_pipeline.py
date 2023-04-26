@@ -19,7 +19,7 @@ from darts import TimeSeries
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
 from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain, preprocess_data
-from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
+from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars, plot_subjects_timeserieses
 from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
 from ts_source.utils.utils import add_timecol, load_models as load_models_darts
 from ts_source.preprocess.preprocess import reshape_datats
@@ -172,7 +172,9 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         print(f"  {subj} --> {wld}")
     diff_from_WL0 = sum(subjects_wldiffs.values())
     # Save Results
-    dir_out_summary = os.path.join(dir_out, f'SUMMARY (score={round(diff_from_WL0, 3)})')
+    preproc = '-'.join([v for v in config['preprocess'] if config['preprocess'][v]])
+    agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
+    dir_out_summary = os.path.join(dir_out, f"SUMMARY -- alg={config['alg']}; preproc={preproc}; agg={agg}; score={round(diff_from_WL0, 3)}")
     os.makedirs(dir_out_summary, exist_ok=True)
     make_save_plots(dir_out=dir_out_summary,
                     dfs_ttypesdiffs=dfs_ttypesdiffs,
@@ -590,6 +592,11 @@ def run_wl(config, dir_in, dir_out):
 
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
+
+    # Plot EDA
+    plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
+                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
+                               path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
 
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
