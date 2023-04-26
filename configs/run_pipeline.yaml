@@ -4,13 +4,14 @@ alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
-do_gridsearch: false
-learn_in_testing: false
+hzs:
+  baseline: 100
+  convertto: 1  #5, 6.67
 
 preprocess:
   difference: false  #1
   standardize: false
-  movingaverage: 23  #false
+  movingaverage: false  #23
 
 windows_ascore:
   recent: 7
@@ -150,10 +151,6 @@ columns_model:
 clip_percents:
   start: 0
   end: 0
-
-hzs:
-  baseline: 100
-  convertto: 1  #5, 6.67
 
 testtypes_filenames:
   training:
@@ -420,9 +417,6 @@ test_prop: 0.3
 time_col: timestamp
 file_type: xls
 scale: false
+do_gridsearch: false
+learn_in_testing: false
 
-
-#vals = [
-#]
-#vals = [abs(v) for v in vals]
-#print(f"mean = {np.mean(vals)}")

@@ -2,10 +2,10 @@ import os
 import sys
 import pandas as pd
 
+from sklearn.preprocessing import StandardScaler
+
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 sys.path.append(_SOURCE_DIR)
-
-from source.utils.utils import make_dir
 
 
 def update_colnames(filenames_data:dict, colnames:list):
@@ -65,3 +65,44 @@ def get_testtypes_alldata(testtypes_anomscores:dict, testtypes_filenames:dict, f
             path_out = os.path.join(dir_out, f"{ttype}.csv")
             ttype_data.to_csv(path_out)
     return testtypes_alldata
+
+
+def preprocess_data(filenames_data, cfg_prep):
+    filenames_data2 = {}
+    for fn, data in filenames_data.items():
+        if cfg_prep['difference']:
+            data = diff_data(data, cfg_prep['difference'])
+        if cfg_prep['standardize']:
+            data = standardize_data(data)
+        if cfg_prep['movingaverage']:
+            data = movingavg_data(data, cfg_prep['movingaverage'])
+        filenames_data2[fn] = data
+    return filenames_data2
+
+
+def diff_data(data, diff_lag):
+    df_dict = {}
+    for c in data:
+        c_diff = [data[c][i] - data[c][i - diff_lag] for i in range(diff_lag, len(data[c]))]
+        df_dict[c] = c_diff
+    return pd.DataFrame(df_dict)
+
+
+def standardize_data(data):
+    # fit transform
+    transformer = StandardScaler()
+    transformer.fit(data)
+    # difference transform
+    transformed = transformer.transform(data)
+    df = pd.DataFrame(transformed)
+    df.columns = data.columns
+    return df
+
+
+def movingavg_data(data, window):
+    df_dict = {}
+    for c in data:
+        rolling = data[c].rolling(window=window)
+        df_dict[c] = rolling.mean()
+    df = pd.DataFrame(df_dict)
+    return df.dropna(axis=0, how='all')

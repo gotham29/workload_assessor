@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.preprocessing import StandardScaler
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -19,7 +18,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 from darts import TimeSeries
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
-from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain
+from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain, preprocess_data
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
 from ts_source.utils.utils import add_timecol, load_models as load_models_darts
@@ -492,47 +491,6 @@ def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
         pred = model.predict(n=config['forecast_horizon'], series=ts)
         pred_prev = reshape_datats(ts=pred, shape=(len(features_model)))
     return aScore, pred_prev
-
-
-def diff_data(data, diff_lag):
-    df_dict = {}
-    for c in data:
-        c_diff = [data[c][i] - data[c][i - diff_lag] for i in range(diff_lag, len(data[c]))]
-        df_dict[c] = c_diff
-    return pd.DataFrame(df_dict)
-
-
-def standardize_data(data):
-    # fit transform
-    transformer = StandardScaler()
-    transformer.fit(data)
-    # difference transform
-    transformed = transformer.transform(data)
-    df = pd.DataFrame(transformed)
-    df.columns = data.columns
-    return df
-
-
-def movingavg_data(data, window):
-    df_dict = {}
-    for c in data:
-        rolling = data[c].rolling(window=window)
-        df_dict[c] = rolling.mean()
-    df = pd.DataFrame(df_dict)
-    return df.dropna(axis=0, how='all')
-
-
-def preprocess_data(filenames_data, cfg_prep):
-    filenames_data2 = {}
-    for fn, data in filenames_data.items():
-        if cfg_prep['difference']:
-            data = diff_data(data, cfg_prep['difference'])
-        if cfg_prep['standardize']:
-            data = standardize_data(data)
-        if cfg_prep['movingaverage']:
-            data = movingavg_data(data, cfg_prep['movingaverage'])
-        filenames_data2[fn] = data
-    return filenames_data2
 
 
 def get_subjects_data(config, subjects, dir_out):

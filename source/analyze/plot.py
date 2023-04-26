@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
-# sys.path.append(_SOURCE_DIR)
+_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+sys.path.append(_SOURCE_DIR)
 
+from source.preprocess.preprocess import preprocess_data
+from source.utils.utils import load_config
 
 def plot_data(filenames_data: dict, file_type: str, dir_output: str):
     dir_out = os.path.join(dir_output, 'data_plots')
@@ -227,7 +229,8 @@ def get_accum(values):
     return accum_vals
 
 
-def plot_subjects_timeserieses(dir_data, dir_out):
+def plot_subjects_timeserieses(dir_data, dir_out, path_cfg):
+    cfg = load_config(path_cfg)
     subjects_found = [f for f in os.listdir(dir_data) if os.path.isdir(os.path.join(dir_data, f))]
     path_realtimewl = os.path.join(dir_data, 'realtime_wl.csv')
     realtime_wl = pd.read_csv(path_realtimewl)
@@ -237,7 +240,7 @@ def plot_subjects_timeserieses(dir_data, dir_out):
         dir_out_subj = os.path.join(dir_out, subj)
         realtime_wl_subj = realtime_wl[realtime_wl['Subject'] == subj]
         os.makedirs(dir_out_subj, exist_ok=True)
-        plot_subject_timeserieses(dir_data_subj, dir_out_subj, realtime_wl_subj)
+        plot_subject_timeserieses(cfg['preprocess'], dir_data_subj, dir_out_subj, realtime_wl_subj)
 
 
 def atoi(text):
@@ -253,7 +256,7 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
-def plot_subject_timeserieses(dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
+def plot_subject_timeserieses(cfg_prep, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
     dir_files = [f for f in os.listdir(dir_data_subj) if '.xls' in f]
     files_train = [f for f in dir_files if 'training' in f]
     files_static = [f for f in dir_files if 'static' in f]
@@ -262,14 +265,14 @@ def plot_subject_timeserieses(dir_data_subj, dir_out_subj, realtime_wl_subj, hz_
     files_static.sort(key=natural_keys)
     files_realtime.sort(key=natural_keys)
     # training
-    plot_timeseries_combined(files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
     # static
-    plot_timeseries_combined(files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
     # realtime
-    plot_timeseries(files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries(cfg_prep=cfg_prep, files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
 
 
-def plot_timeseries(files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries(cfg_prep, files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
     agg = int(hz_baseline / hz_convertto)
     # ind_prev = 0
     for fn in files:
@@ -283,6 +286,9 @@ def plot_timeseries(files, title, dir_data_subj, dir_out_subj, realtime_wl_subj,
         # subtract mean
         mean_ = np.mean(data['steering angle'])
         data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        # preprocess
+        filenames_data = preprocess_data({'data': data}, cfg_prep)
+        data = filenames_data['data']
         # get times wl imposed
         run_number = int(fn.split('realtime')[1])
         wl_imposed1_col = f"Run {run_number}-1"
@@ -306,7 +312,7 @@ def plot_timeseries(files, title, dir_data_subj, dir_out_subj, realtime_wl_subj,
         plt.savefig(path_out)
 
 
-def plot_timeseries_combined(files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
     files_types = {'static1': 'rain',
                    'static2': 'fog',
                    'static3': 'pennies',
@@ -337,6 +343,9 @@ def plot_timeseries_combined(files, dir_data_subj, dir_out_subj, title='Training
         # subtract mean
         mean_ = np.mean(data['steering angle'])
         data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        # preprocess
+        filenames_data = preprocess_data({'data': data}, cfg_prep)
+        data = filenames_data['data']
         datas.append(data)
         vline_ind = len(data) + count
         f = f.replace('.xls', '').replace('--', '').replace('crash', '')
@@ -372,4 +381,5 @@ def plot_timeseries_combined(files, dir_data_subj, dir_out_subj, title='Training
 
 if __name__ == "__main__":
     plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
-                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda")
+                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
+                               path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
