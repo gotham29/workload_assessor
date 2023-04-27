@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: ARIMA
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -361,7 +361,7 @@ htm_config_user:
   models_state:
     model_for_each_feature: false
     return_pred_count: true
-    use_sp: true
+    use_sp: true #false
   timesteps_stop:
     learning:  #100000
     running:  #110000

@@ -109,7 +109,7 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
     return wllevels_anomscores, wllevels_diffs
 
 
-def get_subjects_wldiffs(subjects_ttypesascores, max_diff=500):
+def get_subjects_wldiffs(subjects_ttypesascores):
     subjects_wldiffs = {}
     for subj, wllevels_anomscores in subjects_ttypesascores.items():
         wlmean_l0 = np.mean(wllevels_anomscores['baseline'])
@@ -121,7 +121,7 @@ def get_subjects_wldiffs(subjects_ttypesascores, max_diff=500):
             diff_l0 = (np.mean(ascores) - wlmean_l0)
             diff_pct = (diff_l0 / wlmean_l0) * 100
             diff_pct_total += diff_pct
-        subjects_wldiffs[subj] = min(round(diff_pct_total, 1), max_diff)
+        subjects_wldiffs[subj] = round(diff_pct_total, 2)
     return subjects_wldiffs
 
 
@@ -166,7 +166,8 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         subjects_ttypesdiffs[subj] = ttypes_diffs
         subjects_ttypesascores[subj] = ttypes_ascores
     # Get Score
-    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores, max_diff=1000)
+    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores)
+    subjects_wldiffs_capped = {k: min(v, 1000) for k, v in subjects_wldiffs.items()}
     print(f"\nsubjects_wldiffs...")
     for subj, wld in subjects_wldiffs.items():
         print(f"  {subj} --> {wld}")
@@ -175,10 +176,12 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
     preproc = '-'.join([v for v in config['preprocess'] if config['preprocess'][v]])
     agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
     dir_out_summary = os.path.join(dir_out, f"SUMMARY -- alg={config['alg']}; preproc={preproc}; agg={agg}; score={round(diff_from_WL0, 3)}")
+    path_out_subjects_wldiffs = os.path.join(dir_out_summary, 'subjects_wldiffs.csv')
     os.makedirs(dir_out_summary, exist_ok=True)
+    pd.DataFrame(subjects_wldiffs, index=[0]).to_csv(path_out_subjects_wldiffs)
     make_save_plots(dir_out=dir_out_summary,
                     dfs_ttypesdiffs=dfs_ttypesdiffs,
-                    subjects_wldiffs=subjects_wldiffs,
+                    subjects_wldiffs=subjects_wldiffs_capped,
                     diff_from_WL0=diff_from_WL0,
                     subjects_ttypesascores=subjects_ttypesascores)
     return diff_from_WL0
