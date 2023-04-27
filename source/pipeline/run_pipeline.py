@@ -166,7 +166,7 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         subjects_ttypesdiffs[subj] = ttypes_diffs
         subjects_ttypesascores[subj] = ttypes_ascores
     # Get Score
-    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores, max_diff=500)
+    subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores, max_diff=1000)
     print(f"\nsubjects_wldiffs...")
     for subj, wld in subjects_wldiffs.items():
         print(f"  {subj} --> {wld}")

@@ -240,7 +240,7 @@ def plot_subjects_timeserieses(dir_data, dir_out, path_cfg):
         dir_out_subj = os.path.join(dir_out, subj)
         realtime_wl_subj = realtime_wl[realtime_wl['Subject'] == subj]
         os.makedirs(dir_out_subj, exist_ok=True)
-        plot_subject_timeserieses(cfg['preprocess'], dir_data_subj, dir_out_subj, realtime_wl_subj)
+        plot_subject_timeserieses(cfg['preprocess'], dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
 
 
 def atoi(text):

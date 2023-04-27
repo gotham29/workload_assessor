@@ -1,12 +1,12 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: ARIMA
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 hzs:
   baseline: 100
-  convertto: 1  #5, 6.67
+  convertto: 0.2  #5, 6.67
 
 preprocess:
   difference: false  #1

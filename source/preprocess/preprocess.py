@@ -76,7 +76,7 @@ def preprocess_data(filenames_data, cfg_prep):
             data = standardize_data(data)
         if cfg_prep['movingaverage']:
             data = movingavg_data(data, cfg_prep['movingaverage'])
-        filenames_data2[fn] = data
+        filenames_data2[fn] = data.astype('float32')
     return filenames_data2
 
 
