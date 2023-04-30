@@ -112,16 +112,14 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
 def get_subjects_wldiffs(subjects_ttypesascores):
     subjects_wldiffs = {}
     for subj, wllevels_anomscores in subjects_ttypesascores.items():
-        wlmean_l0 = np.mean(wllevels_anomscores['baseline'])
-        wlmean_l0 = max(wlmean_l0, 0.01)
-        diff_pct_total = 0
+        wl_t0 = np.sum(wllevels_anomscores['baseline'])
+        wl_t1t0_diffs = {}
         for wllevel, ascores in wllevels_anomscores.items():
             if wllevel == 'baseline':
                 continue
-            diff_l0 = (np.mean(ascores) - wlmean_l0)
-            diff_pct = (diff_l0 / wlmean_l0) * 100
-            diff_pct_total += diff_pct
-        subjects_wldiffs[subj] = round(diff_pct_total, 2)
+            wl_t1 = np.sum(ascores)
+            wl_t1t0_diffs[wllevel] = (wl_t1 - wl_t0)
+        subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
     return subjects_wldiffs
 
 
@@ -169,11 +167,15 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
     subjects_wldiffs = get_subjects_wldiffs(subjects_ttypesascores)
     subjects_wldiffs_capped = {k: min(v, 1000) for k, v in subjects_wldiffs.items()}
     print(f"\nsubjects_wldiffs...")
+    subj_maxlen = max([len(subj) for subj in subjects_wldiffs])
     for subj, wld in subjects_wldiffs.items():
-        print(f"  {subj} --> {wld}")
+        neg = '' if wld>0 else '**'
+        diff_maxlen = subj_maxlen - len(subj)
+        spaces_add = ' '*diff_maxlen
+        print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     diff_from_WL0 = sum(subjects_wldiffs.values())
     # Save Results
-    preproc = '-'.join([v for v in config['preprocess'] if config['preprocess'][v]])
+    preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
     agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
     dir_out_summary = os.path.join(dir_out, f"SUMMARY -- alg={config['alg']}; preproc={preproc}; agg={agg}; score={round(diff_from_WL0, 3)}")
     path_out_subjects_wldiffs = os.path.join(dir_out_summary, 'subjects_wldiffs.csv')
@@ -596,10 +598,13 @@ def run_wl(config, dir_in, dir_out):
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
 
+    """
+    UPDATE
     # Plot EDA
     plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
                                dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
                                path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
+    """
 
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')

@@ -8,6 +8,30 @@ _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..
 sys.path.append(_SOURCE_DIR)
 
 
+def get_autocorr(data_t1, data_t0):
+    diff = data_t1-data_t0
+    diff_pct = (diff / data_t0)*100
+    return diff_pct
+
+
+def get_autocorrs(steering_angles):
+    diff_pcts = [0]
+    for _, v in enumerate(steering_angles):
+        if _ == 0:
+            continue
+        diff = get_autocorr(v, steering_angles[_-1])
+        diff_pcts.append(diff)
+    return diff_pcts
+
+
+def select_by_autocorr(steering_angles, diff_pcts, diff_thresh=5):
+    data_selected = []
+    for _, v in enumerate(steering_angles):
+        if diff_pcts[_] > diff_thresh:
+            data_selected.append(v)
+    return data_selected
+
+
 def update_colnames(filenames_data:dict, colnames:list):
     for fname, data in filenames_data.items():
         data.columns = colnames
@@ -67,15 +91,25 @@ def get_testtypes_alldata(testtypes_anomscores:dict, testtypes_filenames:dict, f
     return testtypes_alldata
 
 
+def prep_data(data, cfg_prep):
+    if cfg_prep['difference']:
+        data = diff_data(data, cfg_prep['difference'])
+    if cfg_prep['standardize']:
+        data = standardize_data(data)
+    if cfg_prep['movingaverage']:
+        data = movingavg_data(data, cfg_prep['movingaverage'])
+    return data
+
+
 def preprocess_data(filenames_data, cfg_prep):
     filenames_data2 = {}
     for fn, data in filenames_data.items():
-        if cfg_prep['difference']:
-            data = diff_data(data, cfg_prep['difference'])
-        if cfg_prep['standardize']:
-            data = standardize_data(data)
-        if cfg_prep['movingaverage']:
-            data = movingavg_data(data, cfg_prep['movingaverage'])
+        data = prep_data(data, cfg_prep)
+        diff_pcts = get_autocorrs(data['steering angle'].values)
+        data_selected = select_by_autocorr(data['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+        percent_data_dropped = 1 - (len(data_selected) / float(len(data)))
+        print(f"        % data DROPPED = {round( percent_data_dropped*100 , 1)}")
+        data = pd.DataFrame({'steering angle': data_selected})
         filenames_data2[fn] = data.astype('float32')
     return filenames_data2
 
