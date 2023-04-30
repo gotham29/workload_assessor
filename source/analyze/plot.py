@@ -1,11 +1,12 @@
+import operator
 import os
 import re
 import sys
-import seaborn as sns
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 sys.path.append(_SOURCE_DIR)
@@ -453,16 +454,104 @@ def select_by_autocorr(steering_angles, diff_pcts, diff_thresh=5):
     return data_selected
 
 
-if __name__ == "__main__":
-    plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
-                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
-                               path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
+def plot_venues(paper_min, venues_impactscores, venues_waittimes, path_in, path_out):
+    # GET DATA
+    df = pd.read_csv(path_in)
+    venues_counts = dict(df['Publication Venue'].value_counts())
+    venues_counts = dict(sorted(venues_counts.items(), key=operator.itemgetter(1), reverse=True))
+    venues_counts2 = {k: v for k, v in venues_counts.items() if v >= paper_min}
+    # PLOT
+    plt.cla()
+    plt.figure(figsize=(20, 10))
+    paper_counts = list(venues_counts2.values())
+    wait_times = list(venues_waittimes.values())
+    impact_scores = [v * 10 for v in list(venues_impactscores.values())]
+    x = np.array([_ for _ in range(len(venues_counts2))])
+    plt.bar(x-0.2, paper_counts, width=0.2, color='b', align='center', label='Paper Counts', alpha=0.5)  #x - 0.5
+    plt.bar(x, wait_times, width=0.2, color='g', align='center', label='Wait Times (weeks)', alpha=0.5)
+    plt.bar(x+0.2, impact_scores, width=0.2, color='r', align='center', label='Impact Scores (x10)', alpha=0.5)  #x + 0.5
+    plt.xticks(range(len(venues_counts2)), list(venues_counts2.keys()), rotation=90)
+    plt.title("Common Publication Venues - WL")
+    plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig(path_out)
 
-# path_cfg = "/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml"
-# path_data = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/heiserman/data/train.csv"
-# path_out = "/Users/samheiserman/Desktop/PLOT.png"
-# cfg_prep = load_config(path_cfg)['preprocess']
-# data = pd.read_csv(path_data)
-# diff_pcts = get_autocorrs(data['steering angle'].values)
-# data_selected = select_by_autocorr(data['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
-# save_tsplot(data_selected, cfg_prep, path_out)
+
+if __name__ == "__main__":
+    venues_impactscores = {
+        'Applied Ergonomics': 2.963,
+        'Transportation Research Part F: Traffic Psychology and Behaviour': 3.153,
+        'International Journal of Industrial Ergonomics': 2.705,
+        'Frontiers in Human Neuroscience': 3.634,
+        'Human Factors': 2.952,
+        'IEEE Transactions on Neural Systems and Rehabilitation Engineering': 3.480,
+        'Frontiers in Neuroscience': 3.711,
+        'International Journal of Psychophysiology': 3.157,
+        'Surgical Endoscopy': 3.570,
+        'Journal of Medical Systems': 2.131,
+        'IEEE Access': 3.745,
+        'Accident Analysis & Prevention': 3.145,
+        'Frontiers in Psychology': 2.848,
+        'International Journal of Environmental Research and Public Health': 2.849,
+        'Ergonomics': 2.526,
+        'International Journal of Human-Computer Interaction': 1.597,
+        'IEEE Transactions on Human-Machine Systems': 2.944,
+        'Journal of Neural Engineering': 3.352,
+        'International Journal of Human-Computer Studies': 2.799,
+        'Journal of Cognitive Engineering and Decision Making': 1.541,
+        'Human Factors and Ergonomics in Manufacturing & Service Industries': 1.058,
+        'Applied Sciences': 3.689,
+        'Aerospace Medicine and Human Performance': 1.743,
+        'Sensors': 3.275,
+        'PLoS One': 2.740,
+        'Work: A Journal of Prevention, Assessment and Rehabilitation': 1.178,
+        'Journal of Experimental Psychology: Applied': 2.931,
+        'Journal of Medical Internet Research': 5.034,
+        'Scientific Reports': 4.122,
+        'Journal of Safety Research': 1.689,
+        'Journal of Surgical Education': 2.101,
+        'Journal of Ambient Intelligence and Humanized Computing': 2.385
+    }
+    venues_waittimes = {
+        'Applied Ergonomics': 12,
+        'Transportation Research Part F: Traffic Psychology and Behaviour': 12,
+        'International Journal of Industrial Ergonomics': 14,
+        'Frontiers in Human Neuroscience': 14,
+        'Human Factors': 12,
+        'IEEE Transactions on Neural Systems and Rehabilitation Engineering': 20,
+        'Frontiers in Neuroscience': 14,
+        'International Journal of Psychophysiology': 14,
+        'Surgical Endoscopy': 14,
+        'Journal of Medical Systems': 12,
+        'IEEE Access': 10,
+        'Accident Analysis & Prevention': 10,
+        'Frontiers in Psychology': 14,
+        'International Journal of Environmental Research and Public Health': 10,
+        'Ergonomics': 14,
+        'International Journal of Human-Computer Interaction': 12,
+        'IEEE Transactions on Human-Machine Systems': 20,
+        'Journal of Neural Engineering': 14,
+        'International Journal of Human-Computer Studies': 14,
+        'Journal of Cognitive Engineering and Decision Making': 12,
+        'Human Factors and Ergonomics in Manufacturing & Service Industries': 14,
+        'Applied Sciences': 14,
+        'Aerospace Medicine and Human Performance': 14,
+        'Sensors': 14,
+        'PLoS One': 10,
+        'Work: A Journal of Prevention, Assessment and Rehabilitation': 14,
+        'Journal of Experimental Psychology: Applied': 12,
+        'Journal of Medical Internet Research': 12,
+        'Scientific Reports': 14,
+        'Journal of Safety Research': 10,
+        'Journal of Surgical Education': 14,
+        'Journal of Ambient Intelligence and Humanized Computing': 14
+    }
+    plot_venues(paper_min=3,
+                venues_impactscores=venues_impactscores,
+                venues_waittimes=venues_waittimes,
+                path_in="/Users/samheiserman/Desktop/MWL -- research by app. domain.csv",
+                path_out="/Users/samheiserman/Desktop/VENUES_COUNTS.png")
+    # plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
+    #                            dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
+    #                            path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
+
