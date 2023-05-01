@@ -1,18 +1,18 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: SteeringEntropy
+alg: NBEATSModel
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 hzs:
   baseline: 100
-  convertto: 5  #5, 6.67
+  convertto: 5  #6.67
 
 preprocess:
   difference: false  #1
   standardize: false
   movingaverage: false  #23
-  autocorr_thresh: 0.25
+  autocorr_thresh: 5
 
 windows_ascore:
   recent: 7

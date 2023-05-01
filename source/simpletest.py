@@ -247,7 +247,7 @@ modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
                                                              output_dirs=output_dirs)
 print("  DONE")
 
-Test HTM
+# Test HTM
 print('Testing HTM...')
 features_models, features_outputs = run_batch(cfg_user=htm_config_user,
                                               cfg_model=htm_config_model,
