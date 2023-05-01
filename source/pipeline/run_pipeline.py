@@ -112,13 +112,13 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
 def get_subjects_wldiffs(subjects_ttypesascores):
     subjects_wldiffs = {}
     for subj, wllevels_anomscores in subjects_ttypesascores.items():
-        wl_t0 = np.sum(wllevels_anomscores['baseline'])
+        wl_t0 = max(np.sum(wllevels_anomscores['baseline']), 0.025)
         wl_t1t0_diffs = {}
         for wllevel, ascores in wllevels_anomscores.items():
             if wllevel == 'baseline':
                 continue
-            wl_t1 = np.sum(ascores)
-            wl_t1t0_diffs[wllevel] = (wl_t1 - wl_t0)
+            wl_t1 = max(np.sum(ascores), 0.025)
+            wl_t1t0_diffs[wllevel] = ((wl_t1 - wl_t0) / wl_t0) * 100
         subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
     return subjects_wldiffs
 
