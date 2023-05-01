@@ -161,6 +161,8 @@ def get_testtypes_diffs(testtypes_anomscores):
             if combo in ttype_combos_done:
                 continue
             ttype_combos_done.append(combo)
-            pct_change = (np.mean(ascores_other) - np.mean(ascores)) / np.mean(ascores_other)
-            ttypesdiffs[ttype][ttype_other] = round(pct_change*100, 1)
+            ascores_total = max(np.sum(ascores), 0.025)
+            ascores_total_other = max(np.sum(ascores_other), 0.025)
+            pct_change = (ascores_total_other - ascores_total) / ascores_total
+            ttypesdiffs[ttype][ttype_other] = round(pct_change*100, 2)
     return ttypesdiffs

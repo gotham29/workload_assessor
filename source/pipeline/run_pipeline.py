@@ -159,7 +159,7 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
                                                    wllevels_tlx=None,  #config['subjects_wllevels_tlx'][subj],
                                                    filenames_data=filenames_data,
                                                    features_models=subjects_features_models[subj],
-                                                   save_results=True)
+                                                   save_results=config['make_plots'])
         dfs_ttypesdiffs.append(get_ttypesdf(subj, ttypes_diffs))
         subjects_ttypesdiffs[subj] = ttypes_diffs
         subjects_ttypesascores[subj] = ttypes_ascores

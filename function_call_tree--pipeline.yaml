@@ -1,30 +1,86 @@
-run_wl
-  if config['mode'] == 'post-hoc':
-    run_posthoc
-      make_dirs_subj
-      run_subject
-        get_testtypes_outputs
+run_wl:
+
+  make_dirs_subj
+  get_subjects_data:
+    load_files
+    update_colnames
+    agg_data
+    clip_data
+    subtract_mean
+    preprocess_data:
+      prep_data:
+        if difference:
+            diff_data
+        if standardize:
+            standardize_data
+        if movingaverage:
+            movingavg_data
+      get_autocorrs:
+        get_autocorr
+      select_by_autocorr
+    get_dftrain
+    add_timecol
+
+  get_subjects_models:
+    if train_models:
+      train_save_models:
+        if alg == 'HTM':
+            htm_source.run_batch
+        elif alg == 'Naive':
+            NaiveModel
+        elif alg == 'SteeringEntropy':
+            SteeringEntropy
+        elif alg in PYOD_MODNAMES_MODELS:
+            pyod.models.fit
+        else:
+            ts_source.run_pipeline
+        htm_source.save_models
+    else:
+      if alg == 'HTM':
+        load_models_htm
+      else:
+        load_models_darts
+
+  if mode == 'post-hoc':
+    run_posthoc:
+      run_subject:
+        get_testtypes_outputs:
           get_testtypes_alldata
-          add_timecol
-          run_batch
-          get_ascores_entropy
-          get_modname
-          get_preds_rolling
+          if alg == 'HTM':
+            htm_source.run_batch
+          elif alg == 'SteeringEntropy':
+            get_ascores_entropy
+          elif alg == 'Naive':
+            get_ascores_naive
+          elif alg in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+            get_ascores_pyod
+          else:
+            ts_source.get_modname
+            ts_source.get_preds_rolling
         get_testtypes_diffs
-        plot_data
-        plot_boxes
-        plot_lines
-        plot_bars
+        if save_results:
+          plot_data
+          plot_boxes
+          plot_lines
       get_subjects_wldiffs
-      make_save_plots
+      make_save_plots:
+        seaborn.heatmap
         plot_bars
         combine_dicts
+        seaborn.violinplot
+
   else:
-    run_realtime
+    run_realtime:
       add_timecol
-      HTMModel.run
-      get_ascore_entropy
-      get_entropy_ts
+      if alg == 'HTM':
+          htm_source.HTMmodel.run
+      elif alg == 'SteeringEntropy':
+          get_ascore_entropy
+      elif alg in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+          get_ascore_pyod
+      else:
+          get_entropy_ts
       is_wl_detected
       score_wl_detections
+      get_f1score
       plot_wlchangepoints
