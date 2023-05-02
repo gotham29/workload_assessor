@@ -20,13 +20,14 @@ def plot_data(filenames_data: dict, file_type: str, dir_output: str):
     for fname, data in filenames_data.items():
         fname = fname.replace(f".{file_type}", "")
         path_out = os.path.join(dir_out, f"{fname}.png")
-        plt.cla()
+        # plt.cla()
         plt.figure(figsize=(15, 3))
         for c in data:
             plt.plot(data[c], label=c)
         plt.title(fname)
         plt.legend()
         plt.savefig(path_out)
+        plt.close()
 
 
 def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
@@ -50,7 +51,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     df_1 = pd.concat(outtypes_data['aScores'], axis=0)
     if data_plot2 != {}:
         df_2 = pd.concat(outtypes_data['pCounts'], axis=0)
-    plt.cla()
+    # plt.cla()
     vplot_anom = sns.violinplot(data=df_1,
                                 x="Task WL",
                                 y='Anomaly Score')
@@ -59,7 +60,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     plt.ylabel(ylabel)
     plt.ylim(0, 1.0)
     plt.savefig(outtypes_paths['aScores'].replace('.png', '--violin.png'), bbox_inches="tight")
-    plt.cla()
+    plt.close()
     if data_plot2 != {}:
         vplot_pred = sns.violinplot(data=df_2,
                                     x="Task WL",
@@ -68,8 +69,9 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig(outtypes_paths['pCounts'].replace('.png', '--violin.png'), bbox_inches="tight")
+        plt.close()
     # Plot -- Box
-    plt.cla()
+    # plt.cla()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     outtypes_ddicts = {'aScores': data_plot1}
@@ -82,6 +84,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         ax.yaxis.grid(True)
         outp = outtypes_paths[outtype].replace('.png', '--box.png')
         plt.savefig(outp, bbox_inches="tight")
+        plt.close()
     # Plot -- Combined
     # if data_plot2 != {}:
     #     plt.cla()
@@ -100,9 +103,9 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     #     plt.savefig(outtypes_paths['WLScores'], bbox_inches="tight")
 
 
-def plot_lines(wllevels_anomscores: dict,
-               wllevels_predcounts: dict,
-               wllevels_alldata: dict,
+def plot_lines(wllevels_anomscores_: dict,
+               wllevels_predcounts_: dict,
+               wllevels_alldata_: dict,
                df_train: pd.DataFrame,
                get_pcounts: bool,
                columns_model: dict,
@@ -111,7 +114,7 @@ def plot_lines(wllevels_anomscores: dict,
     # TRAIN
     ## plot - columns_model
     for feat in columns_model:
-        plt.cla()
+        # plt.cla()
         plt.figure(figsize=(15, 3))
         plt.plot(df_train[feat].values)
         plt.title(f'Behavior - Training')
@@ -119,6 +122,16 @@ def plot_lines(wllevels_anomscores: dict,
         plt.ylabel(feat)
         out_path = os.path.join(out_dir, f'time--training--{feat}.png')
         plt.savefig(out_path)
+        plt.close()
+
+    # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
+    wllevels_alldata, wllevels_anomscores, wllevels_predcounts = {}, {}, {}
+    levels_order = ['baseline', 'distraction', 'rain', 'fog']
+    for k in levels_order:
+        wllevels_alldata[k] = wllevels_alldata_[k]
+        wllevels_anomscores[k] = wllevels_anomscores_[k]
+        if k in wllevels_predcounts_:
+            wllevels_predcounts[k] = wllevels_predcounts_[k]
 
     # TEST
     ## get data & wl inds
@@ -139,7 +152,7 @@ def plot_lines(wllevels_anomscores: dict,
     for feat in columns_model:
         feat_data = alldata_task[feat].values
         f_min, f_max = min(feat_data), max(feat_data)
-        plt.cla()
+        # plt.cla()
         plt.figure(figsize=(15, 3))
         # plt.rcParams['axes.facecolor'] = 'grey'
         plt.plot(feat_data)
@@ -155,11 +168,12 @@ def plot_lines(wllevels_anomscores: dict,
         plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
         out_path = os.path.join(out_dir, f'time--validation--{feat}.png')
         plt.savefig(out_path)
+        plt.close()
 
         ## by level
         for level, data in wllevels_alldata.items():
             d_feat = data[feat].values
-            plt.cla()
+            # plt.cla()
             plt.figure(figsize=(15, 3))
             plt.plot(d_feat, color=levels_colors[level])
             # plt.xlabel('time')
@@ -168,9 +182,10 @@ def plot_lines(wllevels_anomscores: dict,
             # plt.title(f'{level}')  #f'Behavior - {feat} - {level}'
             out_path = os.path.join(out_dir, f'time--validation--{feat}--{level}.png')
             plt.savefig(out_path)
+            plt.close()
 
     ## plot - aScores
-    plt.cla()
+    # plt.cla()
     plt.plot(ascores_accum)
     plt.title("Perceived WL")
     plt.xlabel('Time')
@@ -186,11 +201,11 @@ def plot_lines(wllevels_anomscores: dict,
         prev_ind = ind
     out_path = os.path.join(out_dir, f'time--validation--aScores.png')
     plt.savefig(out_path)
+    plt.close()
 
     ## plot - aScpres overlapped
-    plt.cla()
+    # plt.cla()
     plt.figure(figsize=(15, 3))
-    # plt.grid(False)
     max_ascoreaccum = 0
     for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
         wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 2)
@@ -207,10 +222,11 @@ def plot_lines(wllevels_anomscores: dict,
     plt.legend()
     out_path = os.path.join(out_dir, f'levels--validation--aScores.png')
     plt.savefig(out_path)
+    plt.close()
 
     ## plot - pCounts
     if get_pcounts:
-        plt.cla()
+        # plt.cla()
         plt.plot(pcounts_accum)
         plt.title("Perceived WL")
         plt.xlabel('Time')
@@ -226,16 +242,18 @@ def plot_lines(wllevels_anomscores: dict,
             prev_ind = ind
         out_path = os.path.join(out_dir, f'time--validation--pCounts.png')
         plt.savefig(out_path)
+        plt.close()
 
 
 def plot_bars(mydict, title, xlabel, ylabel, path_out):
-    plt.cla()
+    # plt.cla()
     plt.bar(range(len(mydict)), list(mydict.values()), align='center')
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=90)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.savefig(path_out, bbox_inches="tight")
+    plt.close()
 
 
 def get_accum(values):
@@ -322,7 +340,7 @@ def plot_timeseries(cfg_prep, files, title, dir_data_subj, dir_out_subj, realtim
         wl_imposed2 = int((wl_imposed2_seconds / wl_total_seconds) * data.shape[0])
         # plot
         steering_angles = data['steering angle'].values
-        plt.cla()
+        # plt.cla()
         plt.plot(steering_angles)
         plt.axvline(x=wl_imposed1, color='orange', linestyle='-.', linewidth=1, label='WL Imposed 1')
         plt.axvline(x=wl_imposed2, color='green', linestyle='-.', linewidth=1, label='WL Imposed 2')
@@ -331,6 +349,7 @@ def plot_timeseries(cfg_prep, files, title, dir_data_subj, dir_out_subj, realtim
         plt.tight_layout()
         path_out = os.path.join(dir_out_subj, f"{title}--{fn}.png")
         plt.savefig(path_out)
+        plt.close()
 
 
 def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
@@ -379,7 +398,7 @@ def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title
     data_selected = select_by_autocorr(data_total['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
 
     # steering_angles = data_total['steering angle'].values
-    plt.cla()
+    # plt.cla()
     plt.figure(figsize=(15, 3))
     plt.plot(data_selected)  #steering_angles
     # plot lines and color areas to separate runs and run types
@@ -404,6 +423,7 @@ def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title
     plt.tight_layout()
     path_out = os.path.join(dir_out_subj, f"{title}.png")
     plt.savefig(path_out)
+    plt.close()
 
 
 def prep_data(data, cfg_prep):
@@ -420,7 +440,7 @@ def save_tsplot(data, cfg_prep, path_out):
     mean_ = np.mean(data)
     s_a = [v-mean_ for v in data]
     d = prep_data(s_a, cfg_prep)  #data
-    plt.cla()
+    # plt.cla()
     plt.figure(figsize=(15, 3))
     plt.plot(d)
     title = ""
@@ -428,6 +448,7 @@ def save_tsplot(data, cfg_prep, path_out):
         title += f"{k}={v}; "
     plt.title(title)
     plt.savefig(path_out)
+    plt.close()
 
 
 def get_autocorr(data_t1, data_t0):
@@ -461,7 +482,7 @@ def plot_venues(paper_min, venues_impactscores, venues_waittimes, path_in, path_
     venues_counts = dict(sorted(venues_counts.items(), key=operator.itemgetter(1), reverse=True))
     venues_counts2 = {k: v for k, v in venues_counts.items() if v >= paper_min}
     # PLOT
-    plt.cla()
+    # plt.cla()
     plt.figure(figsize=(20, 10))
     paper_counts = list(venues_counts2.values())
     wait_times = list(venues_waittimes.values())
@@ -475,6 +496,7 @@ def plot_venues(paper_min, venues_impactscores, venues_waittimes, path_in, path_
     plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
     plt.tight_layout()
     plt.savefig(path_out)
+    plt.close()
 
 
 if __name__ == "__main__":

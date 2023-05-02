@@ -15,8 +15,10 @@ MODES_CONVERT = {
 }
 
 
-def make_boxplots(data_dict, title, path_out):
-    plt.cla()
+def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
+    plt.rcParams["figure.figsize"] = [7.00, 3.50]
+    # plt.grid(True)
+    # plt.rcParams["figure.autolayout"] = True
     fig, ax = plt.subplots()
     bplot = ax.boxplot(data_dict.values(), patch_artist=True)
     ax.set_xticklabels(data_dict.keys())
@@ -24,11 +26,15 @@ def make_boxplots(data_dict, title, path_out):
     for patch, color in zip(bplot['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.5)
-    plt.ylim(0, 1.0)
-    plt.ylabel('Raw TLX')
-    plt.suptitle('TLX Scores by Run Mode')
+    if ylim:
+        plt.ylim(ylim)
+    # plt.figure(figsize=(15, 3))
+    plt.ylabel(ylabel)
+    if suptitle:
+        plt.suptitle(suptitle)
     plt.title(title)
     plt.savefig(path_out)
+    plt.close()
 
 
 def main():
@@ -39,8 +45,6 @@ def main():
     Check matplotlib/pandas documentation for more information
 
     """
-    plt.rcParams["figure.figsize"] = [7.00, 3.50]
-    plt.rcParams["figure.autolayout"] = True
     columns = ["Subject", "Run #", "Run Mode", "Mental Demand", "Physical Demand", "Temporal Demand", "Performance",
                "Effort", "Frustration", "Raw TLX"]
     dataframe = pandas.read_csv(PATH_TLX, usecols=columns)
@@ -54,7 +58,7 @@ def main():
     gpby_mode = newframe.groupby('Run Mode')
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-    make_boxplots(modes_scores, "All Subjects", path_out)
+    make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out, suptitle='TLX Scores by Run Mode', ylim=(0, 1))
 
     """ box plots for run mode score by subject """
     gpby_subj = newframe.groupby('Subject')
@@ -64,7 +68,7 @@ def main():
         gpby_mode = df_subj.groupby('Run Mode')
         for mode, df_mode in gpby_mode:
             modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-        make_boxplots(modes_scores, f"{subj}", path_out)
+        make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None, ylim=(0, 1))
 
 
 if __name__ == "__main__":

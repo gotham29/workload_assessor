@@ -18,13 +18,16 @@ sys.path.append(_HTM_SOURCE_DIR)
 from darts import TimeSeries
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
-from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain, preprocess_data
-from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars, plot_subjects_timeserieses
-from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs
+from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_ttypesdf, get_dftrain, \
+    preprocess_data
+from source.analyze.tlx import make_boxplots
+from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
+from source.analyze.anomaly import get_testtypes_outputs, get_testtypes_diffs, get_ascores_entropy, get_ascores_naive, \
+    get_ascores_pyod, get_ascore_pyod
 from ts_source.utils.utils import add_timecol, load_models as load_models_darts
 from ts_source.preprocess.preprocess import reshape_datats
-from ts_source.model.model import get_model_lag, LAG_MIN
-
+from ts_source.model.model import get_model_lag, LAG_MIN, get_modname, get_preds_rolling
+from htm_source.pipeline.htm_batch_runner import run_batch
 
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
@@ -61,7 +64,75 @@ def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
     return filenames_data
 
 
-def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, features_models, save_results=True):
+def get_levels_totalascores(config,
+                            filenames_data,
+                            features_models,
+                            levels_order,
+                            levels_filenames):
+    levels_totalascores = {level: [] for level in levels_filenames if level != 'training'}
+    filenames_levels = {}
+    for level, fns in levels_filenames.items():
+        if level == 'training':
+            continue
+        for fn in fns:
+            filenames_levels[fn] = level
+
+    # filenames_totalscores = {}
+    for fn, data in filenames_data.items():
+        if 'static' not in fn:
+            continue
+        data = add_timecol(data, config['time_col'])
+        if config['alg'] == 'HTM':
+            feats_models, features_outputs = run_batch(cfg_user=config['htm_config_user'],
+                                                       cfg_model=config['htm_config_model'],
+                                                       config_path_user=None,
+                                                       config_path_model=None,
+                                                       learn=config['learn_in_testing'],
+                                                       data=data,
+                                                       iter_print=1000,
+                                                       features_models=features_models)
+            ascores = features_outputs[f"megamodel_features={len(config['columns_model'])}"]['anomaly_score']
+
+        elif config['alg'] == 'SteeringEntropy':
+            ascores = get_ascores_entropy(data['steering angle'].values)
+
+        elif config['alg'] == 'Naive':
+            ascores = get_ascores_naive(data['steering angle'].values)
+
+        elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+            ascores = get_ascores_pyod(data[['steering angle']], features_models['steering angle'])
+
+        else:  # ts_source alg
+            for feat, model in features_models.items():  # Assumes single model
+                break
+            mod_name = get_modname(model)
+            features = model.training_series.components
+            preds = get_preds_rolling(model=model,
+                                      df=data,
+                                      features=features,
+                                      LAG=max(LAG_MIN, get_model_lag(mod_name, model)),
+                                      time_col=config['time_col'],
+                                      forecast_horizon=config['forecast_horizon'])
+            preds_df = pd.DataFrame(preds, columns=list(features))
+            data_ = data.tail(preds_df.shape[0])
+            ascores = list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
+            # ascores = []
+            # clip_val = np.percentile(ascores_, 95)
+            # for ascore in ascores_:
+            #     ascore = ascore if ascore <= clip_val else clip_val
+            #     ascores.append(ascore)
+
+        total_ascore = np.sum(ascores)
+        levels_totalascores[filenames_levels[fn]].append(total_ascore)
+
+    levels_totalascores2 = {}
+    for k in levels_order:
+        levels_totalascores2[k] = levels_totalascores[k]
+
+    return levels_totalascores2
+
+
+def run_subject(config, df_train, dir_output, filenames_data, features_models, save_results=True):
     wllevels_anomscores, wllevels_predcounts, wllevels_alldata = get_testtypes_outputs(alg=config['alg'],
                                                                                        htm_config_user=config[
                                                                                            'htm_config_user'],
@@ -77,6 +148,7 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
                                                                                        testtypes_filenames=config[
                                                                                            'testtypes_filenames'],
                                                                                        save_results=save_results)
+
     # Get WL diffs btwn testtypes
     wllevels_diffs = get_testtypes_diffs(testtypes_anomscores=wllevels_anomscores)
     if save_results:
@@ -85,27 +157,33 @@ def run_subject(config, df_train, dir_output, wllevels_tlx, filenames_data, feat
         # Write outputs
         print(f"  Writing outputs to --> {dir_output}")
         print("    Boxplots...")
-        plot_boxes(data_plot1=wllevels_anomscores,
-                   data_plot2=wllevels_predcounts,
-                   title_1=f"Anomaly Scores by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
-                   title_2=f"Prediction Counts by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
-                   out_dir=os.path.join(dir_output, 'anomaly'),
-                   xlabel='MWL Levels',
-                   ylabel='HTM Metric')
+        levels_totalascores = get_levels_totalascores(config=config,
+                                                      filenames_data=filenames_data,
+                                                      features_models=features_models,
+                                                      levels_order=['baseline', 'distraction', 'rain', 'fog'],
+                                                      levels_filenames=config['testtypes_filenames'])
+        print("      levels_totalascores...")
+        for k, v in levels_totalascores.items():
+            print(f"        {k} --> {v}")
+        path_out = os.path.join(dir_output, 'anomaly', "levels--aScoreTotals--box.png")
+        make_boxplots(levels_totalascores, ylabel=f"{config['alg']} WL", title=f"{config['alg']} WL Scores by Run Mode",
+                      suptitle=None,
+                      path_out=path_out, ylim=None)
+        # plot_boxes(data_plot1=wllevels_anomscores,
+        #            data_plot2=wllevels_predcounts,
+        #            title_1=f"Anomaly Scores by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
+        #            title_2=f"Prediction Counts by WL Level\nhz={config['hzs']['convertto']},; features={config['columns_model']}",
+        #            out_dir=os.path.join(dir_output, 'anomaly'),
+        #            xlabel='MWL Levels',
+        #            ylabel='HTM Metric')
         print("    Lineplots...")
-        plot_lines(wllevels_anomscores=wllevels_anomscores,
-                   wllevels_predcounts=wllevels_predcounts,
-                   wllevels_alldata=wllevels_alldata,
+        plot_lines(wllevels_anomscores_=wllevels_anomscores,
+                   wllevels_predcounts_=wllevels_predcounts,
+                   wllevels_alldata_=wllevels_alldata,
                    get_pcounts=True if config['alg'] == 'HTM' else False,
                    df_train=df_train,
                    columns_model=config['columns_model'],
                    out_dir=os.path.join(dir_output, 'anomaly'))
-        # print("    Barplots...")
-        # plot_bars(mydict=wllevels_tlx,
-        #           title='NASA TLX vs Task WL',
-        #           xlabel='Task WL',
-        #           ylabel='NASA TLX',
-        #           path_out=os.path.join(dir_output, 'bars--TLXs.png'))
     return wllevels_anomscores, wllevels_diffs
 
 
@@ -156,7 +234,6 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
         ttypes_ascores, ttypes_diffs = run_subject(config=config,
                                                    df_train=subjects_dfs_train[subj],
                                                    dir_output=dir_output_subj,
-                                                   wllevels_tlx=None,  #config['subjects_wllevels_tlx'][subj],
                                                    filenames_data=filenames_data,
                                                    features_models=subjects_features_models[subj],
                                                    save_results=config['make_plots'])
@@ -169,15 +246,16 @@ def run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, su
     print(f"\nsubjects_wldiffs...")
     subj_maxlen = max([len(subj) for subj in subjects_wldiffs])
     for subj, wld in subjects_wldiffs.items():
-        neg = '' if wld>0 else '**'
+        neg = '' if wld > 0 else '**'
         diff_maxlen = subj_maxlen - len(subj)
-        spaces_add = ' '*diff_maxlen
+        spaces_add = ' ' * diff_maxlen
         print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     diff_from_WL0 = sum(subjects_wldiffs.values())
     # Save Results
     preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
     agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
-    dir_out_summary = os.path.join(dir_out, f"SUMMARY -- alg={config['alg']}; preproc={preproc}; agg={agg}; score={round(diff_from_WL0, 3)}")
+    dir_out_summary = os.path.join(dir_out,
+                                   f"SUMMARY -- alg={config['alg']}; preproc={preproc}; agg={agg}; score={round(diff_from_WL0, 3)}")
     path_out_subjects_wldiffs = os.path.join(dir_out_summary, 'subjects_wldiffs.csv')
     os.makedirs(dir_out_summary, exist_ok=True)
     pd.DataFrame(subjects_wldiffs, index=[0]).to_csv(path_out_subjects_wldiffs)
@@ -479,7 +557,7 @@ def get_ascore_entropy(_, row, feat, model, data_test, pred_prev, LAG=3):
 def get_ascore_pyod(_, data, model):
     aScore = [0]
     if _ > 0:
-        aScore = model.decision_function(data[(_-1):_])  # outlier scores
+        aScore = model.decision_function(data[(_ - 1):_])  # outlier scores
     return abs(aScore[0])
 
 
@@ -523,7 +601,7 @@ def get_subjects_data(config, subjects, dir_out):
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
         # Subtract mean
         filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['testtypes_filenames'],
-                                   time_col=config['time_col'])
+                                       time_col=config['time_col'])
         # Preprocess
         filenames_data = preprocess_data(filenames_data, config['preprocess'])
         # Train models
@@ -574,12 +652,11 @@ def has_expected_files(dir_in, files_exp):
 
 
 def run_wl(config, dir_in, dir_out):
-
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
     files_exp = list(config['testtypes_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
-    subjects = [s for s in subjects_all if has_expected_files( os.path.join(dir_in, s), files_exp)]
+    subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
     subjects_invalid = [s for s in subjects_all if s not in subjects]
     print(f"Subjects Found (valid) = {len(subjects)}")
     for s in sorted(subjects):
