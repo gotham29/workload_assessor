@@ -56,8 +56,8 @@ def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_data):
     return df_train
 
 
-def get_ttypesdf(subj, subj_ttypesdiffs):
-    subj_df = pd.DataFrame(subj_ttypesdiffs)
+def get_wllevelsdf(subj, subj_wllevels_diffs):
+    subj_df = pd.DataFrame(subj_wllevels_diffs)
     col_vals = [subj]+['' for _ in range(subj_df.shape[0]-1)]
     subj_df.insert(len(subj_df.columns), 'subject', col_vals)
     return subj_df
@@ -71,24 +71,24 @@ def clip_data(filenames_data:dict, clip_percents:dict):
     return filenames_data
 
 
-def get_testtypes_alldata(testtypes_anomscores:dict, testtypes_filenames:dict, filenames_data:dict, columns_model:list, dir_output:str, save_results=False):
+def get_wllevels_alldata(wllevels_anomscores:dict, wllevels_filenames:dict, filenames_data:dict, columns_model:list, dir_output:str, save_results=False):
     dir_out = os.path.join(dir_output, 'data_files')
-    testtypes_alldata = {}
-    # print('  test data...')
-    for ttype in testtypes_anomscores:
-        ttype_filenames = testtypes_filenames[ttype]
-        ttype_datas = []
-        # print(f"    type = {ttype}")
-        for fn in ttype_filenames:
-            ttype_datas.append( filenames_data[fn] )
-            # print(f"      {fn}")
-        ttype_data = pd.concat(ttype_datas, axis=0)[columns_model]
-        testtypes_alldata[ttype] = ttype_data
+    wllevels_alldata = {}
+    print('  test data...')
+    for wllevel in wllevels_anomscores:
+        wllevel_filenames = wllevels_filenames[wllevel]
+        wllevel_datas = []
+        print(f"    wllevel = {wllevel}")
+        for fn in wllevel_filenames:
+            wllevel_datas.append(filenames_data[fn])
+            print(f"      {fn}")
+        wllevel_data = pd.concat(wllevel_datas, axis=0)[columns_model]
+        wllevels_alldata[wllevel] = wllevel_data
         # save data
         if save_results:
-            path_out = os.path.join(dir_out, f"{ttype}.csv")
-            ttype_data.to_csv(path_out)
-    return testtypes_alldata
+            path_out = os.path.join(dir_out, f"{wllevel}.csv")
+            wllevel_data.to_csv(path_out)
+    return wllevels_alldata
 
 
 def prep_data(data, cfg_prep):

@@ -32,11 +32,9 @@ def plot_data(filenames_data: dict, file_type: str, dir_output: str):
 
 def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
     outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
-                      'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png'),
-                      # 'WLScores': os.path.join(out_dir, 'TaskWL_aggScore.png')
-                      }
+                      'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png')}
     # Plot -- Violin
-    outtypes_data = {ot: [] for ot in outtypes_paths if ot != 'WLScores'}
+    outtypes_data = {ot: [] for ot in outtypes_paths}
     for testlevel, ascores in data_plot1.items():
         df_dict_1 = {'Task WL': [testlevel for _ in range(len(ascores))],
                      'Anomaly Score': ascores}
@@ -51,7 +49,6 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     df_1 = pd.concat(outtypes_data['aScores'], axis=0)
     if data_plot2 != {}:
         df_2 = pd.concat(outtypes_data['pCounts'], axis=0)
-    # plt.cla()
     vplot_anom = sns.violinplot(data=df_1,
                                 x="Task WL",
                                 y='Anomaly Score')
@@ -85,22 +82,6 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         outp = outtypes_paths[outtype].replace('.png', '--box.png')
         plt.savefig(outp, bbox_inches="tight")
         plt.close()
-    # Plot -- Combined
-    # if data_plot2 != {}:
-    #     plt.cla()
-    #     plt.xlabel(xlabel)
-    #     plt.ylabel(ylabel)
-    #     ttypes_scores = {}
-    #     for ttype, ascores in data_plot1.items():
-    #         pcounts = data_plot2[ttype]
-    #         if np.median(ascores) == 0:
-    #             score = 0
-    #         else:
-    #             score = 1 / (np.median(pcounts) / np.median(ascores))
-    #         ttypes_scores[ttype] = score
-    #     plt.bar(range(len(ttypes_scores)), list(ttypes_scores.values()), align='center')
-    #     plt.xticks(range(len(ttypes_scores)), list(ttypes_scores.keys()))
-    #     plt.savefig(outtypes_paths['WLScores'], bbox_inches="tight")
 
 
 def plot_lines(wllevels_anomscores_: dict,

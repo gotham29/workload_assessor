@@ -12,7 +12,7 @@ preprocess:
   difference: false  #1
   standardize: false
   movingaverage: false  #23
-  autocorr_thresh: 1
+  autocorr_thresh: 0.5
 
 windows_ascore:
   recent: 7
@@ -150,7 +150,7 @@ clip_percents:
   start: 0
   end: 0
 
-testtypes_filenames:
+wllevels_filenames:
   training:
     - training1.xls
     - training2.xls
@@ -417,4 +417,4 @@ file_type: xls
 scale: false
 do_gridsearch: false
 learn_in_testing: false
-make_plots: true
+make_plots: false
