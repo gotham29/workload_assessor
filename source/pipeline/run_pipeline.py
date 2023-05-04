@@ -233,7 +233,7 @@ def get_scores(subjects_wldiffs):
         spaces_add = ' ' * diff_maxlen
         print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     percent_change_from_baseline = round(sum(subjects_wldiffs.values()), 1)
-    subjects_wldiffs_positive = len({subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0})
+    subjects_wldiffs_positive = {subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0}
     percent_subjs_incr_from_baseline = round(100*len(subjects_wldiffs_positive) / len(subjects_wldiffs), 1)
     return percent_change_from_baseline, percent_subjs_incr_from_baseline
 
@@ -245,7 +245,7 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     subjects_wllevelsascores = {}
     for subj, filenames_data in subjects_filenames_data.items():
         dir_output_subj = os.path.join(dir_out, subj)
-        wllevels_ascores, wllevels_diffs = run_subject(config=cfg,
+        wllevels_ascores, wllevels_diffs = run_subject(cfg=cfg,
                                                        df_train=subjects_dfs_train[subj],
                                                        dir_output=dir_output_subj,
                                                        filenames_data=filenames_data,
