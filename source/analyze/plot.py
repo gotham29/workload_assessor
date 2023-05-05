@@ -60,7 +60,7 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
     plt.ylim(0, 1.0)
     plt.savefig(outtypes_paths['aScores'].replace('.png', '--violin.png'), bbox_inches="tight")
     plt.close()
-    if data_plot2 != {}:
+    if len(data_plot2['baseline']) > 0:
         vplot_pred = sns.violinplot(data=df_2,
                                     x="Task WL",
                                     y='Prediction Count')
@@ -228,10 +228,12 @@ def plot_lines(wllevels_anomscores_: dict,
         plt.close()
 
 
-def plot_bars(mydict, title, xlabel, ylabel, path_out):
-    # plt.cla()
-    plt.bar(range(len(mydict)), list(mydict.values()), align='center')
-    plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=90)
+def plot_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None):
+    if colors is None:
+        colors = ['black' for _ in range(len(mydict))]
+    plt.rcParams["figure.figsize"] = [7.00, 3.50]
+    plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
+    plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

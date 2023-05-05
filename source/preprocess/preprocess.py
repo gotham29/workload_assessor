@@ -8,6 +8,26 @@ _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..
 sys.path.append(_SOURCE_DIR)
 
 
+def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
+    filenames_wllevels = {}
+    wllevels_means = {}
+    for wl, filenames in wllevels_filenames.items():
+        dfs = [filenames_data[f] for f in filenames]
+        df = pd.concat(dfs, axis=0)
+        feats_means = {feat: m for feat, m in dict(df.mean()).items() if feat != time_col}
+        wllevels_means[wl] = feats_means
+        for f in filenames:
+            filenames_wllevels[f] = wl
+    for fn, data in filenames_data.items():
+        if fn not in filenames_wllevels:
+            continue
+        wl = filenames_wllevels[fn]
+        feats_means = wllevels_means[wl]
+        for feat, mean in feats_means.items():
+            data[feat] = data[feat] - mean
+    return filenames_data
+
+
 def get_autocorr(data_t1, data_t0):
     diff = data_t1-data_t0
     diff_pct = (diff / data_t0)*100

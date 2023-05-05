@@ -26,6 +26,15 @@ def get_args(
     return args
 
 
+def combine_dicts(dicts):
+    d1 = dicts[0]
+    d_comb = {k: [] for k in d1}
+    for d_ in dicts:
+        for k, v in d_.items():
+            d_comb[k] += v
+    return d_comb
+
+
 def load_files(dir_input: str, file_type: str, read_func: str):
     filenames_data = {}
     fdir_allfiles = [f for f in os.listdir(dir_input)]
