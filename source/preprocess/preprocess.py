@@ -101,15 +101,15 @@ def prep_data(data, cfg_prep):
     return data
 
 
-def preprocess_data(filenames_data, cfg_prep):
+def preprocess_data(filenames_data, cfg_prep, columns_model):
     filenames_data2 = {}
     for fn, data in filenames_data.items():
         data = prep_data(data, cfg_prep)
-        diff_pcts = get_autocorrs(data['steering angle'].values)
-        data_selected = select_by_autocorr(data['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+        diff_pcts = get_autocorrs(data[ columns_model[0] ].values)  #data['steering angle'].values
+        data_selected = select_by_autocorr(data[ columns_model[0] ].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])  #data['steering angle'].values
         percent_data_dropped = 1 - (len(data_selected) / float(len(data)))
         print(f"        % data DROPPED = {round( percent_data_dropped*100 , 1)}")
-        data = pd.DataFrame({'steering angle': data_selected})
+        data = pd.DataFrame({ columns_model[0] : data_selected})  #pd.DataFrame({'steering angle': data_selected})
         filenames_data2[fn] = data.astype('float32')
     return filenames_data2
 

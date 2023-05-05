@@ -9,10 +9,12 @@ import pandas as pd
 import seaborn as sns
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+_TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
 sys.path.append(_SOURCE_DIR)
+sys.path.append(_TS_SOURCE_DIR)
 
 from source.preprocess.preprocess import preprocess_data, diff_data, standardize_data, movingavg_data
-from source.utils.utils import load_config
+from ts_source.utils.utils import load_config
 
 def plot_data(filenames_data: dict, file_type: str, dir_output: str):
     dir_out = os.path.join(dir_output, 'data_plots')

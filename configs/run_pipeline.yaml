@@ -4,10 +4,6 @@ alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
-hzs:
-  baseline: 100
-  convertto: 5  #6.67
-
 preprocess:
   difference: false  #1
   standardize: false
@@ -145,6 +141,10 @@ colnames:
 
 columns_model:
   - steering angle
+
+hzs:
+  baseline: 100
+  convertto: 5  #6.67
 
 clip_percents:
   start: 0
@@ -365,49 +365,7 @@ htm_config_user:
     running:  #110000
     sampling:  #10000
 
-subjects_wllevels_tlx:
-  zaychik:
-    Level 0: 0.1
-    Level 1: 1.1
-    Level 2: 2.1
-    Level 3: 3.1
-  rian:
-    Level 0: 0.2
-    Level 1: 1.2
-    Level 2: 2.2
-    Level 3: 3.2
-  miller:
-    Level 0: 1.3
-    Level 1: 2.3
-    Level 2: 3.3
-    Level 3: 3.3
-  jeremy:
-    Level 0: 0.4
-    Level 1: 1.4
-    Level 2: 2.4
-    Level 3: 3.4
-  jacob:
-    Level 0: 0.5
-    Level 1: 1.5
-    Level 2: 2.5
-    Level 3: 3.5
-  mike:
-    Level 0: 0.5
-    Level 1: 1.5
-    Level 2: 2.5
-    Level 3: 3.5
-  hiroki:
-    Level 0: 0.6
-    Level 1: 1.6
-    Level 2: 2.6
-    Level 3: 3.6
-  heiserman:
-    Level 0: 0.7
-    Level 1: 1.7
-    Level 2: 2.7
-    Level 3: 3.7
-
-train_models: true
+train_models: false #true
 data_cap: 100000
 eval_metric: rmse
 forecast_horizon: 1

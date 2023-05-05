@@ -17,17 +17,18 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from darts import TimeSeries
 from source.model.model import train_save_models
-from source.utils.utils import get_args, load_config, load_files, make_dirs_subj
+from source.utils.utils import get_args, load_files, make_dirs_subj
 from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_wllevelsdf, get_dftrain, \
     preprocess_data, get_wllevels_alldata
 from source.analyze.tlx import make_boxplots
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_wllevels_diffs, get_ascores_entropy, get_ascores_naive, \
     get_ascores_pyod, get_ascore_pyod
-from ts_source.utils.utils import add_timecol, load_models as load_models_darts
+from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
 from ts_source.preprocess.preprocess import reshape_datats
 from ts_source.model.model import get_model_lag, LAG_MIN, get_modname, get_preds_rolling
 from htm_source.pipeline.htm_batch_runner import run_batch
+from htm_source.utils.fs import load_models as load_models_htm
 
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
@@ -92,7 +93,7 @@ def get_wllevels_outputs(filenames_ascores, filenames_predcounts, wllevels_filen
     return wllevels_ascores, wllevels_pcounts, wllevels_totalascores2
 
 
-def get_filenames_outputs(config,
+def get_filenames_outputs(cfg,
                           filenames_data,
                           features_models):
     filenames_ascores = {fn: [] for fn in filenames_data if 'static' in fn}
@@ -100,27 +101,28 @@ def get_filenames_outputs(config,
 
     for fn in filenames_ascores:
         data = add_timecol(filenames_data[fn], config['time_col'])
-        if config['alg'] == 'HTM':
-            feats_models, features_outputs = run_batch(cfg_user=config['htm_config_user'],
-                                                       cfg_model=config['htm_config_model'],
+        if cfg['alg'] == 'HTM':
+            feats_models, features_outputs = run_batch(cfg_user=cfg['htm_config_user'],
+                                                       cfg_model=cfg['htm_config_model'],
                                                        config_path_user=None,
                                                        config_path_model=None,
-                                                       learn=config['learn_in_testing'],
+                                                       learn=cfg['learn_in_testing'],
                                                        data=data,
                                                        iter_print=1000,
                                                        features_models=features_models)
-            ascores = features_outputs[f"megamodel_features={len(config['columns_model'])}"]['anomaly_score']
-            pcounts = features_outputs[f"megamodel_features={len(config['columns_model'])}"]['pred_count']
+            ascores = features_outputs[f"megamodel_features={len(cfg['columns_model'])}"]['anomaly_score']
+            pcounts = features_outputs[f"megamodel_features={len(cfg['columns_model'])}"]['pred_count']
             filenames_pcounts[fn] += pcounts
 
         elif config['alg'] == 'SteeringEntropy':
-            ascores = get_ascores_entropy(data['steering angle'].values)
+            ascores = get_ascores_entropy(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
 
         elif config['alg'] == 'Naive':
-            ascores = get_ascores_naive(data['steering angle'].values)
+            ascores = get_ascores_naive(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
 
         elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
-            ascores = get_ascores_pyod(data[['steering angle']], features_models['steering angle'])
+            ascores = get_ascores_pyod(data[cfg['columns_model']], features_models[
+                cfg['columns_model'][0]])  # data[['steering angle']], features_models['steering angle']
 
         else:  # ts_source alg
             for feat, model in features_models.items():  # Assumes single model
@@ -131,11 +133,12 @@ def get_filenames_outputs(config,
                                       df=data,
                                       features=features,
                                       LAG=max(LAG_MIN, get_model_lag(mod_name, model)),
-                                      time_col=config['time_col'],
-                                      forecast_horizon=config['forecast_horizon'])
+                                      time_col=cfg['time_col'],
+                                      forecast_horizon=cfg['forecast_horizon'])
             preds_df = pd.DataFrame(preds, columns=list(features))
             data_ = data.tail(preds_df.shape[0])
-            ascores = list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
+            ascores = list(abs(data_[cfg['columns_model'][0]].values - preds_df[cfg['columns_model'][
+                0]].values))  # list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
 
         filenames_ascores[fn] = ascores
 
@@ -234,7 +237,7 @@ def get_scores(subjects_wldiffs):
         print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     percent_change_from_baseline = round(sum(subjects_wldiffs.values()), 1)
     subjects_wldiffs_positive = {subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0}
-    percent_subjs_incr_from_baseline = round(100*len(subjects_wldiffs_positive) / len(subjects_wldiffs), 1)
+    percent_subjs_incr_from_baseline = round(100 * len(subjects_wldiffs_positive) / len(subjects_wldiffs), 1)
     return percent_change_from_baseline, percent_subjs_incr_from_baseline
 
 
@@ -589,36 +592,40 @@ def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
     return aScore, pred_prev
 
 
-def get_subjects_data(config, subjects, dir_out):
+def get_subjects_data(cfg, subjects, dir_out):
     print('Gathering subjects data...')
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
-        dir_input = os.path.join(config['dirs']['input'], subj)
+
+        if subj != 'aranoff':
+            continue
+
+        dir_input = os.path.join(cfg['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
         folders = ['anomaly', 'models', 'scalers', 'data']
         dirs_out = [os.path.join(dir_output, f) for f in folders]
         for d in dirs_out:
             os.makedirs(d, exist_ok=True)
         # Load
-        filenames_data = load_files(dir_input=dir_input, file_type=config['file_type'], read_func=config['read_func'])
+        filenames_data = load_files(dir_input=dir_input, file_type=cfg['file_type'], read_func=cfg['read_func'])
         # Update columns
-        filenames_data = update_colnames(filenames_data=filenames_data, colnames=config['colnames'])
+        filenames_data = update_colnames(filenames_data=filenames_data, colnames=cfg['colnames'])
         # Agg
-        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=config['hzs']['baseline'],
-                                  hz_convertto=config['hzs']['convertto'])
+        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
+                                  hz_convertto=cfg['hzs']['convertto'])
         # Clip
-        filenames_data = clip_data(filenames_data=filenames_data, clip_percents=config['clip_percents'])
+        filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
         # Subtract mean
-        filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=config['wllevels_filenames'],
-                                       time_col=config['time_col'])
+        filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
+                                       time_col=cfg['time_col'])
         # Preprocess
-        filenames_data = preprocess_data(filenames_data, config['preprocess'])
+        filenames_data = preprocess_data(filenames_data, cfg['preprocess'], cfg['columns_model'])
         # Train models
-        df_train = get_dftrain(wllevels_filenames=config['wllevels_filenames'], filenames_data=filenames_data,
-                               columns_model=config['columns_model'], dir_data=os.path.join(dir_output, 'data'))
+        df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
+                               columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
         # Add timecol
-        df_train = add_timecol(df_train, config['time_col'])
+        df_train = add_timecol(df_train, cfg['time_col'])
         # Store
         subjects_dfs_train[subj] = df_train
         subjects_filenames_data[subj] = filenames_data

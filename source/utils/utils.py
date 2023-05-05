@@ -2,7 +2,6 @@ import argparse
 import sys
 import os
 
-
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
 _HTM_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'htm_streamer')
@@ -10,9 +9,6 @@ _HTM_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
 sys.path.append(_SOURCE_DIR)
 sys.path.append(_TS_SOURCE_DIR)
 sys.path.append(_HTM_SOURCE_DIR)
-
-from ts_source.utils.utils import make_dir, load_config
-from htm_source.utils.fs import load_models, load_pickle_object_as_data, save_data_as_pickle
 
 
 def get_args(
@@ -41,7 +37,7 @@ def load_files(dir_input: str, file_type: str, read_func: str):
     return filenames_data
 
 
-def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models']):  #, 'scalers'
+def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models']):
     os.makedirs(dir_out, exist_ok=True)
     for out in outputs:
         dir_out_type = os.path.join(dir_out, out)
