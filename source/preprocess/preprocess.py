@@ -8,23 +8,23 @@ _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..
 sys.path.append(_SOURCE_DIR)
 
 
-def subtract_mean(filenames_data, wllevels_filenames, time_col='timestamp'):
+def subtract_median(filenames_data, wllevels_filenames, time_col='timestamp'):
     filenames_wllevels = {}
-    wllevels_means = {}
+    wllevels_medians = {}
     for wl, filenames in wllevels_filenames.items():
         dfs = [filenames_data[f] for f in filenames]
         df = pd.concat(dfs, axis=0)
-        feats_means = {feat: m for feat, m in dict(df.mean()).items() if feat != time_col}
-        wllevels_means[wl] = feats_means
+        feats_medians = {feat: m for feat, m in dict(df.median()).items() if feat != time_col}
+        wllevels_medians[wl] = feats_medians
         for f in filenames:
             filenames_wllevels[f] = wl
     for fn, data in filenames_data.items():
         if fn not in filenames_wllevels:
             continue
         wl = filenames_wllevels[fn]
-        feats_means = wllevels_means[wl]
-        for feat, mean in feats_means.items():
-            data[feat] = data[feat] - mean
+        feats_medians = wllevels_medians[wl]
+        for feat, median in feats_medians.items():
+            data[feat] = data[feat] - median
     return filenames_data
 
 
@@ -89,6 +89,26 @@ def clip_data(filenames_data:dict, clip_percents:dict):
         clip_count_end = data.shape[0] - int(data.shape[0] * (clip_percents['end']/100))
         filenames_data[fname] = data[clip_count_start:clip_count_end]
     return filenames_data
+
+
+def clip_start(filenames_data, cfg):
+    filenames_data_ = {}
+    for fn, data in filenames_data.items():
+        d_array = data[cfg['columns_model'][0]].values
+        start_positive = True if d_array[0]>0 else False
+        cross_zero_ind = None
+        for _,val in enumerate(d_array):
+            if cross_zero_ind is not None:
+                break
+            if start_positive:
+                if val < 0:
+                    cross_zero_ind = _
+            else:
+                if val > 0:
+                    cross_zero_ind = _
+        data = data[cross_zero_ind:]
+        filenames_data_[fn] = data[_:]
+    return filenames_data_
 
 
 def get_wllevels_alldata(wllevels_anomscores:dict, wllevels_filenames:dict, filenames_data:dict, columns_model:list, dir_output:str, save_results=False):

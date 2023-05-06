@@ -17,8 +17,8 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_wllevelsdf, get_dftrain, \
-    preprocess_data, get_wllevels_alldata, subtract_mean
+from source.preprocess.preprocess import update_colnames, agg_data, clip_data, clip_start, get_wllevelsdf, get_dftrain, \
+    preprocess_data, get_wllevels_alldata, subtract_median
 from source.analyze.tlx import make_boxplots
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_wllevels_diffs, get_ascores_entropy, get_ascores_naive, \
@@ -192,7 +192,7 @@ def get_scores(subjects_wldiffs, subjects_wllevelsascores):
                 baseline_lowest = False
         if baseline_lowest:
             subjs_baseline_lowest.append(subj)
-    percent_subjects_baseline_lowest = round(100*len(subjs_baseline_lowest) / len(subjects_wllevelsascores))
+    percent_subjects_baseline_lowest = round(100 * len(subjs_baseline_lowest) / len(subjects_wllevelsascores))
     return percent_change_from_baseline, percent_subjects_increased_from_baseline, percent_subjects_baseline_lowest
 
 
@@ -216,7 +216,8 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     # Get Scores
     subjects_wldiffs = get_subjects_wldiffs(subjects_wllevelsascores)
     subjects_wldiffs_capped = {k: min(v, 1000) for k, v in subjects_wldiffs.items()}
-    percent_change_from_baseline, percent_subjects_increased_from_baseline, percent_subjects_baseline_lowest = get_scores(subjects_wldiffs, subjects_wllevelsascores)
+    percent_change_from_baseline, percent_subjects_increased_from_baseline, percent_subjects_baseline_lowest = get_scores(
+        subjects_wldiffs, subjects_wllevelsascores)
     # Save Results
     preproc = '-'.join([f"{k}={v}" for k, v in cfg['preprocess'].items() if v])
     agg = int(cfg['hzs']['baseline'] / cfg['hzs']['convertto'])
@@ -521,8 +522,8 @@ def get_subjects_data(cfg, subjects, dir_out):
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
 
-        if subj != 'ashraf':
-            continue
+        # if subj != 'dighavkar':
+        #     continue
 
         dir_input = os.path.join(cfg['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
@@ -537,11 +538,15 @@ def get_subjects_data(cfg, subjects, dir_out):
         # Agg
         filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
                                   hz_convertto=cfg['hzs']['convertto'])
-        # Clip
+        # Clip both ends
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
         # Subtract mean
-        filenames_data = subtract_mean(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
+        filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
                                        time_col=cfg['time_col'])
+        
+        # Clip start
+        # filenames_data2 = clip_start(filenames_data, cfg)
+
         # Preprocess
         filenames_data = preprocess_data(filenames_data, cfg['preprocess'], cfg['columns_model'])
         # Train models
