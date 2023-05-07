@@ -1,7 +1,8 @@
 import os
 import sys
-import pandas as pd
 
+import numpy as np
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -145,14 +146,17 @@ def prep_data(data, cfg_prep):
 
 def preprocess_data(filenames_data, cfg_prep, columns_model):
     filenames_data2 = {}
+    percents_data_dropped = []
     for fn, data in filenames_data.items():
         data = prep_data(data, cfg_prep)
         diff_pcts = get_autocorrs(data[ columns_model[0] ].values)  #data['steering angle'].values
         data_selected = select_by_autocorr(data[ columns_model[0] ].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])  #data['steering angle'].values
         percent_data_dropped = 1 - (len(data_selected) / float(len(data)))
-        print(f"        % data DROPPED = {round( percent_data_dropped*100 , 1)}")
+        percents_data_dropped.append(percent_data_dropped)
         data = pd.DataFrame({ columns_model[0] : data_selected})  #pd.DataFrame({'steering angle': data_selected})
         filenames_data2[fn] = data.astype('float32')
+    percent_data_dropped = np.sum(percents_data_dropped) / len(filenames_data)
+    print(f"  % data DROPPED = {round(percent_data_dropped * 100, 1)}")
     return filenames_data2
 
 

@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: ARIMA
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -8,7 +8,7 @@ preprocess:
   difference: false  #1
   standardize: false
   movingaverage: false  #23
-  autocorr_thresh: 0.25
+  autocorr_thresh: 0.5
 
 windows_ascore:
   recent: 7
