@@ -30,6 +30,8 @@ def subtract_median(filenames_data, wllevels_filenames, time_col='timestamp'):
 
 def get_autocorr(data_t1, data_t0):
     diff = data_t1-data_t0
+    if data_t0 == 0:
+        data_t0 = 0.001
     diff_pct = (diff / data_t0)*100
     return diff_pct
 

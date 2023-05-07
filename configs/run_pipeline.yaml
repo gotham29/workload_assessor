@@ -8,7 +8,7 @@ preprocess:
   difference: false  #1
   standardize: false
   movingaverage: false  #23
-  autocorr_thresh: 0.5
+  autocorr_thresh: 0.25
 
 windows_ascore:
   recent: 7

@@ -1,6 +1,7 @@
 import argparse
-import sys
 import os
+import shutil
+import sys
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -51,3 +52,10 @@ def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'mod
     for out in outputs:
         dir_out_type = os.path.join(dir_out, out)
         os.makedirs(dir_out_type, exist_ok=True)
+
+
+def delete_dir_subj(dir_out, subj):
+    dirs_subj = [f for f in os.listdir(dir_out) if subj in f]
+    for subj in dirs_subj:
+        d_remove = os.path.join(dir_out, subj)
+        shutil.rmtree(d_remove)
