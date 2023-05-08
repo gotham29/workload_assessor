@@ -16,7 +16,7 @@ sys.path.append(_TS_SOURCE_DIR)
 sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
-from source.utils.utils import get_args, load_files, make_dirs_subj, delete_dir_subj, combine_dicts
+from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
 from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_wllevelsdf, get_dftrain, \
     preprocess_data, get_wllevels_alldata, subtract_median
 from source.analyze.tlx import make_boxplots
@@ -171,13 +171,13 @@ def run_subject(cfg, df_train, dir_output, filenames_data, features_models, save
 
 
 def get_scores(subjects_wldiffs, subjects_wllevelsascores):
-    print(f"\nsubjects_wldiffs...")
-    subj_maxlen = max([len(subj) for subj in subjects_wldiffs])
-    for subj, wld in subjects_wldiffs.items():
-        neg = '' if wld > 0 else '**'
-        diff_maxlen = subj_maxlen - len(subj)
-        spaces_add = ' ' * diff_maxlen
-        print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
+    # print(f"\nsubjects_wldiffs...")
+    # subj_maxlen = max([len(subj) for subj in subjects_wldiffs])
+    # for subj, wld in subjects_wldiffs.items():
+    #     neg = '' if wld > 0 else '**'
+    #     diff_maxlen = subj_maxlen - len(subj)
+    #     spaces_add = ' ' * diff_maxlen
+    #     print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     # percent_change_from_baseline
     percent_change_from_baseline = round(sum(subjects_wldiffs.values()))
     # subjects_wldiffs_positive
@@ -239,15 +239,15 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out)
 
     # Save Results
-    preproc = '-'.join([f"{k}={v}" for k, v in cfg['preprocess'].items() if v])
-    agg = int(cfg['hzs']['baseline'] / cfg['hzs']['convertto'])
-    dir_out_summary = os.path.join(dir_out,
-                                   f"SUMMARY -- alg={cfg['alg']}; preproc={preproc}; agg={agg}; %change_from_baseline={percent_change_from_baseline}; %subjects_increased_from_baseline={percent_subjects_increased_from_baseline}; %subjects_baseline_lowest={percent_subjects_baseline_lowest}")
-    os.makedirs(dir_out_summary, exist_ok=True)
-    path_out_subjects_wldiffs = os.path.join(dir_out_summary, 'subjects_wldiffs.csv')
+    scores = pd.DataFrame({'percent_change_from_baseline':percent_change_from_baseline,
+              'percent_subjects_increased_from_baseline':percent_subjects_increased_from_baseline,
+              'percent_subjects_baseline_lowest':percent_subjects_baseline_lowest}, index=[0])
+    path_out_scores = os.path.join(dir_out, 'scores.csv')
+    scores.to_csv(path_out_scores)
+    path_out_subjects_wldiffs = os.path.join(dir_out, 'subjects_wldiffs.csv')
     df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0])
     df_subjects_wldiffs.to_csv(path_out_subjects_wldiffs)
-    make_save_plots(dir_out=dir_out_summary,
+    make_save_plots(dir_out=dir_out,
                     dfs_wllevelsdiffs=dfs_wllevelsdiffs,
                     subjects_wldiffs=subjects_wldiffs_capped,
                     percent_change_from_baseline=percent_change_from_baseline,
@@ -536,7 +536,7 @@ def plot_wlchangepoints(columns_model, file_type, testfile, data_test, dir_out_s
         plt.close()
 
 
-def get_subjects_data(cfg, subjects, dir_out):
+def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     print('Gathering subjects data...')
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
@@ -568,7 +568,7 @@ def get_subjects_data(cfg, subjects, dir_out):
         # filenames_data2 = clip_start(filenames_data, cfg)
 
         # Preprocess
-        filenames_data = preprocess_data(filenames_data, cfg['preprocess'], cfg['columns_model'])
+        filenames_data = preprocess_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], cfg['columns_model'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                                columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
@@ -616,10 +616,10 @@ def has_expected_files(dir_in, files_exp):
         return False
 
 
-def run_wl(config, dir_in, dir_out):
+def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
-    files_exp = list(config['wllevels_filenames'].values())
+    files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
     subjects_invalid = [s for s in subjects_all if s not in subjects]
@@ -629,14 +629,31 @@ def run_wl(config, dir_in, dir_out):
     print(f"Subjects Found (invalid) = {len(subjects_invalid)}")
     for s in sorted(subjects_invalid):
         print(f"  --> {s}")
+    subjects_spacesadd = {}
+    subj_maxlen = max([len(subj) for subj in subjects])
+    for subj in subjects:
+        diff_maxlen = subj_maxlen - len(subj)
+        subjects_spacesadd[subj] = ' ' * diff_maxlen
+
+    # make alg dir & reset dir_out
+    if make_dir_alg:
+        dir_out_alg = os.path.join(dir_out, cfg['alg'])
+        os.makedirs(dir_out_alg, exist_ok=True)
+        dir_out = dir_out_alg
+
+    # make metadata dir
+    if make_dir_metadata:
+        preproc = '-'.join([f"{k}={v}" for k, v in cfg['preprocess'].items() if v])
+        metadata_dir = os.path.join(dir_out, f"preproc--{preproc}; hz={cfg['hzs']['convertto']}")
+        os.makedirs(metadata_dir, exist_ok=True)
+        dir_out = metadata_dir
 
     # Make subjects' output dirs
     for subj in subjects:
-        delete_dir_subj(dir_out, subj)
         make_dirs_subj(os.path.join(dir_out, subj))
 
     # Get subjects data
-    subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, dir_out)
+    subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd, dir_out)
 
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
@@ -667,7 +684,7 @@ if __name__ == '__main__':
     config['read_func'] = FILETYPES_READFUNCS[config['file_type']]
 
     # Set output dir
-    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'])
+    dir_out = os.path.join(config['dirs']['output'], config['mode'])  # ,config['alg']
     os.makedirs(dir_out, exist_ok=True)
 
     if config['alg'] == 'HTM' and config['do_gridsearch']:
@@ -678,4 +695,4 @@ if __name__ == '__main__':
                                          PERMDECS=config['htm_gridsearch']['PERMDEC='],
                                          PADDINGS=config['htm_gridsearch']['PADDING%='])
     else:
-        run_wl(config=config, dir_in=config['dirs']['input'], dir_out=dir_out)
+        run_wl(cfg=config, dir_in=config['dirs']['input'], dir_out=dir_out)

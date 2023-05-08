@@ -144,7 +144,7 @@ def prep_data(data, cfg_prep):
     return data
 
 
-def preprocess_data(filenames_data, cfg_prep, columns_model):
+def preprocess_data(subj, spaces_add, filenames_data, cfg_prep, columns_model):
     filenames_data2 = {}
     percents_data_dropped = []
     for fn, data in filenames_data.items():
@@ -156,7 +156,7 @@ def preprocess_data(filenames_data, cfg_prep, columns_model):
         data = pd.DataFrame({ columns_model[0] : data_selected})  #pd.DataFrame({'steering angle': data_selected})
         filenames_data2[fn] = data.astype('float32')
     percent_data_dropped = np.sum(percents_data_dropped) / len(filenames_data)
-    print(f"  % data DROPPED = {round(percent_data_dropped * 100, 1)}")
+    print(f"  {subj}{spaces_add} --> %data DROPPED: {round(percent_data_dropped * 100, 1)}")
     return filenames_data2
 
 
