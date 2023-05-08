@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: LightGBMModel
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -378,14 +378,3 @@ scale: false
 do_gridsearch: false
 learn_in_testing: false
 make_plots: true
-
-#vals = [
-#8450,
-#7325,
-#6299,
-#5881,
-#5847,
-#6724,
-#7733,
-#]
-#np.mean(vals)
