@@ -231,13 +231,15 @@ def plot_lines(wllevels_anomscores_: dict,
 def plot_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None, print_barheights=True):
     if colors is None:
         colors = ['black' for _ in range(len(mydict))]
+    mydict = {k:round(v,3) for k,v in mydict.items()}
+    plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)
     if print_barheights:
         xlocs = [i+1 for i in range(0,len(mydict))]
         for i, v in enumerate(list(mydict.values())):
-            plt.text(xlocs[i] - 0.25, v + 0.01, str(v))
+            plt.text(xlocs[i]-1.15, v + 0.1, str(v))
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
