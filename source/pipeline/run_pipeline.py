@@ -19,7 +19,7 @@ from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
 from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_wllevelsdf, get_dftrain, \
     preprocess_data, get_wllevels_alldata, subtract_median
-from source.analyze.tlx import make_boxplots
+from source.analyze.tlx import make_boxplots, save_tlx_overlaps
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_wllevels_diffs, get_ascores_entropy, get_ascores_naive, \
     get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_f1score, get_ascore_entropy, get_entropy_ts
@@ -235,13 +235,17 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     percent_subjects_increased_from_baseline = round(
         100 * len(subjects_increased_from_baseline) / len(subjects_wldiffs))
 
+    # get overlap w/TLX
+    mean_tlx_overlap = save_tlx_overlaps(subjects_wllevelsascores, dir_out)
+
     # rename dirs based on scores
     rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out)
 
     # Save Results
-    scores = pd.DataFrame({'percent_change_from_baseline':percent_change_from_baseline,
-              'percent_subjects_increased_from_baseline':percent_subjects_increased_from_baseline,
-              'percent_subjects_baseline_lowest':percent_subjects_baseline_lowest}, index=[0])
+    scores = pd.DataFrame({'percent_change_from_baseline': percent_change_from_baseline,
+                           'percent_subjects_increased_from_baseline': percent_subjects_increased_from_baseline,
+                           'percent_subjects_baseline_lowest': percent_subjects_baseline_lowest,
+                           'mean_tlx_overlap': mean_tlx_overlap}, index=[0])
     path_out_scores = os.path.join(dir_out, 'scores.csv')
     scores.to_csv(path_out_scores)
     path_out_subjects_wldiffs = os.path.join(dir_out, 'subjects_wldiffs.csv')
@@ -542,7 +546,7 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
 
-        # if subj not in ['aranoff', 'balaji', 'dorbala', 'charles']:
+        # if subj not in ['aranoff', 'balaji', 'charles', 'dorbala']:
         #     continue
 
         dir_input = os.path.join(cfg['dirs']['input'], subj)
@@ -568,7 +572,8 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
         # filenames_data2 = clip_start(filenames_data, cfg)
 
         # Preprocess
-        filenames_data = preprocess_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], cfg['columns_model'])
+        filenames_data = preprocess_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
+                                         cfg['columns_model'])
         # Train models
         df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                                columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
@@ -618,7 +623,7 @@ def has_expected_files(dir_in, files_exp):
 
 def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
-    subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f))]
+    subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
     files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
