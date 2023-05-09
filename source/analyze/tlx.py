@@ -1,6 +1,9 @@
+import collections
+import operator
 import os
 
-import pandas
+import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -37,6 +40,45 @@ def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
     plt.close()
 
 
+def save_tlx_overlaps(subjects_wllevelsascores, dir_out):
+    PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
+    df_tlx = pd.read_csv(PATH_TLX)
+    ## get tlx orders
+    subjects_tlxorders = {}
+    gpby_subj = df_tlx.groupby('Subject')
+    for subj, df_subj in gpby_subj:
+        subj = subj.lower().strip()
+        modes_scores = {}
+        gpby_mode = df_subj.groupby('Run Mode')
+        for mode, df_mode in gpby_mode:
+            modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode['Raw TLX'].values)
+        modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
+        subjects_tlxorders[subj] = list(modes_scores.keys())
+    ## get ml orders
+    subjects_mlorders = {}
+    for subj, wllevels_ascores in subjects_wllevelsascores.items():
+        subj = subj.lower().strip()
+        wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
+        wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
+        subjects_mlorders[subj] = list(wllevels_ascoresums.keys())
+    ## get TLX-ML overlaps
+    subjects_mltlx_overlaps = {}
+    for subj, ml_order in subjects_mlorders.items():
+        tlx_order = subjects_tlxorders[subj]
+        overlaps = 0
+        for _, wllevel in enumerate(ml_order):
+            if wllevel == tlx_order[_]:
+                overlaps += 1
+        overlap = overlaps / (len(ml_order) - 1)
+        subjects_mltlx_overlaps[subj] = min(round(overlap, 3), 1.0)
+    # save results
+    subjects_mltlx_overlaps = dict(collections.OrderedDict(sorted(subjects_mltlx_overlaps.items())))
+    df_overlaps = pd.DataFrame(subjects_mltlx_overlaps, ['overlaps']).T
+    path_out_overlps = os.path.join(dir_out, 'tlx_overlaps.csv')
+    df_overlaps.to_csv(path_out_overlps, index=True)
+    return 100 * round(np.mean(df_overlaps['overlaps']), 3)
+
+
 def main():
     """
 
@@ -47,10 +89,10 @@ def main():
     """
     columns = ["Subject", "Run #", "Run Mode", "Mental Demand", "Physical Demand", "Temporal Demand", "Performance",
                "Effort", "Frustration", "Raw TLX"]
-    dataframe = pandas.read_csv(PATH_TLX, usecols=columns)
+    dataframe = pd.read_csv(PATH_TLX, usecols=columns)
     newframe = dataframe.loc[1:, ["Subject", "Run Mode", "Raw TLX"]]
     nftlx = newframe.loc[1:, ["Raw TLX"]]
-    nftlx.apply(pandas.to_numeric)
+    nftlx.apply(pd.to_numeric)
 
     """ box plots for run mode - all subjects combined """
     path_out = os.path.join(DIR_OUT, f"*modes_compared.png")
@@ -58,7 +100,8 @@ def main():
     gpby_mode = newframe.groupby('Run Mode')
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-    make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out, suptitle='TLX Scores by Run Mode', ylim=(0, 1))
+    make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
+                  suptitle='TLX Scores by Run Mode', ylim=(0, 1))
 
     """ box plots for run mode score by subject """
     gpby_subj = newframe.groupby('Subject')
@@ -68,7 +111,8 @@ def main():
         gpby_mode = df_subj.groupby('Run Mode')
         for mode, df_mode in gpby_mode:
             modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-        make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None, ylim=(0, 1))
+        make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
+                      ylim=(0, 1))
 
 
 if __name__ == "__main__":
