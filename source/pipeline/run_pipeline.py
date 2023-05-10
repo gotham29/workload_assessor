@@ -17,8 +17,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, agg_data, clip_data, get_wllevelsdf, get_dftrain, \
-    preprocess_data, get_wllevels_alldata, subtract_median
+from source.preprocess.preprocess import update_colnames, get_wllevelsdf, preprocess_data, get_wllevels_alldata
 from source.analyze.tlx import make_boxplots, save_tlx_overlaps
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
 from source.analyze.anomaly import get_wllevels_diffs, get_ascores_entropy, get_ascores_naive, \
@@ -171,13 +170,6 @@ def run_subject(cfg, df_train, dir_output, filenames_data, features_models, save
 
 
 def get_scores(subjects_wldiffs, subjects_wllevelsascores):
-    # print(f"\nsubjects_wldiffs...")
-    # subj_maxlen = max([len(subj) for subj in subjects_wldiffs])
-    # for subj, wld in subjects_wldiffs.items():
-    #     neg = '' if wld > 0 else '**'
-    #     diff_maxlen = subj_maxlen - len(subj)
-    #     spaces_add = ' ' * diff_maxlen
-    #     print(f"  {subj} {spaces_add} --> {neg}{wld}{neg}")
     # percent_change_from_baseline
     percent_change_from_baseline = round(sum(subjects_wldiffs.values()))
     # subjects_wldiffs_positive
@@ -545,10 +537,6 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
-
-        # if subj not in ['aranoff', 'balaji', 'charles', 'dorbala']:
-        #     continue
-
         dir_input = os.path.join(cfg['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
         folders = ['anomaly', 'models', 'scalers', 'data']
@@ -559,26 +547,8 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
         filenames_data = load_files(dir_input=dir_input, file_type=cfg['file_type'], read_func=cfg['read_func'])
         # Update columns
         filenames_data = update_colnames(filenames_data=filenames_data, colnames=cfg['colnames'])
-        # Agg
-        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
-                                  hz_convertto=cfg['hzs']['convertto'])
-        # Clip both ends
-        filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
-        # Subtract mean
-        filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
-                                         time_col=cfg['time_col'])
-
-        # Clip start
-        # filenames_data2 = clip_start(filenames_data, cfg)
-
         # Preprocess
-        filenames_data = preprocess_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
-                                         cfg['columns_model'])
-        # Train models
-        df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
-                               columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
-        # Add timecol
-        df_train = add_timecol(df_train, cfg['time_col'])
+        filenames_data, df_train = preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd)
         # Store
         subjects_dfs_train[subj] = df_train
         subjects_filenames_data[subj] = filenames_data

@@ -6,7 +6,33 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+_TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
+
 sys.path.append(_SOURCE_DIR)
+sys.path.append(_TS_SOURCE_DIR)
+
+from ts_source.utils.utils import add_timecol
+
+
+def preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd):
+    # Agg
+    filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
+                              hz_convertto=cfg['hzs']['convertto'])
+    # Clip both ends
+    filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
+    # Subtract mean
+    filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
+                                     time_col=cfg['time_col'])
+    # Preprocess
+    filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
+                                    cfg['columns_model'])
+    # Train models
+    df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
+                           columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
+    # Add timecol
+    df_train = add_timecol(df_train, cfg['time_col'])
+
+    return filenames_data, df_train
 
 
 def subtract_median(filenames_data, wllevels_filenames, time_col='timestamp'):
@@ -144,7 +170,7 @@ def prep_data(data, cfg_prep):
     return data
 
 
-def preprocess_data(subj, spaces_add, filenames_data, cfg_prep, columns_model):
+def transform_data(subj, spaces_add, filenames_data, cfg_prep, columns_model):
     filenames_data2 = {}
     percents_data_dropped = []
     for fn, data in filenames_data.items():
