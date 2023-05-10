@@ -104,6 +104,9 @@ def main():
                   suptitle='TLX Scores by Run Mode', ylim=(0, 1))
 
     """ box plots for run mode score by subject """
+    subjects_baselinelower = {}
+    subjects_baselinelowest = {}
+    subjects_percentchanges = {}
     gpby_subj = newframe.groupby('Subject')
     for subj, df_subj in gpby_subj:
         path_out = os.path.join(DIR_OUT, f"{subj}.png")
@@ -113,6 +116,42 @@ def main():
             modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
         make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
                       ylim=(0, 1))
+        scores_baseline = modes_scores['baseline']
+        mean_baseline = np.mean(scores_baseline)
+        baseline_lowest = True
+        baseline_lower = True
+        means_nonbaseline = []
+        for mode, scores in modes_scores.items():
+            if mode == 'baseline':
+                continue
+            mean_mode = np.mean(scores)
+            means_nonbaseline.append(mean_mode)
+            if mean_mode < mean_baseline:
+                baseline_lowest = False
+        mean_nonbaseline = np.mean(means_nonbaseline)
+        if mean_baseline > mean_nonbaseline:
+            baseline_lower = False
+        subjects_baselinelower[subj] = baseline_lower
+        subjects_baselinelowest[subj] = baseline_lowest
+        subjects_percentchanges[subj] = 100*round((mean_nonbaseline - mean_baseline) / mean_baseline, 2)
+    # save scores subjects
+    df_subjects_baselinelower = pd.DataFrame(subjects_baselinelower, index=['baseline_lower']).T
+    df_subjects_baselinelowest = pd.DataFrame(subjects_baselinelowest, index=['baseline_lowest']).T
+    df_subjects_percentchanges = pd.DataFrame(subjects_percentchanges, index=['percent_change']).T
+    path_out = os.path.join(DIR_OUT, 'scores_subjects.csv')
+    df_sum = pd.concat([df_subjects_baselinelower, df_subjects_baselinelowest, df_subjects_percentchanges], axis=1)
+    df_sum.to_csv(path_out)
+    # save scores sum
+    percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
+    percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
+    percent_change = np.sum(df_sum['percent_change']) / len(df_sum)
+    scores = {'percent_baselinelower': 100*round(percent_baselinelower, 2),
+              'percent_baselinelowest': 100*round(percent_baselinelowest, 2),
+              'percent_change': 100*round(percent_change, 2)}
+    path_out = os.path.join(DIR_OUT, 'scores_sum.csv')
+    pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
+
+
 
 
 if __name__ == "__main__":

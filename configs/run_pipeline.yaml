@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: SteeringEntropy
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
