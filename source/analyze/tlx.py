@@ -14,6 +14,7 @@ DIR_OUT = os.path.join(_SOURCE_DIR, 'results', 'tlx')
 sys.path.append(_SOURCE_DIR)
 
 from source.analyze.plot import plot_bars
+from source.analyze.anomaly import get_subjects_wldiffs
 
 MODES_CONVERT = {
     'B': 'baseline',
@@ -53,7 +54,7 @@ def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_alr
         wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
         subjects_orders_1[subj] = list(wllevels_ascoresums.keys())
     if order_already_set:
-        subjects_orders_2 =subjects_wllevelsascores2
+        subjects_orders_2 = subjects_wllevelsascores2
     else:
         subjects_orders_2 = {}
         for subj, wllevels_ascores in subjects_wllevelsascores2.items():
@@ -76,7 +77,7 @@ def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_alr
     return df_overlaps
 
 
-def save_tlx_overlaps(subjects_wllevelsascores, dir_out):
+def get_tlx_overlaps(subjects_wllevelsascores):
     PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
     df_tlx = pd.read_csv(PATH_TLX)
     ## get tlx orders
@@ -90,11 +91,10 @@ def save_tlx_overlaps(subjects_wllevelsascores, dir_out):
             modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode['Raw TLX'].values)
         modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
         subjects_tlxorders[subj] = list(modes_scores.keys())
-    ## get & save df_overlaps
+    ## get df_overlaps
     df_overlaps = get_overlaps(subjects_wllevelsascores, subjects_tlxorders, order_already_set=True)
-    path_out_overlps = os.path.join(dir_out, 'tlx_overlaps.csv')
-    df_overlaps.to_csv(path_out_overlps, index=True)
-    return 100 * round(np.mean(df_overlaps['overlaps']), 3)
+    mean_percent_overlap = 100 * round(np.mean(df_overlaps['overlaps']), 3)
+    return mean_percent_overlap, df_overlaps
 
 
 def main():
@@ -105,6 +105,7 @@ def main():
     Check matplotlib/pandas documentation for more information
 
     """
+    SUBJS_DROP = ['Zaychik', 'Heiserman']
     columns = ["Subject", "Run #", "Run Mode", "Mental Demand", "Physical Demand", "Temporal Demand", "Performance",
                "Effort", "Frustration", "Raw TLX"]
     dataframe = pd.read_csv(PATH_TLX, usecols=columns)
@@ -118,33 +119,34 @@ def main():
     gpby_mode = newframe.groupby('Run Mode')
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-
-    # make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
-    #               suptitle='TLX Scores by Run Mode', ylim=(0, 1))
-
     modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
     plot_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels", ylabel='Raw TLX',
               path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=True)
+    # make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
+    #               suptitle='TLX Scores by Run Mode', ylim=(0, 1))
 
     """ box plots for run mode score by subject """
     subjects_baselinelower = {}
     subjects_baselinelowest = {}
     subjects_percentchanges = {}
+    subjects_wllevelsascores = {}
     gpby_subj = newframe.groupby('Subject')
     for subj, df_subj in gpby_subj:
+        if subj in SUBJS_DROP:
+            continue
         path_out = os.path.join(DIR_OUT, f"{subj}.png")
         modes_scores = {}
         gpby_mode = df_subj.groupby('Run Mode')
         for mode, df_mode in gpby_mode:
             modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-
-        # make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
-        #               ylim=(0, 1))
-
+        subjects_wllevelsascores[subj] = modes_scores
         modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
         plot_bars(modes_scores_sum, title=f"TLX Scores by Run Mode -- {subj}", xlabel="WL Levels",
                   ylabel='Raw TLX',
-                  path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=False)
+                  path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'],
+                  print_barheights=False)
+        # make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
+        #               ylim=(0, 1))
 
         scores_baseline = modes_scores['baseline']
         mean_baseline = np.mean(scores_baseline)
@@ -167,19 +169,24 @@ def main():
     # save scores subjects
     df_subjects_baselinelower = pd.DataFrame(subjects_baselinelower, index=['baseline_lower']).T
     df_subjects_baselinelowest = pd.DataFrame(subjects_baselinelowest, index=['baseline_lowest']).T
-    df_subjects_percentchanges = pd.DataFrame(subjects_percentchanges, index=['percent_change']).T
+    df_subjects_percentchanges = pd.DataFrame(subjects_percentchanges, index=['%Change from Baseline']).T
     path_out = os.path.join(DIR_OUT, 'scores_subjects.csv')
     df_sum = pd.concat([df_subjects_baselinelower, df_subjects_baselinelowest, df_subjects_percentchanges], axis=1)
     df_sum.to_csv(path_out)
     # save scores sum
     percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
     percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
-    percent_change = np.sum(df_sum['percent_change']) / len(df_sum)
+    percent_change = np.sum(df_sum['%Change from Baseline']) / len(df_sum)
     scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 2),
               'percent_baselinelowest': 100 * round(percent_baselinelowest, 2),
               'percent_change': 100 * round(percent_change, 2)}
     path_out = os.path.join(DIR_OUT, 'scores_sum.csv')
     pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
+    # save subjects_wllevelsascores
+    path_out_subjects_levels_wldiffs = os.path.join(DIR_OUT, 'subjects_levels_wldiffs.csv')
+    subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevelsascores)
+    df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs)
+    df_subjects_levels_wldiffs.to_csv(path_out_subjects_levels_wldiffs, index=True)
 
 
 if __name__ == "__main__":

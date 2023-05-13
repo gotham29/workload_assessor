@@ -132,6 +132,7 @@ def get_wllevels_diffs(wllevels_anomscores):
 
 def get_subjects_wldiffs(subjects_wllevelsascores):
     subjects_wldiffs = {}
+    subjects_levels_wldiffs = {}
     for subj, wllevels_anomscores in subjects_wllevelsascores.items():
         wl_t0 = max(np.sum(wllevels_anomscores['baseline']), 0.025)
         wl_t1t0_diffs = {}
@@ -139,7 +140,9 @@ def get_subjects_wldiffs(subjects_wllevelsascores):
             if wllevel == 'baseline':
                 continue
             wl_t1 = max(np.sum(ascores), 0.025)
-            wl_t1t0_diffs[wllevel] = ((wl_t1 - wl_t0) / wl_t0) * 100
+            percent_diff = ((wl_t1 - wl_t0) / wl_t0) * 100
+            wl_t1t0_diffs[wllevel] = round(percent_diff, 2)
+        subjects_levels_wldiffs[subj] = wl_t1t0_diffs
         subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
-    return subjects_wldiffs
+    return subjects_wldiffs, subjects_levels_wldiffs
 

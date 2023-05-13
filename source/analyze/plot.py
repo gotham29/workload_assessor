@@ -228,6 +228,18 @@ def plot_lines(wllevels_anomscores_: dict,
         plt.close()
 
 
+def plot_hists(algs_data, dir_out, title):
+    plt.cla()
+    for alg, data in algs_data.items():
+        plt.hist(data, label=f'{alg}', alpha=0.5)
+    plt.title(title)
+    plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+    plt.tight_layout()
+    path_out = os.path.join(dir_out, f"{title}.png")
+    plt.savefig(path_out)
+    plt.close()
+
+
 def plot_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None, print_barheights=True):
     if colors is None:
         colors = ['black' for _ in range(len(mydict))]
