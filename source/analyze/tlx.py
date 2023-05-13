@@ -1,6 +1,7 @@
 import collections
 import operator
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,10 @@ from matplotlib import pyplot as plt
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
 DIR_OUT = os.path.join(_SOURCE_DIR, 'results', 'tlx')
+
+sys.path.append(_SOURCE_DIR)
+
+from source.analyze.plot import plot_bars
 
 MODES_CONVERT = {
     'B': 'baseline',
@@ -40,6 +45,37 @@ def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
     plt.close()
 
 
+def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_already_set=False):
+    subjects_orders_1 = {}
+    for subj, wllevels_ascores in subjects_wllevelsascores1.items():
+        subj = subj.lower().strip()
+        wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
+        wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
+        subjects_orders_1[subj] = list(wllevels_ascoresums.keys())
+    if order_already_set:
+        subjects_orders_2 =subjects_wllevelsascores2
+    else:
+        subjects_orders_2 = {}
+        for subj, wllevels_ascores in subjects_wllevelsascores2.items():
+            subj = subj.lower().strip()
+            wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
+            wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
+            subjects_orders_2[subj] = list(wllevels_ascoresums.keys())
+    # get overlaps
+    subjects_overlaps = {}
+    for subj, order_1 in subjects_orders_1.items():
+        order_2 = subjects_orders_2[subj]
+        overlaps = 0
+        for _, wllevel in enumerate(order_1):
+            if wllevel == order_2[_]:
+                overlaps += 1
+        overlap = overlaps / (len(order_1) - 1)
+        subjects_overlaps[subj] = min(round(overlap, 3), 1.0)
+    subjects_overlaps = dict(collections.OrderedDict(sorted(subjects_overlaps.items())))
+    df_overlaps = pd.DataFrame(subjects_overlaps, ['overlaps']).T
+    return df_overlaps
+
+
 def save_tlx_overlaps(subjects_wllevelsascores, dir_out):
     PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
     df_tlx = pd.read_csv(PATH_TLX)
@@ -54,26 +90,8 @@ def save_tlx_overlaps(subjects_wllevelsascores, dir_out):
             modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode['Raw TLX'].values)
         modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
         subjects_tlxorders[subj] = list(modes_scores.keys())
-    ## get ml orders
-    subjects_mlorders = {}
-    for subj, wllevels_ascores in subjects_wllevelsascores.items():
-        subj = subj.lower().strip()
-        wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
-        wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
-        subjects_mlorders[subj] = list(wllevels_ascoresums.keys())
-    ## get TLX-ML overlaps
-    subjects_mltlx_overlaps = {}
-    for subj, ml_order in subjects_mlorders.items():
-        tlx_order = subjects_tlxorders[subj]
-        overlaps = 0
-        for _, wllevel in enumerate(ml_order):
-            if wllevel == tlx_order[_]:
-                overlaps += 1
-        overlap = overlaps / (len(ml_order) - 1)
-        subjects_mltlx_overlaps[subj] = min(round(overlap, 3), 1.0)
-    # save results
-    subjects_mltlx_overlaps = dict(collections.OrderedDict(sorted(subjects_mltlx_overlaps.items())))
-    df_overlaps = pd.DataFrame(subjects_mltlx_overlaps, ['overlaps']).T
+    ## get & save df_overlaps
+    df_overlaps = get_overlaps(subjects_wllevelsascores, subjects_tlxorders, order_already_set=True)
     path_out_overlps = os.path.join(dir_out, 'tlx_overlaps.csv')
     df_overlaps.to_csv(path_out_overlps, index=True)
     return 100 * round(np.mean(df_overlaps['overlaps']), 3)
@@ -100,8 +118,13 @@ def main():
     gpby_mode = newframe.groupby('Run Mode')
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-    make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
-                  suptitle='TLX Scores by Run Mode', ylim=(0, 1))
+
+    # make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
+    #               suptitle='TLX Scores by Run Mode', ylim=(0, 1))
+
+    modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
+    plot_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels", ylabel='Raw TLX',
+              path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=True)
 
     """ box plots for run mode score by subject """
     subjects_baselinelower = {}
@@ -114,8 +137,15 @@ def main():
         gpby_mode = df_subj.groupby('Run Mode')
         for mode, df_mode in gpby_mode:
             modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
-        make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
-                      ylim=(0, 1))
+
+        # make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
+        #               ylim=(0, 1))
+
+        modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
+        plot_bars(modes_scores_sum, title=f"TLX Scores by Run Mode -- {subj}", xlabel="WL Levels",
+                  ylabel='Raw TLX',
+                  path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=False)
+
         scores_baseline = modes_scores['baseline']
         mean_baseline = np.mean(scores_baseline)
         baseline_lowest = True
@@ -133,7 +163,7 @@ def main():
             baseline_lower = False
         subjects_baselinelower[subj] = baseline_lower
         subjects_baselinelowest[subj] = baseline_lowest
-        subjects_percentchanges[subj] = 100*round((mean_nonbaseline - mean_baseline) / mean_baseline, 2)
+        subjects_percentchanges[subj] = 100 * round((mean_nonbaseline - mean_baseline) / mean_baseline, 2)
     # save scores subjects
     df_subjects_baselinelower = pd.DataFrame(subjects_baselinelower, index=['baseline_lower']).T
     df_subjects_baselinelowest = pd.DataFrame(subjects_baselinelowest, index=['baseline_lowest']).T
@@ -145,13 +175,11 @@ def main():
     percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
     percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
     percent_change = np.sum(df_sum['percent_change']) / len(df_sum)
-    scores = {'percent_baselinelower': 100*round(percent_baselinelower, 2),
-              'percent_baselinelowest': 100*round(percent_baselinelowest, 2),
-              'percent_change': 100*round(percent_change, 2)}
+    scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 2),
+              'percent_baselinelowest': 100 * round(percent_baselinelowest, 2),
+              'percent_change': 100 * round(percent_change, 2)}
     path_out = os.path.join(DIR_OUT, 'scores_sum.csv')
     pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
-
-
 
 
 if __name__ == "__main__":
