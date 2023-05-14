@@ -20,28 +20,35 @@ ALGS_DIRS_IN = {
 def run_stat_tests(algs_data):
     # T-Test
     t_pval1 = ttest_ind(algs_data['HTM'], algs_data['SE'])[1]
-    t_pval2 = ttest_ind(algs_data['HTM'], algs_data['TLX'])[1]
-    t_pval3 = ttest_ind(algs_data['SE'], algs_data['TLX'])[1]
     # KS-Test
     ks_pval1 = kstest(algs_data['HTM'], algs_data['SE'])[1]
-    ks_pval2 = kstest(algs_data['HTM'], algs_data['TLX'])[1]
-    ks_pval3 = kstest(algs_data['SE'], algs_data['TLX'])[1]
     # MW-Test
     mw_pval1 = mannwhitneyu(algs_data['HTM'], algs_data['SE'])[1]
-    mw_pval2 = mannwhitneyu(algs_data['HTM'], algs_data['TLX'])[1]
-    mw_pval3 = mannwhitneyu(algs_data['SE'], algs_data['TLX'])[1]
     print("  T")
     print(f"    HTM vs SE --> {t_pval1}")
-    print(f"    HTM vs TLX --> {t_pval2}")
-    print(f"    SE vs TLX --> {t_pval3}")
     print("  KS")
     print(f"    HTM vs SE --> {ks_pval1}")
-    print(f"    HTM vs TLX --> {ks_pval2}")
-    print(f"    SE vs TLX --> {ks_pval3}")
     print("  MW")
     print(f"    HTM vs SE --> {mw_pval1}")
-    print(f"    HTM vs TLX --> {mw_pval2}")
-    print(f"    SE vs TLX --> {mw_pval3}\n\n")
+    if 'TLX' in algs_data:
+        # T-Test
+        t_pval2 = ttest_ind(algs_data['HTM'], algs_data['TLX'])[1]
+        t_pval3 = ttest_ind(algs_data['SE'], algs_data['TLX'])[1]
+        # KS-Test
+        ks_pval2 = kstest(algs_data['HTM'], algs_data['TLX'])[1]
+        ks_pval3 = kstest(algs_data['SE'], algs_data['TLX'])[1]
+        # MW-Test
+        mw_pval2 = mannwhitneyu(algs_data['HTM'], algs_data['TLX'])[1]
+        mw_pval3 = mannwhitneyu(algs_data['SE'], algs_data['TLX'])[1]
+        print("  T")
+        print(f"    HTM vs TLX --> {t_pval2}")
+        print(f"    SE vs TLX --> {t_pval3}")
+        print("  KS")
+        print(f"    HTM vs TLX --> {ks_pval2}")
+        print(f"    SE vs TLX --> {ks_pval3}")
+        print("  MW")
+        print(f"    HTM vs TLX --> {mw_pval2}")
+        print(f"    SE vs TLX --> {mw_pval3}")
 
 
 """
@@ -97,7 +104,6 @@ title = "Degree of overlap with TLX"
 algs_paths = {
     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_overlaps.csv"),
     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_overlaps.csv"),
-    'TLX': os.path.join(ALGS_DIRS_IN['SE'], "subjects_overlaps.csv")
 }
 algs_data = {}
 for alg, alg_path in algs_paths.items():
