@@ -228,10 +228,10 @@ def plot_lines(wllevels_anomscores_: dict,
         plt.close()
 
 
-def plot_hists(algs_data, dir_out, title):
+def plot_hists(algs_data, dir_out, title, density=False):
     plt.cla()
     for alg, data in algs_data.items():
-        plt.hist(data, label=f'{alg}', alpha=0.5)
+        plt.hist(data, label=f'{alg}', alpha=0.5, density=density)
     plt.title(title)
     plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
     plt.tight_layout()

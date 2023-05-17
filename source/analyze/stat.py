@@ -77,7 +77,7 @@ Test for statistically significant performance differences between Algs
 2) % Increase from Baseline to EACH other WL level
     --> 3 values per subject
 """
-title = "Rate of subjects with baseline lowest"
+title = "Total sensitivity to increased task demands"
 algs_paths = {
     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_levels_wldiffs.csv"),
     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_levels_wldiffs.csv"),
@@ -93,6 +93,7 @@ for alg, alg_path in algs_paths.items():
     algs_data[alg] = values
     print(alg)
 print(f"{title}")
+plot_hists(algs_data, DIR_OUT, title)
 run_stat_tests(algs_data)
 
 
