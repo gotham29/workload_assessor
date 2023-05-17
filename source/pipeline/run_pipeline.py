@@ -220,12 +220,11 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
 
     # Get Scores
     subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevelsascores)
-    subjects_wldiffs_capped = {k: min(v, 1000) for k, v in subjects_wldiffs.items()}
     percent_change_from_baseline, subjects_increased_from_baseline, subjects_baseline_lowest = get_scores(
         subjects_wldiffs, subjects_wllevelsascores)
     percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevelsascores))
-    percent_subjects_increased_from_baseline = round(
-        100 * len(subjects_increased_from_baseline) / len(subjects_wldiffs))
+    # percent_subjects_increased_from_baseline = round(
+    #     100 * len(subjects_increased_from_baseline) / len(subjects_wldiffs))
 
     # get overlap w/TLX
     mean_tlx_overlap, df_overlaps = get_tlx_overlaps(subjects_wllevelsascores)
@@ -238,20 +237,20 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     path_out_subjects_wldiffs = os.path.join(dir_out, 'subjects_wldiffs.csv')
     path_out_subjects_levels_wldiffs = os.path.join(dir_out, 'subjects_levels_wldiffs.csv')
     path_out_subjects_overlaps = os.path.join(dir_out, 'subjects_overlaps.csv')
-    scores = pd.DataFrame({'percent_change_from_baseline': percent_change_from_baseline,
-                           'percent_subjects_increased_from_baseline': percent_subjects_increased_from_baseline,
-                           'percent_subjects_baseline_lowest': percent_subjects_baseline_lowest,
-                           'mean_tlx_overlap': mean_tlx_overlap}, index=[0])
+    scores = pd.DataFrame({'Total sensitivity to increased task demands': percent_change_from_baseline,
+                           # 'percent_subjects_increased_from_baseline': percent_subjects_increased_from_baseline,
+                           'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest,
+                           'Correlation with NASA TLX': mean_tlx_overlap}, index=[0])
     df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs)
     df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0]).T
-    df_subjects_wldiffs.columns = ['%Change from Baseline']
+    df_subjects_wldiffs.columns = ['Difference from Baseline']  #['%Change from Baseline']
     scores.to_csv(path_out_scores)
     df_overlaps.to_csv(path_out_subjects_overlaps, index=True)
     df_subjects_wldiffs.to_csv(path_out_subjects_wldiffs, index=True)
     df_subjects_levels_wldiffs.to_csv(path_out_subjects_levels_wldiffs, index=True)
     make_save_plots(dir_out=dir_out,
                     dfs_wllevelsdiffs=dfs_wllevelsdiffs,
-                    subjects_wldiffs=subjects_wldiffs_capped,
+                    subjects_wldiffs=subjects_wldiffs,  #subjects_wldiffs_capped
                     percent_change_from_baseline=percent_change_from_baseline,
                     subjects_wllevelsascores=subjects_wllevelsascores)
     return percent_change_from_baseline
@@ -342,9 +341,10 @@ def make_save_plots(dir_out,
 
     # subjects WLdiffs
     plot_bars(mydict=subjects_wldiffs,
-              title=f'WL Change from WL Levels 0 to 1-3\n  Total % Change={round(percent_change_from_baseline, 3)}',
+              # title=f'WL Change from WL Levels 0 to 1-3\n  Total % Change={round(percent_change_from_baseline, 3)}',
+              title=f'Total WL Difference = {round(percent_change_from_baseline, 3)}',
               xlabel='Subjects',
-              ylabel='WL % Change from Level 0 to 1-3',
+              ylabel='WL Difference from Level 0 to 1-3',
               path_out=os.path.join(dir_out, f'WL_Diffs.png'),
               xtickrotation=90,
               colors=['grey', 'orange', 'blue', 'green'])
@@ -544,7 +544,7 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
 
-        # if subj not in ['aranoff', 'balaji', 'charles']:
+        # if subj not in ['aranoff', 'budithi', 'balaji', 'charles']:
         #     continue
 
         dir_input = os.path.join(cfg['dirs']['input'], subj)

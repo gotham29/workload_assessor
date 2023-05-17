@@ -59,29 +59,29 @@ Test for statistically significant performance differences between Algs
 1) % Increase from Baseline to all other WL levels
     --> 1 value per subject
 """
-title = "% Increase from Baseline to ALL other WL levels"
-algs_paths = {
-    'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_wldiffs.csv"),
-    'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_wldiffs.csv"),
-    'TLX': os.path.join(ALGS_DIRS_IN['TLX'], "scores_subjects.csv")
-}
-algs_data = {}
-for alg, alg_path in algs_paths.items():
-    data = pd.read_csv(alg_path)
-    algs_data[alg] = data['%Change from Baseline'].values
-print("TEST 1")
-run_stat_tests(algs_data)
+# title = "% Increase from Baseline to ALL other WL levels"
+# algs_paths = {
+#     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_wldiffs.csv"),
+#     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_wldiffs.csv"),
+#     'TLX': os.path.join(ALGS_DIRS_IN['TLX'], "scores_subjects.csv")
+# }
+# algs_data = {}
+# for alg, alg_path in algs_paths.items():
+#     data = pd.read_csv(alg_path)
+#     algs_data[alg] = data['%Change from Baseline'].values
+# print("TEST 1")
+# run_stat_tests(algs_data)
 
 
 """
 2) % Increase from Baseline to EACH other WL level
     --> 3 values per subject
 """
-title = "% Increase from Baseline to each other WL level"
+title = "Rate of subjects with baseline lowest"
 algs_paths = {
     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_levels_wldiffs.csv"),
     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_levels_wldiffs.csv"),
-    'TLX': os.path.join(ALGS_DIRS_IN['SE'], "subjects_levels_wldiffs.csv")
+    'TLX': os.path.join(ALGS_DIRS_IN['TLX'], "subjects_levels_wldiffs.csv")
 }
 algs_data = {}
 for alg, alg_path in algs_paths.items():
@@ -92,7 +92,7 @@ for alg, alg_path in algs_paths.items():
         values += list(data[c].values)
     algs_data[alg] = values
     print(alg)
-print("TEST 3")
+print(f"{title}")
 run_stat_tests(algs_data)
 
 
@@ -100,7 +100,7 @@ run_stat_tests(algs_data)
 3) Degree of overlap with TLX
     --> 1 value per subject
 """
-title = "Degree of overlap with TLX"
+title = "Correlation with NASA TLX"
 algs_paths = {
     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_overlaps.csv"),
     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_overlaps.csv"),
@@ -110,7 +110,7 @@ for alg, alg_path in algs_paths.items():
     data = pd.read_csv(alg_path)
     algs_data[alg] = data['overlaps'].values
 plot_hists(algs_data, DIR_OUT, title)
-print("TEST 3")
+print(f"\n\n{title}")
 run_stat_tests(algs_data)
 
 

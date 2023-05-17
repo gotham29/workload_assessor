@@ -111,6 +111,16 @@ def get_f1score(tp, fp, fn):
     return round(f1, 3)
 
 
+def get_normdiff(wl_t0, wl_t1):
+    if wl_t1 == wl_t0:
+        normalized_diff = 0
+    elif wl_t1 > wl_t0:
+        normalized_diff = (wl_t1 - wl_t0) / wl_t1
+    else:  #wl_t0 > wl_t1:
+        normalized_diff = -(wl_t0 - wl_t1) / wl_t0
+    return normalized_diff
+
+
 def get_wllevels_diffs(wllevels_anomscores):
     # Get difference in median anomaly score between wllevels
     wllevels_diffs = {}
@@ -131,17 +141,21 @@ def get_wllevels_diffs(wllevels_anomscores):
 
 
 def get_subjects_wldiffs(subjects_wllevelsascores):
+    print("\n  ** get_subjects_wldiffs")
     subjects_wldiffs = {}
     subjects_levels_wldiffs = {}
     for subj, wllevels_anomscores in subjects_wllevelsascores.items():
-        wl_t0 = max(np.sum(wllevels_anomscores['baseline']), 0.025)
+        print(f"    {subj}")
+        wl_t0 = np.sum(wllevels_anomscores['baseline'])  # wl_t0 = max(np.sum(wllevels_anomscores['baseline']), 0.025)
         wl_t1t0_diffs = {}
         for wllevel, ascores in wllevels_anomscores.items():
             if wllevel == 'baseline':
                 continue
-            wl_t1 = max(np.sum(ascores), 0.025)
-            percent_diff = ((wl_t1 - wl_t0) / wl_t0) * 100
-            wl_t1t0_diffs[wllevel] = round(percent_diff, 2)
+            wl_t1 = np.sum(ascores)  # max(np.sum(ascores), 0.025)
+            normalized_diff = get_normdiff(wl_t0, wl_t1)
+            print(f"      wllevel = {wllevel}; diff = {normalized_diff}")
+            # percent_diff = ((wl_t1 - wl_t0) / wl_t0) * 100
+            wl_t1t0_diffs[wllevel] = round(normalized_diff, 2)  # round(percent_diff, 2)
         subjects_levels_wldiffs[subj] = wl_t1t0_diffs
         subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
     return subjects_wldiffs, subjects_levels_wldiffs

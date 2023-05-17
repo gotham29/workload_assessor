@@ -128,7 +128,7 @@ def main():
     """ box plots for run mode score by subject """
     subjects_baselinelower = {}
     subjects_baselinelowest = {}
-    subjects_percentchanges = {}
+    # subjects_normdiffs = {}
     subjects_wllevelsascores = {}
     gpby_subj = newframe.groupby('Subject')
     for subj, df_subj in gpby_subj:
@@ -148,38 +148,43 @@ def main():
         # make_boxplots(modes_scores, ylabel='Raw TLX', title='TLX Scores by Run Mode', path_out=path_out, suptitle=None,
         #               ylim=(0, 1))
 
-        scores_baseline = modes_scores['baseline']
-        mean_baseline = np.mean(scores_baseline)
+        wl_t0 = modes_scores['baseline']
+        wl_t0_mean = np.mean(wl_t0)
         baseline_lowest = True
         baseline_lower = True
-        means_nonbaseline = []
+        w1_means = []
         for mode, scores in modes_scores.items():
             if mode == 'baseline':
                 continue
-            mean_mode = np.mean(scores)
-            means_nonbaseline.append(mean_mode)
-            if mean_mode < mean_baseline:
+            wl_t1_mean = np.mean(scores)
+            w1_means.append(wl_t1_mean)
+            if wl_t1_mean < wl_t0_mean:
                 baseline_lowest = False
-        mean_nonbaseline = np.mean(means_nonbaseline)
-        if mean_baseline > mean_nonbaseline:
+        wl_t1_mean = np.mean(w1_means)
+        if wl_t0_mean > wl_t1_mean:
             baseline_lower = False
         subjects_baselinelower[subj] = baseline_lower
         subjects_baselinelowest[subj] = baseline_lowest
-        subjects_percentchanges[subj] = 100 * round((mean_nonbaseline - mean_baseline) / mean_baseline, 2)
+        # subjects_normdiffs[subj] = #100 * round((mean_nonbaseline - mean_baseline) / mean_baseline, 2)
     # save scores subjects
+    subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevelsascores)
     df_subjects_baselinelower = pd.DataFrame(subjects_baselinelower, index=['baseline_lower']).T
     df_subjects_baselinelowest = pd.DataFrame(subjects_baselinelowest, index=['baseline_lowest']).T
-    df_subjects_percentchanges = pd.DataFrame(subjects_percentchanges, index=['%Change from Baseline']).T
+    df_subjects_normdiffs = pd.DataFrame(subjects_wldiffs, index=['Difference from Baseline']).T
     path_out = os.path.join(DIR_OUT, 'scores_subjects.csv')
-    df_sum = pd.concat([df_subjects_baselinelower, df_subjects_baselinelowest, df_subjects_percentchanges], axis=1)
+    df_sum = pd.concat([df_subjects_baselinelower, df_subjects_baselinelowest, df_subjects_normdiffs], axis=1)
     df_sum.to_csv(path_out)
-    # save scores sum
+    # save scores sums
     percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
     percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
-    percent_change = np.sum(df_sum['%Change from Baseline']) / len(df_sum)
+    normalized_diff = np.sum(df_sum['Difference from Baseline'])  #/ len(df_sum)
+    # percent_change = np.sum(df_sum['%Change from Baseline']) / len(df_sum)
+
     scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 2),
               'percent_baselinelowest': 100 * round(percent_baselinelowest, 2),
-              'percent_change': 100 * round(percent_change, 2)}
+              'Total sensitivity to increased task demand': normalized_diff
+              # 'percent_change': 100 * round(percent_change, 2)
+              }
     path_out = os.path.join(DIR_OUT, 'scores_sum.csv')
     pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
     # save subjects_wllevelsascores
