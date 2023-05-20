@@ -17,10 +17,10 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, get_wllevelsdf, preprocess_data, get_wllevels_alldata
+from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_alldata
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
-from source.analyze.anomaly import get_wllevels_diffs, get_ascores_entropy, get_ascores_naive, \
+from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
     get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_f1score, get_ascore_entropy, get_entropy_ts
 from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
 
@@ -128,9 +128,6 @@ def run_subject(cfg, df_train, dir_output, filenames_data, features_models, save
                                             columns_model=cfg['columns_model'],
                                             dir_output=dir_output,
                                             save_results=save_results)
-
-    # Get WL diffs btwn wllevels
-    wllevels_diffs = get_wllevels_diffs(wllevels_anomscores=wllevels_anomscores)
     if save_results:
         # Plot data
         plot_data(filenames_data=filenames_data, file_type=cfg['file_type'], dir_output=dir_output)
@@ -166,7 +163,7 @@ def run_subject(cfg, df_train, dir_output, filenames_data, features_models, save
                    df_train=df_train,
                    columns_model=cfg['columns_model'],
                    out_dir=os.path.join(dir_output, 'anomaly'))
-    return wllevels_anomscores, wllevels_diffs
+    return wllevels_anomscores
 
 
 def get_scores(subjects_wldiffs, subjects_wllevelsascores):
@@ -203,19 +200,15 @@ def rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, su
 
 def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models):
     # Gather WL results
-    dfs_wllevelsdiffs = []
-    subjects_wllevelsdiffs = {}
     subjects_wllevelsascores = {}
     for subj, filenames_data in subjects_filenames_data.items():
         dir_output_subj = os.path.join(dir_out, subj)
-        wllevels_ascores, wllevels_diffs = run_subject(cfg=cfg,
-                                                       df_train=subjects_dfs_train[subj],
-                                                       dir_output=dir_output_subj,
-                                                       filenames_data=filenames_data,
-                                                       features_models=subjects_features_models[subj],
-                                                       save_results=cfg['make_plots'])
-        dfs_wllevelsdiffs.append(get_wllevelsdf(subj, wllevels_diffs))
-        subjects_wllevelsdiffs[subj] = wllevels_diffs
+        wllevels_ascores = run_subject(cfg=cfg,
+                                       df_train=subjects_dfs_train[subj],
+                                       dir_output=dir_output_subj,
+                                       filenames_data=filenames_data,
+                                       features_models=subjects_features_models[subj],
+                                       save_results=cfg['make_plots'])
         subjects_wllevelsascores[subj] = wllevels_ascores
 
     # Get Scores
@@ -223,8 +216,6 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     percent_change_from_baseline, subjects_increased_from_baseline, subjects_baseline_lowest = get_scores(
         subjects_wldiffs, subjects_wllevelsascores)
     percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevelsascores))
-    # percent_subjects_increased_from_baseline = round(
-    #     100 * len(subjects_increased_from_baseline) / len(subjects_wldiffs))
 
     # get overlap w/TLX
     mean_tlx_overlap, df_overlaps = get_tlx_overlaps(subjects_wllevelsascores)
@@ -238,19 +229,17 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     path_out_subjects_levels_wldiffs = os.path.join(dir_out, 'subjects_levels_wldiffs.csv')
     path_out_subjects_overlaps = os.path.join(dir_out, 'subjects_overlaps.csv')
     scores = pd.DataFrame({'Total sensitivity to increased task demands': percent_change_from_baseline,
-                           # 'percent_subjects_increased_from_baseline': percent_subjects_increased_from_baseline,
                            'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest,
                            'Correlation with NASA TLX': mean_tlx_overlap}, index=[0])
     df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs)
     df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0]).T
-    df_subjects_wldiffs.columns = ['Difference from Baseline']  #['%Change from Baseline']
+    df_subjects_wldiffs.columns = ['Difference from Baseline']
     scores.to_csv(path_out_scores)
     df_overlaps.to_csv(path_out_subjects_overlaps, index=True)
     df_subjects_wldiffs.to_csv(path_out_subjects_wldiffs, index=True)
     df_subjects_levels_wldiffs.to_csv(path_out_subjects_levels_wldiffs, index=True)
     make_save_plots(dir_out=dir_out,
-                    dfs_wllevelsdiffs=dfs_wllevelsdiffs,
-                    subjects_wldiffs=subjects_wldiffs,  #subjects_wldiffs_capped
+                    subjects_wldiffs=subjects_wldiffs,
                     percent_change_from_baseline=percent_change_from_baseline,
                     subjects_wllevelsascores=subjects_wllevelsascores)
     return percent_change_from_baseline
@@ -327,21 +316,11 @@ def run_realtime(config, dir_out, subjects_features_models):
 
 
 def make_save_plots(dir_out,
-                    dfs_wllevelsdiffs,
                     subjects_wldiffs,
                     percent_change_from_baseline,
                     subjects_wllevelsascores):
-    # df_wllevelsdiffs
-    # df_wllevelsdiffs = pd.concat(dfs_wllevelsdiffs, axis=0)
-    # df_wllevelsdiffs.to_csv(os.path.join(dir_out, f"WL_Diffs.csv"))
-    # cols_plot = [c for c in df_wllevelsdiffs if c != 'subject']
-    # img = sns.heatmap(df_wllevelsdiffs[cols_plot], annot=True).get_figure()
-    # img.savefig(os.path.join(dir_out, f"WL_Diffs-heatmap.png"))
-    # plt.close()
-
     # subjects WLdiffs
     plot_bars(mydict=subjects_wldiffs,
-              # title=f'WL Change from WL Levels 0 to 1-3\n  Total % Change={round(percent_change_from_baseline, 3)}',
               title=f'Total WL Difference = {round(percent_change_from_baseline, 3)}',
               xlabel='Subjects',
               ylabel='WL Difference from Level 0 to 1-3',
@@ -543,10 +522,6 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
     for subj in sorted(subjects):
-
-        # if subj not in ['aranoff', 'budithi', 'balaji', 'charles']:
-        #     continue
-
         dir_input = os.path.join(cfg['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
         folders = ['anomaly', 'models', 'scalers', 'data']
@@ -643,14 +618,7 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
 
-    """
-    UPDATE
-    # Plot EDA
-    plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
-                               dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
-                               path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
-    """
-
+    # Run
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
         score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)

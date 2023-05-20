@@ -121,25 +121,6 @@ def get_normdiff(wl_t0, wl_t1):
     return normalized_diff
 
 
-def get_wllevels_diffs(wllevels_anomscores):
-    # Get difference in median anomaly score between wllevels
-    wllevels_diffs = {}
-    wllevel_combos_done = []
-    for wllevel, ascores in wllevels_anomscores.items():
-        wllevels_diffs[wllevel] = {}
-        wllevels_anomscores_other = {k: v for k, v in wllevels_anomscores.items() if k != wllevel}
-        for wllevel_other, ascores_other in wllevels_anomscores_other.items():
-            combo = '--'.join(sorted([wllevel, wllevel_other]))
-            if combo in wllevel_combos_done:
-                continue
-            wllevel_combos_done.append(combo)
-            ascores_total = max(np.sum(ascores), 0.025)
-            ascores_total_other = max(np.sum(ascores_other), 0.025)
-            pct_change = (ascores_total_other - ascores_total) / ascores_total
-            wllevels_diffs[wllevel][wllevel_other] = round(pct_change*100, 2)
-    return wllevels_diffs
-
-
 def get_subjects_wldiffs(subjects_wllevelsascores):
     print("\n  ** get_subjects_wldiffs")
     subjects_wldiffs = {}

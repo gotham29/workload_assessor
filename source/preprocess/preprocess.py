@@ -105,13 +105,6 @@ def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_data):
     return df_train
 
 
-def get_wllevelsdf(subj, subj_wllevels_diffs):
-    subj_df = pd.DataFrame(subj_wllevels_diffs)
-    col_vals = [subj]+['' for _ in range(subj_df.shape[0]-1)]
-    subj_df.insert(len(subj_df.columns), 'subject', col_vals)
-    return subj_df
-
-
 def clip_data(filenames_data:dict, clip_percents:dict):
     for fname, data in filenames_data.items():
         clip_count_start = int(data.shape[0] * (clip_percents['start']/100))

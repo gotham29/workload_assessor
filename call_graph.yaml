@@ -4,22 +4,24 @@ run_wl:
   get_subjects_data:
     load_files
     update_colnames
-    agg_data
-    clip_data
-    subtract_mean
-    preprocess_data:
-      prep_data:
-        if difference:
-            diff_data
-        if standardize:
-            standardize_data
-        if movingaverage:
-            movingavg_data
-      get_autocorrs:
-        get_autocorr
-      select_by_autocorr
-    get_dftrain
-    add_timecol
+    preprocess_data
+      agg_data
+      clip_data
+      subtract_median
+      transform_data:
+        prep_data:
+          if difference:
+              diff_data
+          if standardize:
+              standardize_data
+          if movingaverage:
+              movingavg_data
+        get_autocorrs:
+          get_autocorr
+        select_by_autocorr
+      add_timecol
+      get_dftrain
+      add_timecol
 
   get_subjects_models:
     if train_models:
@@ -44,8 +46,8 @@ run_wl:
   if mode == 'post-hoc':
     run_posthoc:
       run_subject:
-        get_testtypes_outputs:
-          get_testtypes_alldata
+        get_filenames_outputs:
+          add_timecol
           if alg == 'HTM':
             htm_source.run_batch
           elif alg == 'SteeringEntropy':
@@ -57,12 +59,18 @@ run_wl:
           else:
             ts_source.get_modname
             ts_source.get_preds_rolling
-        get_testtypes_diffs
+        get_wllevels_outputs
+        get_wllevels_alldata
         if save_results:
           plot_data
+          make_boxplots
+          plot_bars
           plot_boxes
           plot_lines
       get_subjects_wldiffs
+      get_scores
+      get_tlx_overlaps
+      rename_dirs_by_scores
       make_save_plots:
         seaborn.heatmap
         plot_bars
