@@ -218,7 +218,7 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevelsascores))
 
     # get overlap w/TLX
-    mean_tlx_overlap, df_overlaps = get_tlx_overlaps(subjects_wllevelsascores)
+    subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevelsascores)
 
     # rename dirs based on scores
     rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out)
@@ -227,10 +227,12 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     path_out_scores = os.path.join(dir_out, 'scores.csv')
     path_out_subjects_wldiffs = os.path.join(dir_out, 'subjects_wldiffs.csv')
     path_out_subjects_levels_wldiffs = os.path.join(dir_out, 'subjects_levels_wldiffs.csv')
-    path_out_subjects_overlaps = os.path.join(dir_out, 'subjects_overlaps.csv')
-    scores = pd.DataFrame({'Total sensitivity to increased task demands': percent_change_from_baseline,
-                           'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest,
-                           'Correlation with NASA TLX': mean_tlx_overlap}, index=[0])
+    path_out_subjects_overlaps = os.path.join(dir_out, 'subjects_tlxoverlaps.csv')
+    scores = {'Total sensitivity to increased task demands': percent_change_from_baseline,
+              'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest}
+    for subscale, meanoverlap in subscales_meanoverlaps.items():
+        scores[subscale] = meanoverlap
+    scores = pd.DataFrame(scores, index=[0])
     df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs)
     df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0]).T
     df_subjects_wldiffs.columns = ['Difference from Baseline']

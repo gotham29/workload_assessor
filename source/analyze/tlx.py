@@ -81,20 +81,29 @@ def get_tlx_overlaps(subjects_wllevelsascores):
     PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
     df_tlx = pd.read_csv(PATH_TLX)
     ## get tlx orders
-    subjects_tlxorders = {}
+    subscales = ['Mental Demand', 'Physical Demand', 'Temporal Demand', 'Performance', 'Effort', 'Frustration',
+                 'Raw TLX']
+    subscales_meanoverlaps = {}
+    subscales_dfsoverlaps = {}
     gpby_subj = df_tlx.groupby('Subject')
-    for subj, df_subj in gpby_subj:
-        subj = subj.lower().strip()
-        modes_scores = {}
-        gpby_mode = df_subj.groupby('Run Mode')
-        for mode, df_mode in gpby_mode:
-            modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode['Raw TLX'].values)
-        modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
-        subjects_tlxorders[subj] = list(modes_scores.keys())
-    ## get df_overlaps
-    df_overlaps = get_overlaps(subjects_wllevelsascores, subjects_tlxorders, order_already_set=True)
-    mean_percent_overlap = 100 * round(np.mean(df_overlaps['overlaps']), 3)
-    return mean_percent_overlap, df_overlaps
+    for subscale in subscales:
+        subjects_tlxorders = {}
+        for subj, df_subj in gpby_subj:
+            modes_scores = {}
+            subj = subj.lower().strip()
+            gpby_mode = df_subj.groupby('Run Mode')
+            for mode, df_mode in gpby_mode:
+                modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode[subscale].values)
+            modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
+            subjects_tlxorders[subj] = list(modes_scores.keys())
+        ## get df_overlaps
+        df_overlaps = get_overlaps(subjects_wllevelsascores, subjects_tlxorders, order_already_set=True)
+        df_overlaps.columns = [subscale]
+        mean_percent_overlap = 100 * round(np.mean(df_overlaps[subscale]), 3)
+        subscales_meanoverlaps[subscale] = mean_percent_overlap
+        subscales_dfsoverlaps[subscale] = df_overlaps
+    df_overlaps_total = pd.concat(list(subscales_dfsoverlaps.values()), axis=1)
+    return subscales_meanoverlaps, df_overlaps_total
 
 
 def main():
@@ -177,7 +186,7 @@ def main():
     # save scores sums
     percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
     percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
-    normalized_diff = np.sum(df_sum['Difference from Baseline'])  #/ len(df_sum)
+    normalized_diff = np.sum(df_sum['Difference from Baseline'])  # / len(df_sum)
     # percent_change = np.sum(df_sum['%Change from Baseline']) / len(df_sum)
 
     scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 2),
