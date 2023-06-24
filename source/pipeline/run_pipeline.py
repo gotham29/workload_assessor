@@ -19,7 +19,7 @@ from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
 from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_alldata
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
-from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars
+from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars, get_accum
 from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
     get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_f1score, get_ascore_entropy, get_entropy_ts
 from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
@@ -250,14 +250,14 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
 def run_realtime(config, dir_out, subjects_features_models):
     rows = list()
     for subj, features_models in subjects_features_models.items():
-        print(f"  subj = {subj}")
+        print(f"\n  subj = {subj}")
         dir_out_subj = os.path.join(dir_out, subj)
         dir_in_subj = os.path.join(config['dirs']['input'], subj)
-        print("    testing...")
+        # print("    testing...")
         for feat, model in features_models.items():
-            print(f"      feat = {feat}")
+            print(f"    feat = {feat}")
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
-                print(f"        testfile = {testfile}")
+                print(f"      testfile = {testfile}")
                 aScores, wl_changepoints_detected = list(), list()
                 path_test = os.path.join(dir_in_subj, testfile)
                 data_test = config['read_func'](path_test)
@@ -293,6 +293,7 @@ def run_realtime(config, dir_out, subjects_features_models):
                         wl_changepoints_detected.append(_)
 
                 # score detected wl-changepoints
+                print(f"        wl_changepoints_detected = {wl_changepoints_detected}")
                 scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
                                                                       wl_changepoints,
                                                                       wl_changepoints_detected,
@@ -305,15 +306,18 @@ def run_realtime(config, dir_out, subjects_features_models):
                 # plot detected wl-changepoints over changepoint windows
                 plot_wlchangepoints(config['columns_model'],
                                     config['file_type'],
+                                    aScores,
                                     testfile,
                                     data_test,
                                     dir_out_subj,
                                     wl_changepoints_windows,
-                                    wl_changepoints_detected)
+                                    wl_changepoints_detected,
+                                    plot_detected=False)
                 rows.append({'subj': subj, 'feat': feat, 'testfile': testfile, 'f1': f1})
     df_f1 = pd.DataFrame(rows)
     path_out = os.path.join(dir_out, "f1_scores.csv")
     df_f1.to_csv(path_out, index=False)
+
     return df_f1
 
 
@@ -503,18 +507,38 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(columns_model, file_type, testfile, data_test, dir_out_subj, wl_changepoints_windows,
-                        wl_changepoints_detected):
+def plot_wlchangepoints(columns_model, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
+                        wl_changepoints_detected, plot_detected=True):
     for feat in columns_model:
         path_out = os.path.join(dir_out_subj,
                                 f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
-        plt.plot(data_test[feat])
-        plt.xlabel('time')
-        plt.ylabel(feat)
-        for cp in wl_changepoints_detected:
-            plt.axvline(cp, color='green', lw=0.5, alpha=0.3)
+
+        behavior = data_test[feat]
+        aScores_accum = get_accum(aScores)
+        t = [_ for _ in range(len(behavior))]
+
+        fig, ax1 = plt.subplots()
+
+        color = 'black'
+        ax1.set_xlabel('time')
+        ax1.set_ylabel(feat, color=color)
+        ax1.plot(t, behavior, color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+        color = 'blue'
+        ax2.set_ylabel('WL Perceived', color=color)  # we already handled the x-label with ax1
+        ax2.plot(t, aScores_accum, color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+
+        if plot_detected:
+            for cp in wl_changepoints_detected:
+                ax2.axvline(cp, color='green', lw=0.5, alpha=0.3)
         for cp, window in wl_changepoints_windows.items():
-            plt.axvspan(window[0], window[1], alpha=0.5, color='red')
+            ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
         plt.savefig(path_out)
         plt.close()
 
@@ -581,6 +605,13 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
+
+    subjects_all = [
+        'aranoff',
+        'thakur',
+        'vangapandu'
+    ]
+
     files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
@@ -619,6 +650,7 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
 
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
+    print(f"\nsubjects_features_models = {subjects_features_models}")
 
     # Run
     if config['mode'] == 'post-hoc':

@@ -11,9 +11,9 @@ preprocess:
   autocorr_thresh: 5
 
 windows_ascore:
-  recent: 7
-  previous: 21
-  change_detection: 21
+  recent: 10
+  previous: 25
+  change_detection: 250
   change_thresh_percent: 30
 
 subjects_testfiles_wltogglepoints:
@@ -2555,8 +2555,6 @@ subjects_testfiles_wltogglepoints:
         - 52
         - 83
 
-
-
 htm_gridsearch:
   SP=:
     - false
@@ -2818,7 +2816,7 @@ htm_config_user:
     running:  #110000
     sampling:  #10000
 
-train_models: false  #true
+train_models: true
 data_cap: 100000
 eval_metric: rmse
 forecast_horizon: 1
