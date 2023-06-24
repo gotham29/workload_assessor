@@ -1,6 +1,6 @@
-mode: post-hoc
+mode: real-time
 #post-hoc, real-time
-alg: SteeringEntropy
+alg: HTM  #SteeringEntropy
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -17,94 +17,2545 @@ windows_ascore:
   change_thresh_percent: 30
 
 subjects_testfiles_wltogglepoints:
-  zaychik:
-    test1-L1.xls:
-      time_total: 60
+  aranoff:
+    realtime1.xls:
+      time_total: 87
       times_wltoggle:
-        - 20
+        - 26
         - 45
-    test2-L1.xls:
+    realtime2.xls:
+      time_total: 85
+      times_wltoggle:
+        - 27
+        - 58
+    realtime3.xls:
+      time_total: 107
+      times_wltoggle:
+        - 8
+        - 78
+    realtime4.xls:
+      time_total: 82
+      times_wltoggle:
+        - 10
+        - 53
+    realtime5.xls:
+      time_total: 113
+      times_wltoggle:
+        - 22
+        - 85
+    realtime6.xls:
+      time_total: 81
+      times_wltoggle:
+        - 24
+        - 71
+    realtime7.xls:
+      time_total: 87
+      times_wltoggle:
+        - 25
+        - 60
+    realtime8.xls:
+      time_total: 105
+      times_wltoggle:
+        - 23
+        - 63
+    realtime9.xls:
+      time_total: 99
+      times_wltoggle:
+        - 38
+        - 85
+
+  ashraf:
+    realtime1.xls:
+      time_total: 110
+      times_wltoggle:
+        - 39
+        - 78
+    realtime2.xls:
+      time_total: 94
+      times_wltoggle:
+        - 54
+        - 65
+    realtime3.xls:
+      time_total: 127
+      times_wltoggle:
+        - 30
+        - 83
+    realtime4.xls:
+      time_total: 84
+      times_wltoggle:
+        - 48
+        - 74
+    realtime5.xls:
+      time_total: 89
+      times_wltoggle:
+        - 9
+        - 58
+    realtime6.xls:
+      time_total: 84
+      times_wltoggle:
+        - 28
+        - 48
+    realtime7.xls:
+      time_total: 105
+      times_wltoggle:
+        - 37
+        - 92
+    realtime8.xls:
+      time_total: 86
+      times_wltoggle:
+        - 47
+        - 58
+    realtime9.xls:
+      time_total: 88
+      times_wltoggle:
+        - 27
+        - 83
+
+  bagchi:
+    realtime1.xls:
+      time_total: 91
+      times_wltoggle:
+        - 40
+        - 83
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 30
+        - 40
+    realtime3.xls:
       time_total: 100
       times_wltoggle:
-        - 35
-        - 65
-  rian:
-    test1-L1.xls:
-      time_total: 60
+        - 9
+        - 53
+    realtime4.xls:
+      time_total: 93
+      times_wltoggle:
+        - 28
+        - 62
+    realtime5.xls:
+      time_total: 85
+      times_wltoggle:
+        - 38
+        - 60
+    realtime6.xls:
+      time_total: 80
+      times_wltoggle:
+        - 39
+        - 54
+    realtime7.xls:
+      time_total: 87
+      times_wltoggle:
+        - 36
+        - 77
+    realtime8.xls:
+      time_total: 85
+      times_wltoggle:
+        - 37
+        - 48
+    realtime9.xls:
+      time_total: 85
+      times_wltoggle:
+        - 25
+        - 56
+
+  balaji:
+    realtime1.xls:
+      time_total: 111
+      times_wltoggle:
+        - 66
+        - 82
+    realtime2.xls:
+      time_total: 93
+      times_wltoggle:
+        - 26
+        - 85
+    realtime3.xls:
+      time_total: 122
+      times_wltoggle:
+        - 28
+        - 109
+    realtime4.xls:
+      time_total: 89
+      times_wltoggle:
+        - 52
+        - 63
+    realtime5.xls:
+      time_total: 93
+      times_wltoggle:
+        - 42
+        - 64
+    realtime6.xls:
+      time_total: 115
+      times_wltoggle:
+        - 53
+        - 106
+    realtime7.xls:
+      time_total: 111
+      times_wltoggle:
+        - 10
+        - 60
+    realtime8.xls:
+      time_total: 95
+      times_wltoggle:
+        - 38
+        - 85
+    realtime9.xls:
+      time_total: 110
+      times_wltoggle:
+        - 30
+        - 98
+
+  budithi:
+    realtime1.xls:
+      time_total: 152
+      times_wltoggle:
+        - 41
+        - 88
+    realtime2.xls:
+      time_total: 114
+      times_wltoggle:
+        - 12
+        - 45
+    realtime3.xls:
+      time_total: 129
+      times_wltoggle:
+        - 90
+        - 115
+    realtime4.xls:
+      time_total: 90
+      times_wltoggle:
+        - 42
+        - 63
+    realtime5.xls:
+      time_total: 123
       times_wltoggle:
         - 20
+        - 72
+    realtime6.xls:
+      time_total: 118
+      times_wltoggle:
+        - 72
+        - 108
+    realtime7.xls:
+      time_total: 90
+      times_wltoggle:
+        - 42
+        - 60
+    realtime8.xls:
+      time_total: 124
+      times_wltoggle:
+        - 75
+        - 97
+    realtime9.xls:
+      time_total: 189
+      times_wltoggle:
+        - 107
+        - 125
+
+  charles:
+    realtime1.xls:
+      time_total: 130
+      times_wltoggle:
+        - 58
+        - 78
+    realtime2.xls:
+      time_total: 97
+      times_wltoggle:
         - 45
-    test2-L1.xls:
+        - 64
+    realtime3.xls:
+      time_total: 118
+      times_wltoggle:
+        - 45
+        - 105
+    realtime4.xls:
+      time_total: 90
+      times_wltoggle:
+        - 29
+        - 53
+    realtime5.xls:
+      time_total: 89
+      times_wltoggle:
+        - 62
+        - 80
+    realtime6.xls:
+      time_total: 96
+      times_wltoggle:
+        - 42
+        - 88
+    realtime7.xls:
+      time_total: 107
+      times_wltoggle:
+        - 29
+        - 92
+    realtime8.xls:
+      time_total: 101
+      times_wltoggle:
+        - 42
+        - 93
+    realtime9.xls:
+      time_total: 107
+      times_wltoggle:
+        - 10
+        - 56
+
+  chaudhry:
+    realtime1.xls:
+      time_total: 121
+      times_wltoggle:
+        - 9
+        - 45
+    realtime2.xls:
+      time_total: 102
+      times_wltoggle:
+        - 8
+        - 65
+    realtime3.xls:
+      time_total: 130
+      times_wltoggle:
+        - 34
+        - 110
+    realtime4.xls:
+      time_total: 99
+      times_wltoggle:
+        - 68
+        - 90
+    realtime5.xls:
+      time_total: 105
+      times_wltoggle:
+        - 70
+        - 104
+    realtime6.xls:
+      time_total: 113
+      times_wltoggle:
+        - 47
+        - 100
+    realtime7.xls:
+      time_total: 124
+      times_wltoggle:
+        - 43
+        - 105
+    realtime8.xls:
       time_total: 100
       times_wltoggle:
-        - 35
-        - 65
-  miller:
-    test1-L1.xls:
-      time_total: 60
+        - 54
+        - 75
+    realtime9.xls:
+      time_total: 132
       times_wltoggle:
-        - 20
+        - 35
+        - 68
+
+  dayaramani:
+    realtime1.xls:
+      time_total: 94
+      times_wltoggle:
+        - 42
+        - 68
+    realtime2.xls:
+      time_total: 94
+      times_wltoggle:
+        - 51
+        - 65
+    realtime3.xls:
+      time_total: 131
+      times_wltoggle:
+        - 31
+        - 90
+    realtime4.xls:
+      time_total: 85
+      times_wltoggle:
+        - 34
+        - 57
+    realtime5.xls:
+      time_total: 115
+      times_wltoggle:
+        - 27
+        - 90
+    realtime6.xls:
+      time_total: 118
+      times_wltoggle:
+        - 35
+        - 110
+    realtime7.xls:
+      time_total: 114
+      times_wltoggle:
+        - 34
+        - 105
+    realtime8.xls:
+      time_total: 80
+      times_wltoggle:
+        - 17
+        - 53
+    realtime9.xls:
+      time_total: 117
+      times_wltoggle:
+        - 22
+        - 64
+
+  derevensky:
+    realtime1.xls:
+      time_total: 87
+      times_wltoggle:
+        - 50
+        - 62
+    realtime2.xls:
+      time_total: 86
+      times_wltoggle:
+        - 39
+        - 59
+    realtime3.xls:
+      time_total: 88
+      times_wltoggle:
+        - 42
+        - 65
+    realtime4.xls:
+      time_total: 90
+      times_wltoggle:
+        - 37
+        - 76
+    realtime5.xls:
+      time_total: 85
+      times_wltoggle:
+        - 10
+        - 37
+    realtime6.xls:
+      time_total: 83
+      times_wltoggle:
         - 45
-    test2-L1.xls:
+        - 76
+    realtime7.xls:
+      time_total: 93
+      times_wltoggle:
+        - 27
+        - 75
+    realtime8.xls:
+      time_total: 89
+      times_wltoggle:
+        - 37
+        - 58
+    realtime9.xls:
+      time_total: 88
+      times_wltoggle:
+        - 25
+        - 75
+
+  devarabhatla:
+    realtime1.xls:
+      time_total: 106
+      times_wltoggle:
+        - 58
+        - 73
+    realtime2.xls:
       time_total: 100
       times_wltoggle:
-        - 35
-        - 65
-  jeremy:
-    test1-L1.xls:
-      time_total: 60
+        - 34
+        - 71
+    realtime3.xls:
+      time_total: 118
       times_wltoggle:
-        - 20
+        - 34
+        - 103
+    realtime4.xls:
+      time_total: 95
+      times_wltoggle:
+        - 10
+        - 65
+    realtime5.xls:
+      time_total: 210
+      times_wltoggle:
         - 45
-    test2-L1.xls:
+        - 200
+    realtime6.xls:
+      time_total: 99
+      times_wltoggle:
+        - 45
+        - 70
+    realtime7.xls:
+      time_total: 136
+      times_wltoggle:
+        - 33
+        - 102
+    realtime8.xls:
+      time_total: 93
+      times_wltoggle:
+        - 65
+        - 85
+    realtime9.xls:
+      time_total: 113
+      times_wltoggle:
+        - 12
+        - 50
+
+  dighavkar:
+    realtime1.xls:
+      time_total: 95
+      times_wltoggle:
+        - 42
+        - 66
+    realtime2.xls:
+      time_total: 91
+      times_wltoggle:
+        - 27
+        - 37
+    realtime3.xls:
+      time_total: 104
+      times_wltoggle:
+        - 28
+        - 84
+    realtime4.xls:
+      time_total: 97
+      times_wltoggle:
+        - 31
+        - 40
+    realtime5.xls:
+      time_total: 107
+      times_wltoggle:
+        - 27
+        - 81
+    realtime6.xls:
+      time_total: 96
+      times_wltoggle:
+        - 27
+        - 60
+    realtime7.xls:
+      time_total: 124
+      times_wltoggle:
+        - 45
+        - 95
+    realtime8.xls:
+      time_total: 111
+      times_wltoggle:
+        - 29
+        - 88
+    realtime9.xls:
+      time_total: 117
+      times_wltoggle:
+        - 42
+        - 105
+
+  dongare:
+    realtime1.xls:
+      time_total: 116
+      times_wltoggle:
+        - 48
+        - 75
+    realtime2.xls:
+      time_total: 111
+      times_wltoggle:
+        - 57
+        - 67
+    realtime3.xls:
+      time_total: 134
+      times_wltoggle:
+        - 74
+        - 90
+    realtime4.xls:
+      time_total: 118
+      times_wltoggle:
+        - 57
+        - 80
+    realtime5.xls:
+      time_total: 106
+      times_wltoggle:
+        - 66
+        - 77
+    realtime6.xls:
+      time_total: 118
+      times_wltoggle:
+        - 50
+        - 75
+    realtime7.xls:
+      time_total: 113
+      times_wltoggle:
+        - 35
+        - 100
+    realtime8.xls:
+      time_total: 103
+      times_wltoggle:
+        - 70
+        - 95
+    realtime9.xls:
+      time_total: 108
+      times_wltoggle:
+        - 30
+        - 72
+
+  dorbala:
+    realtime1.xls:
+      time_total: 89
+      times_wltoggle:
+        - 42
+        - 81
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 26
+        - 52
+    realtime3.xls:
+      time_total: 92
+      times_wltoggle:
+        - 26
+        - 65
+    realtime4.xls:
+      time_total: 77
+      times_wltoggle:
+        - 26
+        - 59
+    realtime5.xls:
+      time_total: 87
+      times_wltoggle:
+        - 10
+        - 52
+    realtime6.xls:
+      time_total: 83
+      times_wltoggle:
+        - 27
+        - 50
+    realtime7.xls:
+      time_total: 110
+      times_wltoggle:
+        - 33
+        - 98
+    realtime8.xls:
+      time_total: 84
+      times_wltoggle:
+        - 27
+        - 60
+    realtime9.xls:
+      time_total: 85
+      times_wltoggle:
+        - 8
+        - 47
+
+  gao:
+    realtime1.xls:
+      time_total: 99
+      times_wltoggle:
+        - 60
+        - 78
+    realtime2.xls:
+      time_total: 104
+      times_wltoggle:
+        - 33
+        - 50
+    realtime3.xls:
+      time_total: 104
+      times_wltoggle:
+        - 42
+        - 90
+    realtime4.xls:
+      time_total: 111
+      times_wltoggle:
+        - 49
+        - 78
+    realtime5.xls:
+      time_total: 118
+      times_wltoggle:
+        - 46
+        - 107
+    realtime6.xls:
+      time_total: 101
+      times_wltoggle:
+        - 45
+        - 68
+    realtime7.xls:
+      time_total: 106
+      times_wltoggle:
+        - 55
+        - 97
+    realtime8.xls:
+      time_total: 92
+      times_wltoggle:
+        - 40
+        - 84
+    realtime9.xls:
       time_total: 100
       times_wltoggle:
-        - 35
+        - 42
+        - 90
+
+  gedda:
+    realtime1.xls:
+      time_total: 91
+      times_wltoggle:
+        - 50
+        - 82
+    realtime2.xls:
+      time_total: 90
+      times_wltoggle:
+        - 10
+        - 62
+    realtime3.xls:
+      time_total: 98
+      times_wltoggle:
+        - 11
+        - 75
+    realtime4.xls:
+      time_total: 88
+      times_wltoggle:
+        - 27
+        - 60
+    realtime5.xls:
+      time_total: 87
+      times_wltoggle:
+        - 50
+        - 80
+    realtime6.xls:
+      time_total: 88
+      times_wltoggle:
+        - 27
+        - 62
+    realtime7.xls:
+      time_total: 142
+      times_wltoggle:
+        - 27
+        - 125
+    realtime8.xls:
+      time_total: 85
+      times_wltoggle:
+        - 27
+        - 60
+    realtime9.xls:
+      time_total: 124
+      times_wltoggle:
+        - 9
+        - 60
+
+  harsh:
+    realtime1.xls:
+      time_total: 88
+      times_wltoggle:
+        - 38
+        - 77
+    realtime2.xls:
+      time_total: 89
+      times_wltoggle:
+        - 27
+        - 50
+    realtime3.xls:
+      time_total: 98
+      times_wltoggle:
+        - 26
         - 65
-  jacob:
-    test1-L1.xls:
-      time_total: 60
+    realtime4.xls:
+      time_total: 85
       times_wltoggle:
-        - 20
-        - 45
-    test2-L1.xls:
-      time_total: 100
+        - 27
+        - 47
+    realtime5.xls:
+      time_total: 87
       times_wltoggle:
-        - 35
-        - 65
-  mike:
-    test1-L1.xls:
-      time_total: 60
+        - 37
+        - 49
+    realtime6.xls:
+      time_total: 83
       times_wltoggle:
-        - 20
-        - 45
-    test2-L1.xls:
-      time_total: 100
+        - 28
+        - 57
+    realtime7.xls:
+      time_total: 89
       times_wltoggle:
-        - 35
-        - 65
-  hiroki:
-    test1-L1.xls:
-      time_total: 60
+        - 36
+        - 76
+    realtime8.xls:
+      time_total: 92
       times_wltoggle:
-        - 20
-        - 45
-    test2-L1.xls:
-      time_total: 100
+        - 9
+        - 52
+    realtime9.xls:
+      time_total: 85
       times_wltoggle:
-        - 35
-        - 65
+        - 8
+        - 37
+
   heiserman:
-    test1-L1.xls:
-      time_total: 60
+    realtime1.xls:
+      time_total: 83
       times_wltoggle:
-        - 20
-        - 45
-    test2-L1.xls:
-      time_total: 100
+        - 16
+        - 46
+    realtime2.xls:
+      time_total: 79
+      times_wltoggle:
+        - 27
+        - 56
+    realtime3.xls:
+      time_total: 87
+      times_wltoggle:
+        - 29
+        - 61
+    realtime4.xls:
+      time_total: 80
+      times_wltoggle:
+        - 26
+        - 71
+    realtime5.xls:
+      time_total: 76
+      times_wltoggle:
+        - 12
+        - 35
+    realtime6.xls:
+      time_total: 84
+      times_wltoggle:
+        - 26
+        - 48
+    realtime7.xls:
+      time_total: 85
+      times_wltoggle:
+        - 21
+        - 62
+    realtime8.xls:
+      time_total: 104
+      times_wltoggle:
+        - 24
+        - 69
+    realtime9.xls:
+      time_total: 83
+      times_wltoggle:
+        - 7
+        - 34
+
+  islam:
+    realtime1.xls:
+      time_total: 105
+      times_wltoggle:
+        - 10
+        - 95
+    realtime2.xls:
+      time_total: 101
+      times_wltoggle:
+        - 32
+        - 56
+    realtime3.xls:
+      time_total: 102
+      times_wltoggle:
+        - 15
+        - 88
+    realtime4.xls:
+      time_total: 96
+      times_wltoggle:
+        - 43
+        - 69
+    realtime5.xls:
+      time_total: 88
+      times_wltoggle:
+        - 37
+        - 60
+    realtime6.xls:
+      time_total: 93
+      times_wltoggle:
+        - 28
+        - 84
+    realtime7.xls:
+      time_total: 103
+      times_wltoggle:
+        - 51
+        - 93
+    realtime8.xls:
+      time_total: 90
+      times_wltoggle:
+        - 28
+        - 62
+    realtime9.xls:
+      time_total: 102
+      times_wltoggle:
+        - 9
+        - 58
+
+  iyengar:
+    realtime1.xls:
+      time_total: 112
+      times_wltoggle:
+        - 41
+        - 73
+    realtime2.xls:
+      time_total: 132
+      times_wltoggle:
+        - 49
+        - 95
+    realtime3.xls:
+      time_total: 125
+      times_wltoggle:
+        - 36
+        - 90
+    realtime4.xls:
+      time_total: 122
+      times_wltoggle:
+        - 44
+        - 112
+    realtime5.xls:
+      time_total: 115
+      times_wltoggle:
+        - 49
+        - 76
+    realtime6.xls:
+      time_total: 113
+      times_wltoggle:
+        - 36
+        - 64
+    realtime7.xls:
+      time_total: 145
+      times_wltoggle:
+        - 49
+        - 70
+    realtime8.xls:
+      time_total: 111
+      times_wltoggle:
+        - 38
+        - 79
+    realtime9.xls:
+      time_total: 144
+      times_wltoggle:
+        - 12
+        - 92
+
+  kandra:
+    realtime1.xls:
+      time_total: 93
+      times_wltoggle:
+        - 38
+        - 85
+    realtime2.xls:
+      time_total: 86
+      times_wltoggle:
+        - 38
+        - 78
+    realtime3.xls:
+      time_total: 104
+      times_wltoggle:
+        - 25
+        - 66
+    realtime4.xls:
+      time_total: 87
+      times_wltoggle:
+        - 48
+        - 60
+    realtime5.xls:
+      time_total: 91
+      times_wltoggle:
+        - 25
+        - 60
+    realtime6.xls:
+      time_total: 84
+      times_wltoggle:
+        - 9
+        - 37
+    realtime7.xls:
+      time_total: 97
+      times_wltoggle:
+        - 8
+        - 55
+    realtime8.xls:
+      time_total: 84
+      times_wltoggle:
+        - 27
+        - 49
+    realtime9.xls:
+      time_total: 91
       times_wltoggle:
         - 35
+        - 78
+
+  kankipati:
+    realtime1.xls:
+      time_total: 87
+      times_wltoggle:
+        - 28
+        - 75
+    realtime2.xls:
+      time_total: 91
+      times_wltoggle:
+        - 28
+        - 38
+    realtime3.xls:
+      time_total: 92
+      times_wltoggle:
+        - 48
+        - 80
+    realtime4.xls:
+      time_total: 91
+      times_wltoggle:
+        - 38
+        - 48
+    realtime5.xls:
+      time_total: 92
+      times_wltoggle:
+        - 40
+        - 52
+    realtime6.xls:
+      time_total: 91
+      times_wltoggle:
+        - 62
+        - 82
+    realtime7.xls:
+      time_total: 95
+      times_wltoggle:
+        - 39
+        - 82
+    realtime8.xls:
+      time_total: 111
+      times_wltoggle:
+        - 26
+        - 60
+    realtime9.xls:
+      time_total: 82
+      times_wltoggle:
+        - 8
+        - 46
+
+  kaziakhmedov:
+    realtime1.xls:
+      time_total: 107
+      times_wltoggle:
+        - 37
+        - 97
+    realtime2.xls:
+      time_total: 95
+      times_wltoggle:
+        - 41
         - 65
+    realtime3.xls:
+      time_total: 121
+      times_wltoggle:
+        - 30
+        - 85
+    realtime4.xls:
+      time_total: 83
+      times_wltoggle:
+        - 38
+        - 58
+    realtime5.xls:
+      time_total: 93
+      times_wltoggle:
+        - 52
+        - 65
+    realtime6.xls:
+      time_total: 93
+      times_wltoggle:
+        - 40
+        - 65
+    realtime7.xls:
+      time_total: 115
+      times_wltoggle:
+        - 10
+        - 65
+    realtime8.xls:
+      time_total: 93
+      times_wltoggle:
+        - 50
+        - 85
+    realtime9.xls:
+      time_total: 112
+      times_wltoggle:
+        - 31
+        - 93
+
+  khillan:
+    realtime1.xls:
+      time_total: 110
+      times_wltoggle:
+        - 47
+        - 58
+    realtime2.xls:
+      time_total: 91
+      times_wltoggle:
+        - 61
+        - 82
+    realtime3.xls:
+      time_total: 90
+      times_wltoggle:
+        - 25
+        - 59
+    realtime4.xls:
+      time_total: 85
+      times_wltoggle:
+        - 25
+        - 45
+    realtime5.xls:
+      time_total: 108
+      times_wltoggle:
+        - 26
+        - 70
+    realtime6.xls:
+      time_total: 87
+      times_wltoggle:
+        - 60
+        - 76
+    realtime7.xls:
+      time_total: 87
+      times_wltoggle:
+        - 33
+        - 76
+    realtime8.xls:
+      time_total: 84
+      times_wltoggle:
+        - 45
+        - 58
+    realtime9.xls:
+      time_total: 87
+      times_wltoggle:
+        - 8
+        - 48
+
+  kodali:
+    realtime1.xls:
+      time_total: 96
+      times_wltoggle:
+        - 45
+        - 69
+    realtime2.xls:
+      time_total: 95
+      times_wltoggle:
+        - 12
+        - 84
+    realtime3.xls:
+      time_total: 126
+      times_wltoggle:
+        - 28
+        - 105
+    realtime4.xls:
+      time_total: 87
+      times_wltoggle:
+        - 9
+        - 28
+    realtime5.xls:
+      time_total: 68
+      times_wltoggle:
+        - 28
+        - 40
+    realtime6.xls:
+      time_total: 86
+      times_wltoggle:
+        - 50
+        - 58
+    realtime7.xls:
+      time_total: 155
+      times_wltoggle:
+        - 40
+        - 102
+    realtime8.xls:
+      time_total: 81
+      times_wltoggle:
+        - 52
+        - 72
+    realtime9.xls:
+      time_total: 110
+      times_wltoggle:
+        - 48
+        - 94
+
+  kothari:
+    realtime1.xls:
+      time_total: 118
+      times_wltoggle:
+        - 69
+        - 85
+    realtime2.xls:
+      time_total: 116
+      times_wltoggle:
+        - 40
+        - 69
+    realtime3.xls:
+      time_total: 155
+      times_wltoggle:
+        - 80
+        - 135
+    realtime4.xls:
+      time_total: 108
+      times_wltoggle:
+        - 37
+        - 69
+    realtime5.xls:
+      time_total: 135
+      times_wltoggle:
+        - 64
+        - 98
+    realtime6.xls:
+      time_total: 119
+      times_wltoggle:
+        - 37
+        - 86
+    realtime7.xls:
+      time_total: 175
+      times_wltoggle:
+        - 35
+        - 147
+    realtime8.xls:
+      time_total: 113
+      times_wltoggle:
+        - 39
+        - 64
+    realtime9.xls:
+      time_total: 128
+      times_wltoggle:
+        - 59
+        - 89
+
+  kottana:
+    realtime1.xls:
+      time_total: 112
+      times_wltoggle:
+        - 27
+        - 65
+    realtime2.xls:
+      time_total: 113
+      times_wltoggle:
+        - 32
+        - 62
+    realtime3.xls:
+      time_total: 125
+      times_wltoggle:
+        - 8
+        - 64
+    realtime4.xls:
+      time_total: 98
+      times_wltoggle:
+        - 31
+        - 46
+    realtime5.xls:
+      time_total: 105
+      times_wltoggle:
+        - 9
+        - 44
+    realtime6.xls:
+      time_total: 106
+      times_wltoggle:
+        - 31
+        - 43
+    realtime7.xls:
+      time_total: 150
+      times_wltoggle:
+        - 37
+        - 131
+    realtime8.xls:
+      time_total: 94
+      times_wltoggle:
+        - 9
+        - 53
+    realtime9.xls:
+      time_total: 106
+      times_wltoggle:
+        - 29
+        - 73
+
+  krishtipati:
+    realtime1.xls:
+      time_total: 180
+      times_wltoggle:
+        - 35
+        - 62
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 38
+        - 50
+    realtime3.xls:
+      time_total: 92
+      times_wltoggle:
+        - 27
+        - 48
+    realtime4.xls:
+      time_total: 88
+      times_wltoggle:
+        - 40
+        - 58
+    realtime5.xls:
+      time_total: 90
+      times_wltoggle:
+        - 26
+        - 64
+    realtime6.xls:
+      time_total: 88
+      times_wltoggle:
+        - 40
+        - 80
+    realtime7.xls:
+      time_total: 88
+      times_wltoggle:
+        - 27
+        - 60
+    realtime8.xls:
+      time_total: 92
+      times_wltoggle:
+        - 9
+        - 64
+    realtime9.xls:
+      time_total: 96
+      times_wltoggle:
+        - 38
+        - 80
+
+  lee:
+    realtime1.xls:
+      time_total: 97
+      times_wltoggle:
+        - 31
+        - 71
+    realtime2.xls:
+      time_total: 96
+      times_wltoggle:
+        - 29
+        - 41
+    realtime3.xls:
+      time_total: 107
+      times_wltoggle:
+        - 30
+        - 60
+    realtime4.xls:
+      time_total: 92
+      times_wltoggle:
+        - 39
+        - 62
+    realtime5.xls:
+      time_total: 96
+      times_wltoggle:
+        - 9
+        - 63
+    realtime6.xls:
+      time_total: 94
+      times_wltoggle:
+        - 31
+        - 52
+    realtime7.xls:
+      time_total: 96
+      times_wltoggle:
+        - 39
+        - 82
+    realtime8.xls:
+      time_total: 91
+      times_wltoggle:
+        - 39
+        - 65
+    realtime9.xls:
+      time_total: 95
+      times_wltoggle:
+        - 26
+        - 80
+
+  mekala:
+    realtime1.xls:
+      time_total: 115
+      times_wltoggle:
+        - 45
+        - 81
+    realtime2.xls:
+      time_total: 111
+      times_wltoggle:
+        - 57
+        - 75
+    realtime3.xls:
+      time_total: 123
+      times_wltoggle:
+        - 70
+        - 92
+    realtime4.xls:
+      time_total: 113
+      times_wltoggle:
+        - 30
+        - 80
+    realtime5.xls:
+      time_total: 109
+      times_wltoggle:
+        - 31
+        - 62
+    realtime6.xls:
+      time_total: 82
+      times_wltoggle:
+        - 32
+        - 62
+    realtime7.xls:
+      time_total: 106
+      times_wltoggle:
+        - 10
+        - 49
+    realtime8.xls:
+      time_total: 118
+      times_wltoggle:
+        - 33
+        - 109
+    realtime9.xls:
+      time_total: 145
+      times_wltoggle:
+        - 30
+        - 79
+
+  narasimhan:
+    realtime1.xls:
+      time_total: 88
+      times_wltoggle:
+        - 27
+        - 49
+    realtime2.xls:
+      time_total: 86
+      times_wltoggle:
+        - 49
+        - 60
+    realtime3.xls:
+      time_total: 112
+      times_wltoggle:
+        - 27
+        - 97
+    realtime4.xls:
+      time_total: 80
+      times_wltoggle:
+        - 35
+        - 55
+    realtime5.xls:
+      time_total: 85
+      times_wltoggle:
+        - 9
+        - 40
+    realtime6.xls:
+      time_total: 80
+      times_wltoggle:
+        - 36
+        - 56
+    realtime7.xls:
+      time_total: 88
+      times_wltoggle:
+        - 33
+        - 61
+    realtime8.xls:
+      time_total: 126
+      times_wltoggle:
+        - 25
+        - 80
+    realtime9.xls:
+      time_total: 103
+      times_wltoggle:
+        - 13
+        - 54
+
+  narayana:
+    realtime1.xls:
+      time_total: 103
+      times_wltoggle:
+        - 71
+        - 93
+    realtime2.xls:
+      time_total: 99
+      times_wltoggle:
+        - 47
+        - 71
+    realtime3.xls:
+      time_total: 151
+      times_wltoggle:
+        - 35
+        - 120
+    realtime4.xls:
+      time_total: 97
+      times_wltoggle:
+        - 44
+        - 57
+    realtime5.xls:
+      time_total: 110
+      times_wltoggle:
+        - 40
+        - 51
+    realtime6.xls:
+      time_total: 113
+      times_wltoggle:
+        - 39
+        - 66
+    realtime7.xls:
+      time_total: 113
+      times_wltoggle:
+        - 12
+        - 66
+    realtime8.xls:
+      time_total: 158
+      times_wltoggle:
+        - 40
+        - 120
+    realtime9.xls:
+      time_total: 121
+      times_wltoggle:
+        - 60
+        - 105
+
+  nori:
+    realtime1.xls:
+      time_total: 103
+      times_wltoggle:
+        - 40
+        - 94
+    realtime2.xls:
+      time_total: 94
+      times_wltoggle:
+        - 29
+        - 40
+    realtime3.xls:
+      time_total: 120
+      times_wltoggle:
+        - 29
+        - 86
+    realtime4.xls:
+      time_total: 101
+      times_wltoggle:
+        - 42
+        - 70
+    realtime5.xls:
+      time_total: 95
+      times_wltoggle:
+        - 29
+        - 66
+    realtime6.xls:
+      time_total: 98
+      times_wltoggle:
+        - 40
+        - 70
+    realtime7.xls:
+      time_total: 129
+      times_wltoggle:
+        - 50
+        - 110
+    realtime8.xls:
+      time_total: 117
+      times_wltoggle:
+        - 55
+        - 78
+    realtime9.xls:
+      time_total: 108
+      times_wltoggle:
+        - 52
+        - 70
+
+  oke:
+    realtime1.xls:
+      time_total: 92
+      times_wltoggle:
+        - 40
+        - 52
+    realtime2.xls:
+      time_total: 85
+      times_wltoggle:
+        - 50
+        - 60
+    realtime3.xls:
+      time_total: 95
+      times_wltoggle:
+        - 10
+        - 55
+    realtime4.xls:
+      time_total: 83
+      times_wltoggle:
+        - 10
+        - 60
+    realtime5.xls:
+      time_total: 86
+      times_wltoggle:
+        - 10
+        - 53
+    realtime6.xls:
+      time_total: 83
+      times_wltoggle:
+        - 38
+        - 58
+    realtime7.xls:
+      time_total: 95
+      times_wltoggle:
+        - 40
+        - 65
+    realtime8.xls:
+      time_total: 90
+      times_wltoggle:
+        - 38
+        - 85
+    realtime9.xls:
+      time_total: 100
+      times_wltoggle:
+        - 30
+        - 60
+
+  olson:
+    realtime1.xls:
+      time_total: 84
+      times_wltoggle:
+        - 27
+        - 72
+    realtime2.xls:
+      time_total: 83
+      times_wltoggle:
+        - 36
+        - 58
+    realtime3.xls:
+      time_total: 89
+      times_wltoggle:
+        - 34
+        - 52
+    realtime4.xls:
+      time_total: 80
+      times_wltoggle:
+        - 24
+        - 55
+    realtime5.xls:
+      time_total: 87
+      times_wltoggle:
+        - 35
+        - 75
+    realtime6.xls:
+      time_total: 82
+      times_wltoggle:
+        - 45
+        - 56
+    realtime7.xls:
+      time_total: 81
+      times_wltoggle:
+        - 7
+        - 34
+    realtime8.xls:
+      time_total: 79
+      times_wltoggle:
+        - 24
+        - 55
+    realtime9.xls:
+      time_total: 81
+      times_wltoggle:
+        - 25
+        - 56
+
+  pachpande:
+    realtime1.xls:
+      time_total: 82
+      times_wltoggle:
+        - 37
+        - 57
+    realtime2.xls:
+      time_total: 98
+      times_wltoggle:
+        - 30
+        - 55
+    realtime3.xls:
+      time_total: 93
+      times_wltoggle:
+        - 50
+        - 80
+    realtime4.xls:
+      time_total: 103
+      times_wltoggle:
+        - 9
+        - 56
+    realtime5.xls:
+      time_total: 109
+      times_wltoggle:
+        - 27
+        - 75
+    realtime6.xls:
+      time_total: 86
+      times_wltoggle:
+        - 23
+        - 58
+    realtime7.xls:
+      time_total: 119
+      times_wltoggle:
+        - 10
+        - 110
+    realtime8.xls:
+      time_total: 121
+      times_wltoggle:
+        - 10
+        - 88
+    realtime9.xls:
+      time_total: 121
+      times_wltoggle:
+        - 37
+        - 50
+
+  padmanaban:
+    realtime1.xls:
+      time_total: 103
+      times_wltoggle:
+        - 56
+        - 70
+    realtime2.xls:
+      time_total: 100
+      times_wltoggle:
+        - 27
+        - 54
+    realtime3.xls:
+      time_total: 101
+      times_wltoggle:
+        - 50
+        - 85
+    realtime4.xls:
+      time_total: 91
+      times_wltoggle:
+        - 53
+        - 65
+    realtime5.xls:
+      time_total: 98
+      times_wltoggle:
+        - 26
+        - 58
+    realtime6.xls:
+      time_total: 97
+      times_wltoggle:
+        - 28
+        - 56
+    realtime7.xls:
+      time_total: 100
+      times_wltoggle:
+        - 8
+        - 55
+    realtime8.xls:
+      time_total: 122
+      times_wltoggle:
+        - 10
+        - 65
+    realtime9.xls:
+      time_total: 106
+      times_wltoggle:
+        - 28
+        - 73
+
+  pathiki:
+    realtime1.xls:
+      time_total: 107
+      times_wltoggle:
+        - 44
+        - 75
+    realtime2.xls:
+      time_total: 104
+      times_wltoggle:
+        - 45
+        - 72
+    realtime3.xls:
+      time_total: 111
+      times_wltoggle:
+        - 33
+        - 95
+    realtime4.xls:
+      time_total: 98
+      times_wltoggle:
+        - 30
+        - 68
+    realtime5.xls:
+      time_total: 103
+      times_wltoggle:
+        - 42
+        - 56
+    realtime6.xls:
+      time_total: 88
+      times_wltoggle:
+        - 10
+        - 48
+    realtime7.xls:
+      time_total: 115
+      times_wltoggle:
+        - 12
+        - 63
+    realtime8.xls:
+      time_total: 146
+      times_wltoggle:
+        - 44
+        - 115
+    realtime9.xls:
+      time_total: 104
+      times_wltoggle:
+        - 30
+        - 95
+
+  patil:
+    realtime1.xls:
+      time_total: 112
+      times_wltoggle:
+        - 70
+        - 100
+    realtime2.xls:
+      time_total: 94
+      times_wltoggle:
+        - 28
+        - 55
+    realtime3.xls:
+      time_total: 96
+      times_wltoggle:
+        - 24
+        - 84
+    realtime4.xls:
+      time_total: 84
+      times_wltoggle:
+        - 60
+        - 78
+    realtime5.xls:
+      time_total: 86
+      times_wltoggle:
+        - 34
+        - 56
+    realtime6.xls:
+      time_total: 87
+      times_wltoggle:
+        - 9
+        - 60
+    realtime7.xls:
+      time_total: 91
+      times_wltoggle:
+        - 35
+        - 75
+    realtime8.xls:
+      time_total: 93
+      times_wltoggle:
+        - 27
+        - 85
+    realtime9.xls:
+      time_total: 114
+      times_wltoggle:
+        - 25
+        - 85
+
+  perrotta:
+    realtime1.xls:
+      time_total: 99
+      times_wltoggle:
+        - 27
+        - 93
+    realtime2.xls:
+      time_total: 89
+      times_wltoggle:
+        - 31
+        - 60
+    realtime3.xls:
+      time_total: 97
+      times_wltoggle:
+        - 28
+        - 68
+    realtime4.xls:
+      time_total: 94
+      times_wltoggle:
+        - 10
+        - 42
+    realtime5.xls:
+      time_total: 87
+      times_wltoggle:
+        - 29
+        - 80
+    realtime6.xls:
+      time_total: 88
+      times_wltoggle:
+        - 28
+        - 50
+    realtime7.xls:
+      time_total: 94
+      times_wltoggle:
+        - 39
+        - 82
+    realtime8.xls:
+      time_total: 90
+      times_wltoggle:
+        - 28
+        - 60
+    realtime9.xls:
+      time_total: 90
+      times_wltoggle:
+        - 9
+        - 51
+
+  pragallapati:
+    realtime1.xls:
+      time_total: 91
+      times_wltoggle:
+        - 10
+        - 54
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 40
+        - 62
+    realtime3.xls:
+      time_total: 92
+      times_wltoggle:
+        - 35
+        - 51
+    realtime4.xls:
+      time_total: 94
+      times_wltoggle:
+        - 40
+        - 86
+    realtime5.xls:
+      time_total: 109
+      times_wltoggle:
+        - 12
+        - 45
+    realtime6.xls:
+      time_total: 136
+      times_wltoggle:
+        - 41
+        - 105
+    realtime7.xls:
+      time_total: 106
+      times_wltoggle:
+        - 10
+        - 90
+    realtime8.xls:
+      time_total: 160
+      times_wltoggle:
+        - 32
+        - 152
+    realtime9.xls:
+      time_total: 100
+      times_wltoggle:
+        - 28
+        - 52
+
+  purohit:
+    realtime1.xls:
+      time_total: 101
+      times_wltoggle:
+        - 34
+        - 74
+    realtime2.xls:
+      time_total: 105
+      times_wltoggle:
+        - 46
+        - 75
+    realtime3.xls:
+      time_total: 132
+      times_wltoggle:
+        - 12
+        - 88
+    realtime4.xls:
+      time_total: 101
+      times_wltoggle:
+        - 9
+        - 91
+    realtime5.xls:
+      time_total: 113
+      times_wltoggle:
+        - 36
+        - 102
+    realtime6.xls:
+      time_total: 104
+      times_wltoggle:
+        - 62
+        - 96
+    realtime7.xls:
+      time_total: 127
+      times_wltoggle:
+        - 48
+        - 104
+    realtime8.xls:
+      time_total: 108
+      times_wltoggle:
+        - 47
+        - 100
+    realtime9.xls:
+      time_total: 122
+      times_wltoggle:
+        - 17
+        - 78
+
+  raghwani:
+    realtime1.xls:
+      time_total: 98
+      times_wltoggle:
+        - 12
+        - 56
+    realtime2.xls:
+      time_total: 91
+      times_wltoggle:
+        - 30
+        - 83
+    realtime3.xls:
+      time_total: 164
+      times_wltoggle:
+        - 33
+        - 122
+    realtime4.xls:
+      time_total: 87
+      times_wltoggle:
+        - 27
+        - 60
+    realtime5.xls:
+      time_total: 95
+      times_wltoggle:
+        - 28
+        - 65
+    realtime6.xls:
+      time_total: 89
+      times_wltoggle:
+        - 51
+        - 62
+    realtime7.xls:
+      time_total: 75
+      times_wltoggle:
+        - 23
+        - 69
+    realtime8.xls:
+      time_total: 96
+      times_wltoggle:
+        - 40
+        - 54
+    realtime9.xls:
+      time_total: 102
+      times_wltoggle:
+        - 9
+        - 49
+
+  ramaiya:
+    realtime1.xls:
+      time_total: 126
+      times_wltoggle:
+        - 65
+        - 115
+    realtime2.xls:
+      time_total: 96
+      times_wltoggle:
+        - 30
+        - 54
+    realtime3.xls:
+      time_total: 102
+      times_wltoggle:
+        - 39
+        - 90
+    realtime4.xls:
+      time_total: 80
+      times_wltoggle:
+        - 25
+        - 45
+    realtime5.xls:
+      time_total: 136
+      times_wltoggle:
+        - 35
+        - 60
+    realtime6.xls:
+      time_total: 86
+      times_wltoggle:
+        - 25
+        - 46
+    realtime7.xls:
+      time_total: 91
+      times_wltoggle:
+        - 8
+        - 50
+    realtime8.xls:
+      time_total: 123
+      times_wltoggle:
+        - 38
+        - 60
+    realtime9.xls:
+      time_total: 74
+      times_wltoggle:
+        - 24
+        - 56
+
+  ravuri:
+    realtime1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 30
+        - 55
+    realtime2.xls:
+      time_total: 92
+      times_wltoggle:
+        - 40
+        - 68
+    realtime3.xls:
+      time_total: 112
+      times_wltoggle:
+        - 27
+        - 89
+    realtime4.xls:
+      time_total: 89
+      times_wltoggle:
+        - 27
+        - 61
+    realtime5.xls:
+      time_total: 93
+      times_wltoggle:
+        - 42
+        - 67
+    realtime6.xls:
+      time_total: 97
+      times_wltoggle:
+        - 42
+        - 88
+    realtime7.xls:
+      time_total: 123
+      times_wltoggle:
+        - 80
+        - 102
+    realtime8.xls:
+      time_total: 100
+      times_wltoggle:
+        - 12
+        - 72
+    realtime9.xls:
+      time_total: 104
+      times_wltoggle:
+        - 10
+        - 63
+
+  roach:
+    realtime1.xls:
+      time_total: 100
+      times_wltoggle:
+        - 65
+        - 90
+    realtime2.xls:
+      time_total: 94
+      times_wltoggle:
+        - 67
+        - 88
+    realtime3.xls:
+      time_total: 95
+      times_wltoggle:
+        - 28
+        - 65
+    realtime4.xls:
+      time_total: 93
+      times_wltoggle:
+        - 41
+        - 64
+    realtime5.xls:
+      time_total: 92
+      times_wltoggle:
+        - 42
+        - 64
+    realtime6.xls:
+      time_total: 92
+      times_wltoggle:
+        - 52
+        - 62
+    realtime7.xls:
+      time_total: 101
+      times_wltoggle:
+        - 39
+        - 89
+    realtime8.xls:
+      time_total: 95
+      times_wltoggle:
+        - 42
+        - 66
+    realtime9.xls:
+      time_total: 101
+      times_wltoggle:
+        - 31
+        - 70
+
+  sankhe:
+    realtime1.xls:
+      time_total: 80
+      times_wltoggle:
+        - 35
+        - 70
+    realtime2.xls:
+      time_total: 78
+      times_wltoggle:
+        - 27
+        - 44
+    realtime3.xls:
+      time_total: 108
+      times_wltoggle:
+        - 25
+        - 60
+    realtime4.xls:
+      time_total: 83
+      times_wltoggle:
+        - 27
+        - 56
+    realtime5.xls:
+      time_total: 83
+      times_wltoggle:
+        - 47
+        - 58
+    realtime6.xls:
+      time_total: 93
+      times_wltoggle:
+        - 28
+        - 80
+    realtime7.xls:
+      time_total: 113
+      times_wltoggle:
+        - 34
+        - 73
+    realtime8.xls:
+      time_total: 83
+      times_wltoggle:
+        - 36
+        - 47
+    realtime9.xls:
+      time_total: 110
+      times_wltoggle:
+        - 12
+        - 52
+
+  sesham:
+    realtime1.xls:
+      time_total: 90
+      times_wltoggle:
+        - 30
+        - 53
+    realtime2.xls:
+      time_total: 84
+      times_wltoggle:
+        - 27
+        - 38
+    realtime3.xls:
+      time_total: 105
+      times_wltoggle:
+        - 28
+        - 90
+    realtime4.xls:
+      time_total: 86
+      times_wltoggle:
+        - 30
+        - 80
+    realtime5.xls:
+      time_total: 88
+      times_wltoggle:
+        - 9
+        - 62
+    realtime6.xls:
+      time_total: 81
+      times_wltoggle:
+        - 9
+        - 27
+    realtime7.xls:
+      time_total: 102
+      times_wltoggle:
+        - 8
+        - 58
+    realtime8.xls:
+      time_total: 62
+      times_wltoggle:
+        - 38
+        - 58
+    realtime9.xls:
+      time_total: 102
+      times_wltoggle:
+        - 28
+        - 60
+
+  shah-a:
+    realtime1.xls:
+      time_total: 114
+      times_wltoggle:
+        - 36
+        - 95
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 57
+        - 78
+    realtime3.xls:
+      time_total: 147
+      times_wltoggle:
+        - 25
+        - 110
+    realtime4.xls:
+      time_total: 90
+      times_wltoggle:
+        - 38
+        - 50
+    realtime5.xls:
+      time_total: 93
+      times_wltoggle:
+        - 38
+        - 84
+    realtime6.xls:
+      time_total: 91
+      times_wltoggle:
+        - 60
+        - 82
+    realtime7.xls:
+      time_total: 112
+      times_wltoggle:
+        - 11
+        - 61
+    realtime8.xls:
+      time_total: 88
+      times_wltoggle:
+        - 37
+        - 58
+    realtime9.xls:
+      time_total: 104
+      times_wltoggle:
+        - 27
+        - 71
+
+  shah-b:
+    realtime1.xls:
+      time_total: 109
+      times_wltoggle:
+        - 48
+        - 77
+    realtime2.xls:
+      time_total: 108
+      times_wltoggle:
+        - 54
+        - 80
+    realtime3.xls:
+      time_total: 110
+      times_wltoggle:
+        - 10
+        - 50
+    realtime4.xls:
+      time_total: 118
+      times_wltoggle:
+        - 44
+        - 70
+    realtime5.xls:
+      time_total: 106
+      times_wltoggle:
+        - 35
+        - 60
+    realtime6.xls:
+      time_total: 101
+      times_wltoggle:
+        - 33
+        - 71
+    realtime7.xls:
+      time_total: 102
+      times_wltoggle:
+        - 27
+        - 66
+    realtime8.xls:
+      time_total: 116
+      times_wltoggle:
+        - 38
+        - 48
+    realtime9.xls:
+      time_total: 136
+      times_wltoggle:
+        - 50
+        - 85
+
+  thakur:
+    realtime1.xls:
+      time_total: 102
+      times_wltoggle:
+        - 74
+        - 93
+    realtime2.xls:
+      time_total: 87
+      times_wltoggle:
+        - 40
+        - 64
+    realtime3.xls:
+      time_total: 154
+      times_wltoggle:
+        - 10
+        - 112
+    realtime4.xls:
+      time_total: 85
+      times_wltoggle:
+        - 53
+        - 62
+    realtime5.xls:
+      time_total: 84
+      times_wltoggle:
+        - 39
+        - 61
+    realtime6.xls:
+      time_total: 101
+      times_wltoggle:
+        - 49
+        - 72
+    realtime7.xls:
+      time_total: 112
+      times_wltoggle:
+        - 47
+        - 98
+    realtime8.xls:
+      time_total: 106
+      times_wltoggle:
+        - 62
+        - 75
+    realtime9.xls:
+      time_total: 109
+      times_wltoggle:
+        - 33
+        - 73
+
+  tosuner:
+    realtime1.xls:
+      time_total: 84
+      times_wltoggle:
+        - 45
+        - 75
+    realtime2.xls:
+      time_total: 89
+      times_wltoggle:
+        - 26
+        - 46
+    realtime3.xls:
+      time_total: 93
+      times_wltoggle:
+        - 8
+        - 50
+    realtime4.xls:
+      time_total: 84
+      times_wltoggle:
+        - 37
+        - 59
+    realtime5.xls:
+      time_total: 98
+      times_wltoggle:
+        - 9
+        - 65
+    realtime6.xls:
+      time_total: 85
+      times_wltoggle:
+        - 37
+        - 57
+    realtime7.xls:
+      time_total: 123
+      times_wltoggle:
+        - 27
+        - 92
+    realtime8.xls:
+      time_total: 90
+      times_wltoggle:
+        - 9
+        - 38
+    realtime9.xls:
+      time_total: 96
+      times_wltoggle:
+        - 25
+        - 63
+
+  upadhyayula:
+    realtime1.xls:
+      time_total: 131
+      times_wltoggle:
+        - 93
+        - 122
+    realtime2.xls:
+      time_total: 132
+      times_wltoggle:
+        - 40
+        - 58
+    realtime3.xls:
+      time_total: 128
+      times_wltoggle:
+        - 52
+        - 100
+    realtime4.xls:
+      time_total: 168
+      times_wltoggle:
+        - 18
+        - 132
+    realtime5.xls:
+      time_total: 121
+      times_wltoggle:
+        - 13
+        - 112
+    realtime6.xls:
+      time_total: 123
+      times_wltoggle:
+        - 87
+        - 115
+    realtime7.xls:
+      time_total: 179
+      times_wltoggle:
+        - 15
+        - 131
+    realtime8.xls:
+      time_total: 107
+      times_wltoggle:
+        - 62
+        - 75
+    realtime9.xls:
+      time_total: 123
+      times_wltoggle:
+        - 85
+        - 114
+
+  vangapandu:
+    realtime1.xls:
+      time_total: 133
+      times_wltoggle:
+        - 29
+        - 100
+    realtime2.xls:
+      time_total: 96
+      times_wltoggle:
+        - 30
+        - 65
+    realtime3.xls:
+      time_total: 129
+      times_wltoggle:
+        - 42
+        - 90
+    realtime4.xls:
+      time_total: 107
+      times_wltoggle:
+        - 42
+        - 72
+    realtime5.xls:
+      time_total: 99
+      times_wltoggle:
+        - 57
+        - 90
+    realtime6.xls:
+      time_total: 100
+      times_wltoggle:
+        - 9
+        - 70
+    realtime7.xls:
+      time_total: 113
+      times_wltoggle:
+        - 28
+        - 100
+    realtime8.xls:
+      time_total: 94
+      times_wltoggle:
+        - 30
+        - 51
+    realtime9.xls:
+      time_total: 104
+      times_wltoggle:
+        - 8
+        - 58
+
+  zaychik:
+    realtime1.xls:
+      time_total: 91
+      times_wltoggle:
+        - 27
+        - 52
+    realtime2.xls:
+      time_total: 88
+      times_wltoggle:
+        - 50
+        - 80
+    realtime3.xls:
+      time_total: 101
+      times_wltoggle:
+        - 27
+        - 35
+    realtime4.xls:
+      time_total: 86
+      times_wltoggle:
+        - 8
+        - 80
+    realtime5.xls:
+      time_total: 94
+      times_wltoggle:
+        - 55
+        - 84
+    realtime6.xls:
+      time_total: 90
+      times_wltoggle:
+        - 27
+        - 51
+    realtime7.xls:
+      time_total: 95
+      times_wltoggle:
+        - 8
+        - 65
+    realtime8.xls:
+      time_total: 87
+      times_wltoggle:
+        - 28
+        - 80
+    realtime9.xls:
+      time_total: 97
+      times_wltoggle:
+        - 52
+        - 83
+
+
 
 htm_gridsearch:
   SP=:
@@ -367,7 +2818,7 @@ htm_config_user:
     running:  #110000
     sampling:  #10000
 
-train_models: true
+train_models: false  #true
 data_cap: 100000
 eval_metric: rmse
 forecast_horizon: 1

@@ -2,6 +2,8 @@ import argparse
 import os
 import sys
 
+import pandas as pd
+
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
 _HTM_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'htm_streamer')
@@ -51,4 +53,24 @@ def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'mod
     for out in outputs:
         dir_out_type = os.path.join(dir_out, out)
         os.makedirs(dir_out_type, exist_ok=True)
+
+
+def print_realtimewl_config(path_in, runs=[1,2,3,4,5,6,7,8,9]):
+    df = pd.read_csv(path_in)
+    # loop over subjects
+    for subj, df_subj in df.groupby('Subject'):
+        # loop over runs
+        print(f"\n  {subj}:")
+        for run in runs:
+            col_timetotal = f"Run {run}-Total"
+            col_time1 = f"Run {run}-1"
+            col_time2 = f"Run {run}-2"
+            time_total = df_subj[col_timetotal].values[0]
+            time_1 = df_subj[col_time1].values[0]
+            time_2 = df_subj[col_time2].values[0]
+            print(f"    realtime{run}.xls:")
+            print(f"      time_total: {time_total}")
+            print("      times_wltoggle:")
+            print(f"        - {time_1}")
+            print(f"        - {time_2}")
 
