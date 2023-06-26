@@ -265,7 +265,7 @@ def run_realtime(config, dir_out, subjects_features_models):
                 cols_drop = [config['time_col']] + [c for c in config['colnames'] if c not in config['columns_model']]
                 data_test.drop(columns=cols_drop, inplace=True)
 
-                # Proprocess data
+                # Proprocess data -- DON'T select_by_autocorr() since it'll make the wl_changepoints invalid
                 # Agg
                 agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
                 data_test = data_test.groupby(data_test.index // agg).mean()
@@ -279,10 +279,8 @@ def run_realtime(config, dir_out, subjects_features_models):
                     data_test[feat] = data_test[feat] - median
                 # Transform
                 data_test = prep_data(data_test, config['preprocess'])
-                # DON'T select_by_autocorr() -- since it'll make the wl_changepoints invalid
                 # Add Timecol
                 data_test = add_timecol(data_test, config['time_col'])
-                print(f"        shape = {data_test.shape}")
 
                 # get wl_changepoints
                 wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
