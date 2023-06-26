@@ -96,8 +96,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
         output_dirs = {'data': os.path.join(dir_output, 'data_files'),
                        'results': os.path.join(dir_output, 'anomaly'),
-                       'models': dir_output_models,
-                       'scalers': os.path.join(dir_output, 'scalers')}
+                       'models': dir_output_models}
         modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
                                                                      data=df_train,
                                                                      data_path=False,

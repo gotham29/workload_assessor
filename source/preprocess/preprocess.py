@@ -23,7 +23,7 @@ def preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd):
     # Subtract mean
     filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
                                      time_col=cfg['time_col'])
-    # Preprocess
+    # Transform
     filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
                                     cfg['columns_model'])
     # Train models

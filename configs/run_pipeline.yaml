@@ -11,10 +11,10 @@ preprocess:
   autocorr_thresh: 5
 
 windows_ascore:
-  recent: 10
-  previous: 25
-  change_detection: 250
-  change_thresh_percent: 30
+  recent: 5
+  previous: 15
+  change_detection: 15
+  change_thresh_percent: 20
 
 subjects_testfiles_wltogglepoints:
   aranoff:

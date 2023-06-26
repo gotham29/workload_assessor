@@ -236,8 +236,7 @@ config_ts = {
 print('\nTesting DARTS...')
 output_dirs = {'data': os.path.join(config_ts['dirs']['output'], 'data_files'),
                'results': os.path.join(config_ts['dirs']['output'], 'anomaly'),
-               'models': os.path.join(config_ts['dirs']['output'], 'models'),
-               'scalers': os.path.join(config_ts['dirs']['output'], 'scalers')}
+               'models': os.path.join(config_ts['dirs']['output'], 'models')}
 for outtype, outdir in output_dirs.items():
     os.makedirs(outdir, exist_ok=True)
 modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,

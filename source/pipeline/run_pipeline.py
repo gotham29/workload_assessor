@@ -17,7 +17,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_alldata
+from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_alldata, prep_data
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import plot_data, plot_boxes, plot_lines, plot_bars, get_accum
 from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
@@ -262,8 +262,27 @@ def run_realtime(config, dir_out, subjects_features_models):
                 path_test = os.path.join(dir_in_subj, testfile)
                 data_test = config['read_func'](path_test)
                 data_test.columns = config['colnames']
-                data_test.drop(columns=[config['time_col']], inplace=True)
+                cols_drop = [config['time_col']] + [c for c in config['colnames'] if c not in config['columns_model']]
+                data_test.drop(columns=cols_drop, inplace=True)
+
+                # Proprocess data
+                # Agg
+                agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
+                data_test = data_test.groupby(data_test.index // agg).mean()
+                # Clip both ends
+                clip_count_start = int(data_test.shape[0] * (config['clip_percents']['start'] / 100))
+                clip_count_end = data_test.shape[0] - int(data_test.shape[0] * (config['clip_percents']['end'] / 100))
+                data_test = data_test[clip_count_start:clip_count_end]
+                # Subtract mean
+                feats_medians = {feat: m for feat, m in dict(data_test.median()).items()}
+                for feat, median in feats_medians.items():
+                    data_test[feat] = data_test[feat] - median
+                # Transform
+                data_test = prep_data(data_test, config['preprocess'])
+                # DON'T select_by_autocorr() -- since it'll make the wl_changepoints invalid
+                # Add Timecol
                 data_test = add_timecol(data_test, config['time_col'])
+                print(f"        shape = {data_test.shape}")
 
                 # get wl_changepoints
                 wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
@@ -311,8 +330,7 @@ def run_realtime(config, dir_out, subjects_features_models):
                                     data_test,
                                     dir_out_subj,
                                     wl_changepoints_windows,
-                                    wl_changepoints_detected,
-                                    plot_detected=False)
+                                    wl_changepoints_detected)
                 rows.append({'subj': subj, 'feat': feat, 'testfile': testfile, 'f1': f1})
     df_f1 = pd.DataFrame(rows)
     path_out = os.path.join(dir_out, "f1_scores.csv")
@@ -479,7 +497,7 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     wl_changepoints_windows = {}
     for cp in wl_changepoints:
         cp_detected = False
-        cp_window = [cp + 1, cp + change_detection_window]
+        cp_window = [cp + 1, min( (cp + change_detection_window), data_size) ]
         cp_detected_in_window = [v for v in wl_changepoints_detected if v in range(cp_window[0], cp_window[1])]
         wl_changepoints_windows[cp] = cp_window
         if len(cp_detected_in_window):
@@ -500,7 +518,8 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     rows_neg = [_ for _ in range(data_size)]
     for wl, cp_window in wl_changepoints_windows.items():
         for _ in range(cp_window[0], cp_window[1]):
-            rows_neg.remove(_)
+            if _ in rows_neg:
+                rows_neg.remove(_)
     true_neg = [v for v in rows_neg if v not in wl_changepoints_detected]
     scores['true_neg'] = len(true_neg)
 
@@ -508,7 +527,7 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
 
 
 def plot_wlchangepoints(columns_model, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
-                        wl_changepoints_detected, plot_detected=True):
+                        wl_changepoints_detected):
     for feat in columns_model:
         path_out = os.path.join(dir_out_subj,
                                 f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
@@ -534,11 +553,24 @@ def plot_wlchangepoints(columns_model, file_type, aScores, testfile, data_test, 
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
-        if plot_detected:
-            for cp in wl_changepoints_detected:
-                ax2.axvline(cp, color='green', lw=0.5, alpha=0.3)
+        # plot wl changes detected
+        label_done = False
+        for cp in wl_changepoints_detected:
+            if not label_done:
+                ax2.axvline(cp, color='green', lw=0.5, alpha=1, label='WL Change Detected')
+                label_done = True
+            else:
+                ax2.axvline(cp, color='green', lw=0.5, alpha=1)
+
+        # plot detection windows
+        label_done = False
         for cp, window in wl_changepoints_windows.items():
-            ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
+            if not label_done:
+                ax2.axvspan(window[0], window[1], alpha=0.5, color='red', label='WL Detection Window')
+                label_done = True
+            else:
+                ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
+        plt.legend()
         plt.savefig(path_out)
         plt.close()
 
@@ -550,7 +582,7 @@ def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
     for subj in sorted(subjects):
         dir_input = os.path.join(cfg['dirs']['input'], subj)
         dir_output = os.path.join(dir_out, subj)
-        folders = ['anomaly', 'models', 'scalers', 'data']
+        folders = ['anomaly', 'models', 'data']
         dirs_out = [os.path.join(dir_output, f) for f in folders]
         for d in dirs_out:
             os.makedirs(d, exist_ok=True)
@@ -605,13 +637,6 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
-
-    subjects_all = [
-        'aranoff',
-        'thakur',
-        'vangapandu'
-    ]
-
     files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
