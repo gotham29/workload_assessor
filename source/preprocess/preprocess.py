@@ -24,8 +24,7 @@ def preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd):
     filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
                                      time_col=cfg['time_col'])
     # Transform
-    filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
-                                    cfg['columns_model'])
+    filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                            columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
@@ -73,16 +72,20 @@ def get_autocorrs(steering_angles):
     return diff_pcts
 
 
-def select_by_autocorr(steering_angles, diff_pcts, diff_thresh=5):
-    data_selected = []
-    for _, v in enumerate(steering_angles):
+def select_by_autocorr(data, diff_pcts, diff_thresh):
+    inds_keep = []
+    for _ in range(data.shape[0]):
         if diff_pcts[_] > diff_thresh:
-            data_selected.append(v)
-    return data_selected
+            inds_keep.append(_)
+    return data[data.index.isin(inds_keep)]
 
 
 def update_colnames(filenames_data:dict, colnames:list):
+    print(f"\ncolnames = {colnames}")
     for fname, data in filenames_data.items():
+        print(f"  fname = {fname}")
+        print(f"    data.shape = {data.shape}")
+        print(f"    data.columns = {data.columns}")
         data.columns = colnames
     return filenames_data
 
@@ -100,7 +103,8 @@ def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_data):
     dfs_train = []
     for fname in wllevels_filenames['training']:
         dfs_train.append(filenames_data[fname])
-    df_train = pd.concat(dfs_train, axis=0)[columns_model]
+    df_train = pd.concat(dfs_train, axis=0) #[columns_model]
+    df_train = df_train[columns_model]
     df_train.to_csv(path_out)
     return df_train
 
@@ -163,17 +167,16 @@ def prep_data(data, cfg_prep):
     return data
 
 
-def transform_data(subj, spaces_add, filenames_data, cfg_prep, columns_model):
+def transform_data(subj, spaces_add, filenames_data, cfg_prep):
     filenames_data2 = {}
     percents_data_dropped = []
     for fn, data in filenames_data.items():
         data = prep_data(data, cfg_prep)
-        diff_pcts = get_autocorrs(data[ columns_model[0] ].values)  #data['steering angle'].values
-        data_selected = select_by_autocorr(data[ columns_model[0] ].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])  #data['steering angle'].values
-        percent_data_dropped = 1 - (len(data_selected) / float(len(data)))
+        diff_pcts = get_autocorrs(data[cfg_prep['autocorr_column']].values)
+        data_ = select_by_autocorr(data, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+        percent_data_dropped = 1 - (len(data_) / float(len(data)))
         percents_data_dropped.append(percent_data_dropped)
-        data = pd.DataFrame({ columns_model[0] : data_selected})  #pd.DataFrame({'steering angle': data_selected})
-        filenames_data2[fn] = data.astype('float32')
+        filenames_data2[fn] = data_.astype('float32')
     percent_data_dropped = np.sum(percents_data_dropped) / len(filenames_data)
     print(f"  {subj}{spaces_add} --> %data DROPPED: {round(percent_data_dropped * 100, 1)}")
     return filenames_data2

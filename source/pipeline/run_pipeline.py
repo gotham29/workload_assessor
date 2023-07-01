@@ -69,7 +69,7 @@ def get_filenames_outputs(cfg,
     filenames_pcounts = {fn: [] for fn in filenames_data if 'static' in fn}
 
     for fn in filenames_ascores:
-        data = add_timecol(filenames_data[fn], config['time_col'])
+        data = filenames_data[fn]  # data = add_timecol(filenames_data[fn], config['time_col'])
         if cfg['alg'] == 'HTM':
             feats_models, features_outputs = run_batch(cfg_user=cfg['htm_config_user'],
                                                        cfg_model=cfg['htm_config_model'],
@@ -81,6 +81,7 @@ def get_filenames_outputs(cfg,
                                                        features_models=features_models)
             ascores = features_outputs[f"megamodel_features={len(cfg['columns_model'])}"]['anomaly_score']
             pcounts = features_outputs[f"megamodel_features={len(cfg['columns_model'])}"]['pred_count']
+            filenames_pcounts[fn] += pcounts
             filenames_pcounts[fn] += pcounts
 
         elif config['alg'] == 'SteeringEntropy':
@@ -635,6 +636,9 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
+
+    subjects_all = ['aranoff']
+
     files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]

@@ -278,7 +278,7 @@ def plot_subjects_timeserieses(dir_data, dir_out, path_cfg):
         dir_out_subj = os.path.join(dir_out, subj)
         realtime_wl_subj = realtime_wl[realtime_wl['Subject'] == subj]
         os.makedirs(dir_out_subj, exist_ok=True)
-        plot_subject_timeserieses(cfg['preprocess'], dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
+        plot_subject_timeserieses(cfg['preprocess'], cfg['file_type'], dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
 
 
 def atoi(text):
@@ -294,8 +294,8 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
-def plot_subject_timeserieses(cfg_prep, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
-    dir_files = [f for f in os.listdir(dir_data_subj) if '.xls' in f]
+def plot_subject_timeserieses(cfg_prep, file_type, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
+    dir_files = [f for f in os.listdir(dir_data_subj) if f'.{file_type}' in f]
     files_train = [f for f in dir_files if 'training' in f]
     files_static = [f for f in dir_files if 'static' in f]
     files_realtime = [f for f in dir_files if 'realtime' in f]
@@ -303,20 +303,20 @@ def plot_subject_timeserieses(cfg_prep, dir_data_subj, dir_out_subj, realtime_wl
     files_static.sort(key=natural_keys)
     files_realtime.sort(key=natural_keys)
     # training
-    plot_timeseries_combined(cfg_prep=cfg_prep, files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
     # static
-    plot_timeseries_combined(cfg_prep=cfg_prep, files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
     # realtime
-    plot_timeseries(cfg_prep=cfg_prep, files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries(cfg_prep=cfg_prep, file_type=file_type, files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
 
 
-def plot_timeseries(cfg_prep, files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
     agg = int(hz_baseline / hz_convertto)
     # ind_prev = 0
     for fn in files:
         # import
         dpath = os.path.join(dir_data_subj, fn)
-        fn = fn.replace('.xls', '')
+        fn = fn.replace(f'.{file_type}', '')
         data = pd.read_excel(dpath)
         data.columns = ['time', 'steering angle', 'break']
         # agg
@@ -355,7 +355,7 @@ def plot_timeseries(cfg_prep, files, title, dir_data_subj, dir_out_subj, realtim
         plt.close()
 
 
-def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
     files_types = {'static1': 'rain',
                    'static2': 'fog',
                    'static3': 'pennies',
@@ -391,7 +391,7 @@ def plot_timeseries_combined(cfg_prep, files, dir_data_subj, dir_out_subj, title
         data = filenames_data['data']
         datas.append(data)
         vline_ind = len(data) + count
-        f = f.replace('.xls', '').replace('--', '').replace('crash', '')
+        f = f.replace(f'.{file_type}', '').replace('--', '').replace('crash', '')
         filenames_vlineindices[f] = int(vline_ind)
         count += len(data)
     data_total = pd.concat(datas, axis=0)

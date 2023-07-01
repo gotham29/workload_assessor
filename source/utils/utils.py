@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -43,7 +44,7 @@ def load_files(dir_input: str, file_type: str, read_func: str):
     fdir_typefiles = [f for f in fdir_allfiles if f.split('.')[-1] == file_type]
     for f in fdir_typefiles:
         d_path = os.path.join(dir_input, f)
-        data = read_func(d_path)
+        data = read_func(d_path).astype('float64').replace(np.nan, 0, inplace=False)
         filenames_data[f] = data
     return filenames_data
 
@@ -55,7 +56,7 @@ def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'mod
         os.makedirs(dir_out_type, exist_ok=True)
 
 
-def print_realtimewl_config(path_in, runs=[1,2,3,4,5,6,7,8,9]):
+def print_realtimewl_config(path_in, file_type='xls', runs=[1,2,3,4,5,6,7,8,9]):
     df = pd.read_csv(path_in)
     # loop over subjects
     for subj, df_subj in df.groupby('Subject'):
@@ -68,7 +69,7 @@ def print_realtimewl_config(path_in, runs=[1,2,3,4,5,6,7,8,9]):
             time_total = df_subj[col_timetotal].values[0]
             time_1 = df_subj[col_time1].values[0]
             time_2 = df_subj[col_time2].values[0]
-            print(f"    realtime{run}.xls:")
+            print(f"    realtime{run}.{file_type}:")
             print(f"      time_total: {time_total}")
             print("      times_wltoggle:")
             print(f"        - {time_1}")

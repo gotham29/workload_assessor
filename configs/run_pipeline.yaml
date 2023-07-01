@@ -1,6 +1,6 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
-alg: SteeringEntropy  #HTM
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -9,6 +9,7 @@ preprocess:
   standardize: false
   movingaverage: false  #23
   autocorr_thresh: 5
+  autocorr_column: steering angle
 
 windows_ascore:
   recent: 5
@@ -2582,8 +2583,8 @@ features:
     - steering angle
 
 dirs:
-  input: /Users/samheiserman/Desktop/repos/workload_assessor/data  #/home/ubuntu/workload_assessor/data
-  output: /Users/samheiserman/Desktop/repos/workload_assessor/results  #/home/ubuntu/workload_assessor/results
+  input: /Users/samheiserman/Desktop/repos/workload_assessor/data
+  output: /Users/samheiserman/Desktop/repos/workload_assessor/results
 
 colnames:
   - timestamp
@@ -2592,6 +2593,7 @@ colnames:
 
 columns_model:
   - steering angle
+  - brake pressure
 
 hzs:
   baseline: 100
@@ -2803,6 +2805,11 @@ htm_config_model:
 htm_config_user:
   features:
     steering angle:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+    brake pressure:
       type: float
       min: null
       max: null
