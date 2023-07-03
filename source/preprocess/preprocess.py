@@ -84,14 +84,11 @@ def select_by_autocorr(data, diff_pcts, diff_thresh):
 
 
 def update_colnames(filenames_data:dict, colnames:list):
-    print(f"\ncolnames = {colnames}")
     for fname, data in filenames_data.items():
-        print(f"  fname = {fname}")
-        print(f"    data.shape = {data.shape}")
-        print(f"    data.columns = {data.columns}")
+        data.columns = colnames
         # HACK - ADD COLUMN
-        data.columns = [c for c in colnames if c != 'steering angle 2']  #colnames
-        data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
+        # data.columns = [c for c in colnames if c != 'steering angle 2']
+        # data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
     return filenames_data
 
 

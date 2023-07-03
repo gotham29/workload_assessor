@@ -2589,12 +2589,12 @@ dirs:
 colnames:
   - timestamp
   - steering angle
-  - steering angle 2
+#  - steering angle 2
   - brake pressure
 
 columns_model:
   - steering angle
-  - steering angle 2
+#  - steering angle 2
 
 hzs:
   baseline: 100
@@ -2810,11 +2810,11 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-    steering angle 2:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    steering angle 2:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     timestamp:
       custom: 0
       dayOfWeek: 0
