@@ -121,22 +121,20 @@ def get_normdiff(wl_t0, wl_t1):
     return normalized_diff
 
 
-def get_subjects_wldiffs(subjects_wllevelsascores):
+def get_subjects_wldiffs(subjects_wllevels_ascores):
     print("\n  ** get_subjects_wldiffs")
     subjects_wldiffs = {}
     subjects_levels_wldiffs = {}
-    for subj, wllevels_anomscores in subjects_wllevelsascores.items():
+    for subj, wllevels_ascores in subjects_wllevels_ascores.items():
         print(f"    {subj}")
-        wl_t0 = np.sum(wllevels_anomscores['baseline'])  # wl_t0 = max(np.sum(wllevels_anomscores['baseline']), 0.025)
+        wl_t0 = np.sum(wllevels_ascores['baseline'])
         wl_t1t0_diffs = {}
-        for wllevel, ascores in wllevels_anomscores.items():
+        for wllevel, ascores in wllevels_ascores.items():
             if wllevel == 'baseline':
                 continue
-            wl_t1 = np.sum(ascores)  # max(np.sum(ascores), 0.025)
-            normalized_diff = get_normdiff(wl_t0, wl_t1)
+            normalized_diff = get_normdiff(wl_t0, np.sum(ascores))
             print(f"      wllevel = {wllevel}; diff = {normalized_diff}")
-            # percent_diff = ((wl_t1 - wl_t0) / wl_t0) * 100
-            wl_t1t0_diffs[wllevel] = round(normalized_diff, 2)  # round(percent_diff, 2)
+            wl_t1t0_diffs[wllevel] = round(normalized_diff, 2)
         subjects_levels_wldiffs[subj] = wl_t1t0_diffs
         subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
     return subjects_wldiffs, subjects_levels_wldiffs

@@ -13,7 +13,7 @@ DIR_OUT = os.path.join(_SOURCE_DIR, 'results', 'tlx')
 
 sys.path.append(_SOURCE_DIR)
 
-from source.analyze.plot import plot_bars
+from source.analyze.plot import plot_outputs_bars
 from source.analyze.anomaly import get_subjects_wldiffs
 
 MODES_CONVERT = {
@@ -26,8 +26,6 @@ MODES_CONVERT = {
 
 def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
-    # plt.grid(True)
-    # plt.rcParams["figure.autolayout"] = True
     fig, ax = plt.subplots()
     bplot = ax.boxplot(data_dict.values(), patch_artist=True)
     ax.set_xticklabels(data_dict.keys())
@@ -37,7 +35,6 @@ def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
         patch.set_alpha(0.5)
     if ylim:
         plt.ylim(ylim)
-    # plt.figure(figsize=(15, 3))
     plt.ylabel(ylabel)
     if suptitle:
         plt.suptitle(suptitle)
@@ -129,7 +126,7 @@ def main():
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
     modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
-    plot_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels", ylabel='Raw TLX',
+    plot_outputs_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels", ylabel='Raw TLX',
               path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=True)
     # make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
     #               suptitle='TLX Scores by Run Mode', ylim=(0, 1))

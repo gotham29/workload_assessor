@@ -44,7 +44,7 @@ def load_files(dir_input: str, file_type: str, read_func: str):
     fdir_typefiles = [f for f in fdir_allfiles if f.split('.')[-1] == file_type]
     for f in fdir_typefiles:
         d_path = os.path.join(dir_input, f)
-        data = read_func(d_path).astype('float64').replace(np.nan, 0, inplace=False)
+        data = read_func(d_path).replace(np.nan, 0, inplace=False)
         filenames_data[f] = data
     return filenames_data
 

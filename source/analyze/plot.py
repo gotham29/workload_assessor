@@ -16,13 +16,10 @@ sys.path.append(_TS_SOURCE_DIR)
 from source.preprocess.preprocess import preprocess_data, diff_data, standardize_data, movingavg_data
 from ts_source.utils.utils import load_config
 
-def plot_data(filenames_data: dict, file_type: str, dir_output: str):
-    dir_out = os.path.join(dir_output, 'data_plots')
-    os.makedirs(dir_out, exist_ok=True)
+def make_data_plots(filenames_data: dict, file_type: str, out_dir_plots: str):
     for fname, data in filenames_data.items():
         fname = fname.replace(f".{file_type}", "")
-        path_out = os.path.join(dir_out, f"{fname}.png")
-        # plt.cla()
+        path_out = os.path.join(out_dir_plots, f"{fname}.png")
         plt.figure(figsize=(15, 3))
         for c in data:
             plt.plot(data[c], label=c)
@@ -32,7 +29,7 @@ def plot_data(filenames_data: dict, file_type: str, dir_output: str):
         plt.close()
 
 
-def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
+def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
     outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
                       'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png')}
     # Plot -- Violin
@@ -86,52 +83,9 @@ def plot_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel
         plt.close()
 
 
-def plot_lines(wllevels_anomscores_: dict,
-               wllevels_predcounts_: dict,
-               wllevels_alldata_: dict,
-               df_train: pd.DataFrame,
-               get_pcounts: bool,
-               columns_model: dict,
-               out_dir: str):
-
-    # TRAIN
-    ## plot - columns_model
-    for feat in columns_model:
-        # plt.cla()
-        plt.figure(figsize=(15, 3))
-        plt.plot(df_train[feat].values)
-        plt.title(f'Behavior - Training')
-        plt.xlabel('time')
-        plt.ylabel(feat)
-        out_path = os.path.join(out_dir, f'time--training--{feat}.png')
-        plt.savefig(out_path)
-        plt.close()
-
-    # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
-    wllevels_alldata, wllevels_anomscores, wllevels_predcounts = {}, {}, {}
-    levels_order = ['baseline', 'distraction', 'rain', 'fog']
-    for k in levels_order:
-        wllevels_alldata[k] = wllevels_alldata_[k]
-        wllevels_anomscores[k] = wllevels_anomscores_[k]
-        if k in wllevels_predcounts_:
-            wllevels_predcounts[k] = wllevels_predcounts_[k]
-
-    # TEST
-    ## get data & wl inds
-    alldata_task = pd.concat(list(wllevels_alldata.values()), axis=0)
-    ascores_accum, pcounts_accum = [], []
-    wllevels_indsend, wllevels_ascoresaccum, wllevel_i = {}, {}, 0
-    for wllevel, ascores in wllevels_anomscores.items():
-        wllevel_i += len(ascores)
-        wllevels_indsend[wllevel] = wllevel_i
-        ascores_accum_wllevel = get_accum(ascores)
-        ascores_accum += ascores_accum_wllevel
-        wllevels_ascoresaccum[wllevel] = ascores_accum_wllevel
-        if get_pcounts:
-            pcounts_accum += get_accum(wllevels_predcounts[wllevel])
-
+def plot_wllevels_totaldfs(wllevels_totaldfs, columns_model, levels_colors = {'baseline': 'grey', 'rain': 'blue', 'fog': 'green', 'distraction': 'orange'}):
     ## plot - behavior (total)
-    levels_colors = {'baseline': 'grey', 'rain': 'blue', 'fog': 'green', 'distraction': 'orange'}
+    alldata_task = pd.concat(list(wllevels_totaldfs.values()), axis=0)
     for feat in columns_model:
         feat_data = alldata_task[feat].values
         f_min, f_max = min(feat_data), max(feat_data)
@@ -154,7 +108,7 @@ def plot_lines(wllevels_anomscores_: dict,
         plt.close()
 
         ## by level
-        for level, data in wllevels_alldata.items():
+        for level, data in wllevels_totaldfs.items():
             d_feat = data[feat].values
             # plt.cla()
             plt.figure(figsize=(15, 3))
@@ -166,6 +120,49 @@ def plot_lines(wllevels_anomscores_: dict,
             out_path = os.path.join(out_dir, f'time--validation--{feat}--{level}.png')
             plt.savefig(out_path)
             plt.close()
+
+
+def plot_training(df_train: pd.DataFrame,
+                  columns_model: list,
+                  out_dir_plots: str,
+                  out_dir_files: str):
+    df_train.to_csv( os.path.join(out_dir_files, 'training.csv') )
+    for feat in columns_model:
+        plt.figure(figsize=(15, 3))
+        plt.plot(df_train[feat].values)
+        plt.title(f'Behavior - Training')
+        plt.xlabel('time')
+        plt.ylabel(feat)
+        out_path = os.path.join(out_dir_plots, f'training--all--{feat}.png')
+        plt.savefig(out_path)
+        plt.close()
+
+
+def plot_outputs_lines(wllevels_anomscores_: dict,
+               wllevels_predcounts_: dict,
+               wllevels_indsend:dict,
+               get_pcounts: bool,
+               out_dir: str,
+               levels_colors = {'baseline': 'grey', 'rain': 'blue', 'fog': 'green', 'distraction': 'orange'}):
+
+    # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
+    wllevels_anomscores, wllevels_predcounts = {}, {}
+    levels_order = ['baseline', 'distraction', 'rain', 'fog']
+    for k in levels_order:
+        wllevels_anomscores[k] = wllevels_anomscores_[k]
+        if k in wllevels_predcounts_:
+            wllevels_predcounts[k] = wllevels_predcounts_[k]
+
+    # TEST
+    ## get data & wl inds
+    ascores_accum, pcounts_accum = [], []
+    wllevels_ascoresaccum = {}
+    for wllevel, ascores in wllevels_anomscores.items():
+        ascores_accum_wllevel = get_accum(ascores)
+        ascores_accum += ascores_accum_wllevel
+        wllevels_ascoresaccum[wllevel] = ascores_accum_wllevel
+        if get_pcounts:
+            pcounts_accum += get_accum(wllevels_predcounts[wllevel])
 
     ## plot - aScores
     # plt.cla()
@@ -240,7 +237,7 @@ def plot_hists(algs_data, dir_out, title, density=False):
     plt.close()
 
 
-def plot_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None, print_barheights=True):
+def plot_outputs_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None, print_barheights=True):
     if colors is None:
         colors = ['black' for _ in range(len(mydict))]
     mydict = {k:round(v,3) for k,v in mydict.items()}

@@ -14,7 +14,7 @@ sys.path.append(_TS_SOURCE_DIR)
 from ts_source.utils.utils import add_timecol
 
 
-def preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd):
+def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
     # Agg
     filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
                               hz_convertto=cfg['hzs']['convertto'])
@@ -27,9 +27,12 @@ def preprocess_data(subj, cfg, dir_output, filenames_data, subjects_spacesadd):
     filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
-                           columns_model=cfg['columns_model'], dir_data=os.path.join(dir_output, 'data'))
+                           columns_model=cfg['columns_model'])
     # Add timecol
     df_train = add_timecol(df_train, cfg['time_col'])
+    for fn, data in filenames_data.items():
+        data.drop(columns=[cfg['time_col']], inplace=True)
+        data = add_timecol(data, cfg['time_col'])
 
     return filenames_data, df_train
 
@@ -86,7 +89,9 @@ def update_colnames(filenames_data:dict, colnames:list):
         print(f"  fname = {fname}")
         print(f"    data.shape = {data.shape}")
         print(f"    data.columns = {data.columns}")
-        data.columns = colnames
+        # HACK - ADD COLUMN
+        data.columns = [c for c in colnames if c != 'steering angle 2']  #colnames
+        data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
     return filenames_data
 
 
@@ -98,14 +103,12 @@ def agg_data(filenames_data:dict, hz_baseline:int, hz_convertto:int):
     return filenames_data
 
 
-def get_dftrain(wllevels_filenames, filenames_data, columns_model, dir_data):
-    path_out = os.path.join(dir_data, 'train.csv')
+def get_dftrain(wllevels_filenames, filenames_data, columns_model):
     dfs_train = []
     for fname in wllevels_filenames['training']:
         dfs_train.append(filenames_data[fname])
-    df_train = pd.concat(dfs_train, axis=0) #[columns_model]
+    df_train = pd.concat(dfs_train, axis=0)
     df_train = df_train[columns_model]
-    df_train.to_csv(path_out)
     return df_train
 
 
@@ -137,24 +140,36 @@ def clip_start(filenames_data, cfg):
     return filenames_data_
 
 
-def get_wllevels_alldata(wllevels_anomscores:dict, wllevels_filenames:dict, filenames_data:dict, columns_model:list, dir_output:str, save_results=False):
-    dir_out = os.path.join(dir_output, 'data_files')
-    wllevels_alldata = {}
+def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_model:list, out_dir_files:str, levels_order:list=['baseline', 'distraction', 'rain', 'fog']):
+    wllevels_totaldfs = {}
     print('  test data...')
-    for wllevel in wllevels_anomscores:
-        wllevel_filenames = wllevels_filenames[wllevel]
+    for wllevel, wllevel_filenames in wllevels_filenames.items():
+        if wllevel == 'training':
+            continue
         wllevel_datas = []
         print(f"    wllevel = {wllevel}")
         for fn in wllevel_filenames:
             wllevel_datas.append(filenames_data[fn])
             print(f"      {fn}")
         wllevel_data = pd.concat(wllevel_datas, axis=0)[columns_model]
-        wllevels_alldata[wllevel] = wllevel_data
+        wllevels_totaldfs[wllevel] = wllevel_data
         # save data
-        if save_results:
-            path_out = os.path.join(dir_out, f"{wllevel}.csv")
-            wllevel_data.to_csv(path_out)
-    return wllevels_alldata
+        path_out = os.path.join(out_dir_files, f"{wllevel}.csv")
+        wllevel_data.to_csv(path_out)
+    # reorder wllevels
+    wllevels_totaldfs_ = {}
+    for k in levels_order:
+        wllevels_totaldfs_[k] = wllevels_totaldfs[k]
+
+    return wllevels_totaldfs_
+
+
+def get_wllevels_indsend(wllevels_totaldfs_):
+    wllevels_indsend, wllevel_i = {}, 0
+    for wllevel, dftotal in wllevels_totaldfs_.items():
+        wllevel_i += len(dftotal)
+        wllevels_indsend[wllevel] = wllevel_i
+    return wllevels_indsend
 
 
 def prep_data(data, cfg_prep):

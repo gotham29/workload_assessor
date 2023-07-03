@@ -2589,11 +2589,12 @@ dirs:
 colnames:
   - timestamp
   - steering angle
+  - steering angle 2
   - brake pressure
 
 columns_model:
   - steering angle
-  - brake pressure
+  - steering angle 2
 
 hzs:
   baseline: 100
@@ -2809,13 +2810,25 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-    brake pressure:
+    steering angle 2:
       type: float
       min: null
       max: null
       weight: 1.0
+    timestamp:
+      custom: 0
+      dayOfWeek: 0
+      format: '%Y-%m-%d %X'
+      holiday: 0
+      season: 0
+      timeOfDay:
+      - 21
+      - 9.49
+      type: timestamp
+      weekend: 0
+      weight: 0
   models_state:
-    model_for_each_feature: false
+    model_for_each_feature: true  #false
     return_pred_count: true
     use_sp: true
   timesteps_stop:
@@ -2833,4 +2846,3 @@ file_type: xls
 scale: false
 do_gridsearch: false
 learn_in_testing: false
-make_plots: true
