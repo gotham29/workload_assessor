@@ -50,10 +50,13 @@ def load_files(dir_input: str, file_type: str, read_func: str):
 
 
 def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models']):
+    outnames_dirs = {}
     os.makedirs(dir_out, exist_ok=True)
     for out in outputs:
         dir_out_type = os.path.join(dir_out, out)
         os.makedirs(dir_out_type, exist_ok=True)
+        outnames_dirs[out] = dir_out_type
+    return outnames_dirs
 
 
 def print_realtimewl_config(path_in, file_type='xls', runs=[1,2,3,4,5,6,7,8,9]):
