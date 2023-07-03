@@ -165,7 +165,6 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
             pcounts_accum += get_accum(wllevels_predcounts[wllevel])
 
     ## plot - aScores
-    # plt.cla()
     plt.plot(ascores_accum)
     plt.title("Perceived WL")
     plt.xlabel('Time')
@@ -184,7 +183,6 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
     plt.close()
 
     ## plot - aScpres overlapped
-    # plt.cla()
     plt.figure(figsize=(15, 3))
     max_ascoreaccum = 0
     for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
@@ -197,7 +195,6 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
     max_ascoreaccum = max_ascoreaccum
     plt.ylim(0, max_ascoreaccum)
     plt.title("Perceived WL by Task Level")
-    # plt.xlabel('Time')
     plt.ylabel('Accumulated Anomaly Scores')
     plt.legend()
     out_path = os.path.join(out_dir, f'levels--validation--aScores.png')
@@ -206,7 +203,6 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
 
     ## plot - pCounts
     if get_pcounts:
-        # plt.cla()
         plt.plot(pcounts_accum)
         plt.title("Perceived WL")
         plt.xlabel('Time')
@@ -241,7 +237,6 @@ def plot_outputs_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, 
     if colors is None:
         colors = ['black' for _ in range(len(mydict))]
     mydict = {k:round(v,3) for k,v in mydict.items()}
-    plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)

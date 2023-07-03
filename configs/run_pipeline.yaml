@@ -2828,7 +2828,7 @@ htm_config_user:
       weekend: 0
       weight: 0
   models_state:
-    model_for_each_feature: true  #false
+    model_for_each_feature: false
     return_pred_count: true
     use_sp: true
   timesteps_stop:

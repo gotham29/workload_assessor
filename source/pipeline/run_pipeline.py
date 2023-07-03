@@ -185,7 +185,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model):
                       ylabel=f"{cfg['alg']} WL",
                       path_out=os.path.join(outnames_dirs['anomaly'], "levels--aScoreTotals--bar.png"),
                       xtickrotation=0,
-                      colors=['grey', 'orange', 'blue', 'green'])
+                      colors=['grey', 'blue', 'green', 'orange'])
     plot_outputs_boxes(data_plot1=wllevels_ascores,
                        data_plot2=wllevels_pcounts,
                        title_1=f"Anomaly Scores by WL Level\nhz={cfg['hzs']['convertto']},; features={cfg['columns_model']}",
