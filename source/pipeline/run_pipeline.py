@@ -87,11 +87,8 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filename
 def get_filenames_outputs(cfg,
                           modname,
                           filenames_data,
-                          features_models):
+                          modname_model):
 
-    # filenames_lists = {fn: [] for fn in filenames_data}
-    # modnames_filenames_ascores = {modname: filenames_lists for modname in features_models}
-    # modnames_filenames_pcounts = {modname: filenames_lists for modname in features_models}
     filenames_ascores = {}
     filenames_pcounts = {}
 
@@ -99,19 +96,21 @@ def get_filenames_outputs(cfg,
         if 'static' not in fn:
             continue
         if cfg['alg'] == 'HTM':
-            feats_models, features_outputs = run_batch(cfg_user=cfg['htm_config_user'],
+            cfg_htm_user = {k:v for k,v in cfg['htm_config_user'].items()}
+            # if model_for_each_feature - drop from htm_user['feautres'] all but modname & 'timestamp'
+            if 'megamodel' not in modname:
+                feats_models = [modname, 'timestamp']
+                cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_models}
+            feats_models, features_outputs = run_batch(cfg_user=cfg_htm_user,
                                                        cfg_model=cfg['htm_config_model'],
                                                        config_path_user=None,
                                                        config_path_model=None,
                                                        learn=cfg['learn_in_testing'],
                                                        data=data,
                                                        iter_print=1000,
-                                                       features_models=features_models)
+                                                       features_models=modname_model)
             filenames_ascores[fn] = features_outputs[modname]['anomaly_score']
             filenames_pcounts[fn] = features_outputs[modname]['pred_count']
-            # for modname, outputs in features_outputs.items():
-            #     if modname in columns_model:
-            #         modnames_filenames_ascores[modname][fn] = outputs['anomaly_score']
 
         # elif config['alg'] == 'SteeringEntropy':
         #     ascores = get_ascores_entropy(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
@@ -141,14 +140,14 @@ def get_filenames_outputs(cfg,
         # filenames_ascores[fn] = ascores
         # data.drop(columns=[config['time_col']], inplace=True)
 
-    return filenames_ascores, filenames_pcounts  #modnames_filenames_ascores, modnames_filenames_pcounts
+    return filenames_ascores, filenames_pcounts
 
 
-def run_subject(cfg, modname, df_train, dir_out, filenames_data, features_models):
+def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model):
     # make subj dirs
     outnames_dirs = make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models'])
     # save models
-    save_models({modname: features_models[modname]}, outnames_dirs['models'])
+    save_models(modname_model, outnames_dirs['models'])
     # plot training data
     plot_training(df_train, columns_model=cfg['columns_model'], out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
     # plot filenames_data
@@ -164,7 +163,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, features_models
     filenames_ascores, filenames_pcounts = get_filenames_outputs(cfg=config,
                                                                  modname=modname,
                                                                  filenames_data=filenames_data,
-                                                                 features_models=features_models)
+                                                                 modname_model=modname_model)
 
     # agg ascore to wllevel
     wllevels_ascores, wllevels_pcounts, wllevels_totalascores = get_wllevels_outputs(filenames_ascores=filenames_ascores,
@@ -248,12 +247,13 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         subjects_wllevels_ascores = {}
         for subj, filenames_data in subjects_filenames_data.items():
             dir_out_subj = os.path.join(dir_out_modname, subj)
+            modname_model = {modname: subjects_features_models[subj][modname]}
             wllevels_ascores = run_subject(cfg=cfg,
                                            modname=modname,
                                            df_train=subjects_dfs_train[subj],
                                            dir_out=dir_out_subj,
                                            filenames_data=filenames_data,
-                                           features_models=subjects_features_models[subj])
+                                           modname_model=modname_model)
             subjects_wllevels_ascores[subj] = wllevels_ascores
 
         # Write results for each modname
