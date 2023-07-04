@@ -83,12 +83,12 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                       iter_print=1000,
                                                       features_models={})
     elif alg == 'Naive':
-        features_models = {feat: NaiveModel() for feat in features_model}
+        features_models = {feat: NaiveModel() for feat in features_model if feat != config['time_col']}
     elif alg == 'SteeringEntropy':
-        features_models = {feat: SteeringEntropy() for feat in features_model}
+        features_models = {feat: SteeringEntropy() for feat in features_model if feat != config['time_col']}
     elif alg in PYOD_MODNAMES_MODELS:
         model = PYOD_MODNAMES_MODELS[alg]
-        features_models = {feat: model.fit(df_train[features_model]) for feat in features_model}
+        features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if feat != config['time_col']}
     else:
         # ts_source
         config_ts = {k: v for k, v in config.items()}

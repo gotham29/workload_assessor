@@ -37,14 +37,7 @@ FILETYPES_READFUNCS = {
 }
 
 
-# def get_wllevels_outputs(modnames_filenames_ascores, modnames_filenames_pcounts, wllevels_filenames,
-#                          features_models, levels_order=['baseline', 'distraction', 'rain', 'fog']):
 def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filenames, levels_order=['baseline', 'distraction', 'rain', 'fog']):
-
-    # wllevels_totals = {wllevel: [] for wllevel in wllevels_filenames if wllevel != 'training'}
-    # modnames_wllevels_ascores = {modname: wllevels_totals for modname in features_models}
-    # modnames_wllevels_pcounts = {modname: wllevels_totals for modname in features_models}
-    # modnames_wllevels_totalascores = {modname: wllevels_totals for modname in features_models}
 
     wllevels_ascores = {wllevel: [] for wllevel in wllevels_filenames if wllevel != 'training'}
     wllevels_pcounts = {wllevel: [] for wllevel in wllevels_filenames if wllevel != 'training'}
@@ -59,27 +52,13 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filename
     for fn, ascores in filenames_ascores.items():
         wllevel = filenames_wllevels[fn]
         wllevels_ascores[wllevel] += ascores
-        wllevels_pcounts[wllevel] += filenames_pcounts[fn]
+        if fn in filenames_pcounts:
+            wllevels_pcounts[wllevel] += filenames_pcounts[fn]
 
     wllevels_totalascores = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
     wllevels_totalascores_ = {}
     for k in levels_order:
         wllevels_totalascores_[k] = wllevels_totalascores[k]
-
-    # for modname, filenames_ascores in modnames_filenames_ascores.items():
-    #     filenames_ascores = {fn:ascores for fn,ascores in filenames_ascores.items() if 'static' in fn}
-    #     for fn, ascores in filenames_ascores.items():
-    #         wllevel = filenames_wllevels[fn]
-    #         pcounts = modnames_filenames_pcounts[modname][fn]
-    #         modnames_wllevels_ascores[modname][wllevel] += ascores
-    #         modnames_wllevels_pcounts[modname][wllevel] += pcounts
-
-    # for modname, wllevels_ascores in modnames_wllevels_ascores.items():
-    #     wllevels_totalascores = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
-    #     wllevels_totalascores_ = {}
-    #     for k in levels_order:
-    #         wllevels_totalascores_[k] = wllevels_totalascores[k]
-    #     modnames_wllevels_totalascores[modname] = wllevels_totalascores_
 
     return wllevels_ascores, wllevels_pcounts, wllevels_totalascores  #modnames_wllevels_ascores, modnames_wllevels_pcounts, modnames_wllevels_totalascores
 
@@ -92,15 +71,17 @@ def get_filenames_outputs(cfg,
     filenames_ascores = {}
     filenames_pcounts = {}
 
+    # if model_for_each_feature - drop from htm_user['feautres'] all but modname & 'timestamp'
+    feats_model = config['columns_model'] + [config['time_col']]
+    if 'megamodel' not in modname:
+        feats_model = [modname, 'timestamp']
+
     for fn, data in filenames_data.items():
         if 'static' not in fn:
             continue
         if cfg['alg'] == 'HTM':
             cfg_htm_user = {k:v for k,v in cfg['htm_config_user'].items()}
-            # if model_for_each_feature - drop from htm_user['feautres'] all but modname & 'timestamp'
-            if 'megamodel' not in modname:
-                feats_models = [modname, 'timestamp']
-                cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_models}
+            cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_model}
             feats_models, features_outputs = run_batch(cfg_user=cfg_htm_user,
                                                        cfg_model=cfg['htm_config_model'],
                                                        config_path_user=None,
@@ -109,11 +90,12 @@ def get_filenames_outputs(cfg,
                                                        data=data,
                                                        iter_print=1000,
                                                        features_models=modname_model)
-            filenames_ascores[fn] = features_outputs[modname]['anomaly_score']
+            ascores = features_outputs[modname]['anomaly_score']
+            # filenames_ascores[fn] = features_outputs[modname]['anomaly_score']
             filenames_pcounts[fn] = features_outputs[modname]['pred_count']
 
-        # elif config['alg'] == 'SteeringEntropy':
-        #     ascores = get_ascores_entropy(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
+        elif config['alg'] == 'SteeringEntropy':
+            ascores = get_ascores_entropy(data[ feats_model[0] ].values)  # data['steering angle'].values
         #
         # elif config['alg'] == 'Naive':
         #     ascores = get_ascores_naive(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
@@ -137,7 +119,7 @@ def get_filenames_outputs(cfg,
         #     ascores = list(abs(data_[cfg['columns_model'][0]].values - preds_df[cfg['columns_model'][
         #         0]].values))  # list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
 
-        # filenames_ascores[fn] = ascores
+        filenames_ascores[fn] = ascores
         # data.drop(columns=[config['time_col']], inplace=True)
 
     return filenames_ascores, filenames_pcounts
@@ -309,7 +291,6 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
-
         # loop over subjects
         rows = list()
         for subj, features_models in subjects_features_models.items():
@@ -317,11 +298,8 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
             dir_out_subj = os.path.join(dir_out_modname, subj)
             os.makedirs(dir_out_subj, exist_ok=True)
             dir_in_subj = os.path.join(config['dirs']['input'], subj)
-
+            # loop over testfiles
             model = subjects_features_models[subj][modname]
-
-            # for feat, model in features_models.items():
-            #     print(f"    feat = {feat}")
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
                 aScores, wl_changepoints_detected = list(), list()
@@ -329,15 +307,16 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 path_test = os.path.join(dir_in_subj, testfile)
                 data_test = config['read_func'](path_test)
 
+                # data_test.columns = config['colnames']
                 # HACK - ADD COLUMN
                 data_test.columns = [c for c in config['colnames'] if c != 'steering angle 2']
                 data_test.insert(loc=2, column='steering angle 2', value=data_test['steering angle'].values)
-                data_test.columns = config['colnames']
 
                 # proprocess data -- DON'T select_by_autocorr() since it'll make the wl_changepoints invalid
                 # drop columns
                 cols_drop = [config['time_col']] + [c for c in config['colnames'] if c not in config['columns_model']]
                 data_test.drop(columns=cols_drop, inplace=True)
+
                 # agg
                 agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
                 data_test = data_test.groupby(data_test.index // agg).mean()
@@ -351,8 +330,10 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                     data_test[feat] = data_test[feat] - median
                 # transform
                 data_test = prep_data(data_test, config['preprocess'])
+
                 # add timecol
-                data_test = add_timecol(data_test, config['time_col'])
+                if config['time_col'] not in data_test:
+                    data_test = add_timecol(data_test, config['time_col'])
 
                 # get wl_changepoints
                 wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
@@ -361,7 +342,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
 
                 # run data thru model
                 pred_prev = None
-                for _, row in data_test.iterrows():  #data_test[config['columns_model']]
+                for _, row in data_test.iterrows():
                     if config['alg'] == 'HTM':
                         aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
                                                                   learn=config['learn_in_testing'])
@@ -395,7 +376,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 # plot detected wl-changepoints over changepoint windows
                 feats_plot = [modname]
                 if 'megamodel' in modname:
-                    feats_plot = config['columns_model']
+                    feats_plot = [c for c in config['columns_model'] if c != config['time_col']]
                 plot_wlchangepoints(feats_plot,
                                     config['file_type'],
                                     aScores,
@@ -675,7 +656,7 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
     subjects_features_models = dict()
     for subj, df_train in subjects_dfs_train.items():
         print(f"  --> {subj}")
-        # Train & save model(s)
+        # Train model(s)
         if config['train_models']:
             features_models = train_save_models(df_train=df_train,
                                                 alg=config['alg'],
@@ -742,6 +723,7 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd)
 
     # Train subjects models
+    """ BUG --> getting 'timestamp' model """
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
     print(f"\nsubjects_features_models = {subjects_features_models}")
 

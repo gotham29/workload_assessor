@@ -1,6 +1,6 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: SteeringEntropy
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -2828,7 +2828,7 @@ htm_config_user:
       weekend: 0
       weight: 0
   models_state:
-    model_for_each_feature: false
+    model_for_each_feature: false  #true
     return_pred_count: true
     use_sp: true
   timesteps_stop:
