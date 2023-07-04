@@ -236,15 +236,18 @@ def rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, su
 
 
 def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models):
-    # Gather WL results
+    # gather WL results
     subj = list(subjects_filenames_data.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
     print(f'\nrun_posthoc; modnames = {modnames}')
+    modnames_percentchangesfrombaseline = {}
+    # loop over modname
     for modname in modnames:
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
         subjects_wllevels_ascores = {}
+        # loop over subjects
         for subj, filenames_data in subjects_filenames_data.items():
             dir_out_subj = os.path.join(dir_out_modname, subj)
             modname_model = {modname: subjects_features_models[subj][modname]}
@@ -256,7 +259,7 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
                                            modname_model=modname_model)
             subjects_wllevels_ascores[subj] = wllevels_ascores
 
-        # Write results for each modname
+        # write results for each modname
         subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevels_ascores)
         percent_change_from_baseline, subjects_increased_from_baseline, subjects_baseline_lowest = get_scores(
             subjects_wldiffs, subjects_wllevels_ascores)
@@ -268,7 +271,7 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         # rename dirs based on scores
         rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out_modname)
 
-        # Save Results
+        # save results
         path_out_scores = os.path.join(dir_out_modname, 'scores.csv')
         path_out_subjects_wldiffs = os.path.join(dir_out_modname, 'subjects_wldiffs.csv')
         path_out_subjects_levels_wldiffs = os.path.join(dir_out_modname, 'subjects_levels_wldiffs.csv')
@@ -289,42 +292,66 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
                         subjects_wldiffs=subjects_wldiffs,
                         percent_change_from_baseline=percent_change_from_baseline,
                         subjects_wllevelsascores=subjects_wllevels_ascores)
-    return percent_change_from_baseline
+        modnames_percentchangesfrombaseline[modname] = percent_change_from_baseline
+
+    mean_percentchangefrombaseline = np.mean(list(modnames_percentchangesfrombaseline.values()))
+    return mean_percentchangefrombaseline
 
 
-def run_realtime(config, dir_out, subjects_features_models):
-    rows = list()
-    for subj, features_models in subjects_features_models.items():
-        print(f"\n  subj = {subj}")
-        dir_out_subj = os.path.join(dir_out, subj)
-        dir_in_subj = os.path.join(config['dirs']['input'], subj)
-        # print("    testing...")
-        for feat, model in features_models.items():
-            print(f"    feat = {feat}")
+def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data):
+
+    # loop over modnames
+    subj = list(subjects_features_models.keys())[0]
+    modnames = list(subjects_features_models[subj].keys())
+    modnames_df1s = {}
+    print(f'\nrun_posthoc; modnames = {modnames}')
+    for modname in modnames:
+        dir_out_modname = os.path.join(dir_out, f"modname={modname}")
+        os.makedirs(dir_out_modname, exist_ok=True)
+        print(f"  --> {dir_out_modname}")
+
+        # loop over subjects
+        rows = list()
+        for subj, features_models in subjects_features_models.items():
+            print(f"\n  subj = {subj}")
+            dir_out_subj = os.path.join(dir_out_modname, subj)
+            os.makedirs(dir_out_subj, exist_ok=True)
+            dir_in_subj = os.path.join(config['dirs']['input'], subj)
+
+            model = subjects_features_models[subj][modname]
+
+            # for feat, model in features_models.items():
+            #     print(f"    feat = {feat}")
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
                 aScores, wl_changepoints_detected = list(), list()
+                # data_test = subjects_filenames_data[subj][testfile]
                 path_test = os.path.join(dir_in_subj, testfile)
                 data_test = config['read_func'](path_test)
+
+                # HACK - ADD COLUMN
+                data_test.columns = [c for c in config['colnames'] if c != 'steering angle 2']
+                data_test.insert(loc=2, column='steering angle 2', value=data_test['steering angle'].values)
                 data_test.columns = config['colnames']
+
+                # proprocess data -- DON'T select_by_autocorr() since it'll make the wl_changepoints invalid
+                # drop columns
                 cols_drop = [config['time_col']] + [c for c in config['colnames'] if c not in config['columns_model']]
                 data_test.drop(columns=cols_drop, inplace=True)
-
-                # Proprocess data -- DON'T select_by_autocorr() since it'll make the wl_changepoints invalid
-                # Agg
+                # agg
                 agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
                 data_test = data_test.groupby(data_test.index // agg).mean()
-                # Clip both ends
+                # clip both ends
                 clip_count_start = int(data_test.shape[0] * (config['clip_percents']['start'] / 100))
                 clip_count_end = data_test.shape[0] - int(data_test.shape[0] * (config['clip_percents']['end'] / 100))
                 data_test = data_test[clip_count_start:clip_count_end]
-                # Subtract mean
+                # subtract mean
                 feats_medians = {feat: m for feat, m in dict(data_test.median()).items()}
                 for feat, median in feats_medians.items():
                     data_test[feat] = data_test[feat] - median
-                # Transform
+                # transform
                 data_test = prep_data(data_test, config['preprocess'])
-                # Add Timecol
+                # add timecol
                 data_test = add_timecol(data_test, config['time_col'])
 
                 # get wl_changepoints
@@ -334,12 +361,12 @@ def run_realtime(config, dir_out, subjects_features_models):
 
                 # run data thru model
                 pred_prev = None
-                for _, row in data_test[config['columns_model']].iterrows():
+                for _, row in data_test.iterrows():  #data_test[config['columns_model']]
                     if config['alg'] == 'HTM':
                         aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
                                                                   learn=config['learn_in_testing'])
                     elif config['alg'] == 'SteeringEntropy':
-                        aScore, pred_prev = get_ascore_entropy(_, row, feat, model, data_test, pred_prev)
+                        aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)  #feat
                     elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
                         aScore = get_ascore_pyod(_, data_test[config['columns_model']], model)
                     else:
@@ -362,11 +389,14 @@ def run_realtime(config, dir_out, subjects_features_models):
                                                                       config['windows_ascore']['change_detection'])
                 f1 = get_f1score(scores['true_pos'], scores['false_pos'], scores['false_neg'])
                 path_out = os.path.join(dir_out_subj,
-                                        f"{feat}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")
+                                        f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  #feat
                 pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
 
                 # plot detected wl-changepoints over changepoint windows
-                plot_wlchangepoints(config['columns_model'],
+                feats_plot = [modname]
+                if 'megamodel' in modname:
+                    feats_plot = config['columns_model']
+                plot_wlchangepoints(feats_plot,
                                     config['file_type'],
                                     aScores,
                                     testfile,
@@ -374,12 +404,14 @@ def run_realtime(config, dir_out, subjects_features_models):
                                     dir_out_subj,
                                     wl_changepoints_windows,
                                     wl_changepoints_detected)
-                rows.append({'subj': subj, 'feat': feat, 'testfile': testfile, 'f1': f1})
-    df_f1 = pd.DataFrame(rows)
-    path_out = os.path.join(dir_out, "f1_scores.csv")
-    df_f1.to_csv(path_out, index=False)
+                rows.append({'subj': subj, 'modname': modname, 'testfile': testfile, 'f1': f1})  #'feat': feat,
+        df_f1 = pd.DataFrame(rows)
+        path_out = os.path.join(dir_out_modname, "f1_scores.csv")
+        df_f1.to_csv(path_out, index=False)
+        modnames_df1s[modname] = df_f1
 
-    return df_f1
+    df_f1_concat = pd.concat(modnames_df1s.values(), axis=0)
+    return df_f1_concat
 
 
 def make_save_plots(dir_out,
@@ -393,7 +425,8 @@ def make_save_plots(dir_out,
                       ylabel='WL Difference from Level 0 to 1-3',
                       path_out=os.path.join(dir_out, f'WL_Diffs.png'),
                       xtickrotation=90,
-                      colors=['grey', 'orange', 'blue', 'green'])
+                      colors=['grey', 'orange', 'blue', 'green'],
+                      print_barheights=False)
     # WL across Task WL (agg. all subjects)
     fname = 'TaskWL_aScores'
     title = "Perceived WL vs Task WL"
@@ -569,9 +602,9 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(columns_model, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
+def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
                         wl_changepoints_detected):
-    for feat in columns_model:
+    for feat in feats_plot:
         path_out = os.path.join(dir_out_subj,
                                 f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
 
@@ -618,7 +651,7 @@ def plot_wlchangepoints(columns_model, file_type, aScores, testfile, data_test, 
         plt.close()
 
 
-def get_subjects_data(cfg, subjects, subjects_spacesadd, dir_out):
+def get_subjects_data(cfg, subjects, subjects_spacesadd):
     print('Gathering subjects data...')
     subjects_filenames_data = dict()
     subjects_dfs_train = dict()
@@ -673,7 +706,9 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
-    # subjects_all = ['aranoff', 'balaji']
+
+    subjects_all = ['aranoff', 'balaji']
+
     files_exp = list(cfg['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
@@ -703,13 +738,8 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
         os.makedirs(metadata_dir, exist_ok=True)
         dir_out = metadata_dir
 
-    # # Make subjects' output dirs
-    # for subj in subjects:
-    #     """ nest into /modname={modname} """
-    #     make_dirs_subj(os.path.join(dir_out, subj))
-
     # Get subjects data
-    subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd, dir_out)
+    subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd)
 
     # Train subjects models
     subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
@@ -721,7 +751,7 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
         score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
     else:
         print('\nMODE = real-time')
-        score = np.mean(run_realtime(config, dir_out, subjects_features_models)['f1'])
+        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data)['f1'])
 
     return score
 
