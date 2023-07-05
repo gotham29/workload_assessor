@@ -17,7 +17,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_totaldfs, prep_data, \
+from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_totaldfs, diff_standard_ma, \
     get_wllevels_indsend
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import make_data_plots, plot_outputs_boxes, plot_outputs_lines, plot_outputs_bars, get_accum, \
@@ -60,7 +60,7 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filename
     for k in levels_order:
         wllevels_totalascores_[k] = wllevels_totalascores[k]
 
-    return wllevels_ascores, wllevels_pcounts, wllevels_totalascores  #modnames_wllevels_ascores, modnames_wllevels_pcounts, modnames_wllevels_totalascores
+    return wllevels_ascores, wllevels_pcounts, wllevels_totalascores
 
 
 def get_filenames_outputs(cfg,
@@ -75,9 +75,9 @@ def get_filenames_outputs(cfg,
 
         if cfg['alg'] == 'HTM':
             # if model_for_each_feature - drop from cfg_htm_user['features'] all but modname & 'timestamp'
+            cfg_htm_user = {k: v for k, v in cfg['htm_config_user'].items()}
             if cfg['htm_config_user']['models_state']['model_for_each_feature']:  #'megamodel' not in modname:
                 feats_model = [modname, config['time_col']]
-                cfg_htm_user = {k:v for k,v in cfg['htm_config_user'].items()}
                 cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_model}
 
             feats_models, features_outputs = run_batch(cfg_user=cfg_htm_user,
@@ -92,14 +92,14 @@ def get_filenames_outputs(cfg,
             filenames_pcounts[fn] = features_outputs[modname]['pred_count']
 
         elif config['alg'] == 'SteeringEntropy':
-            ascores = get_ascores_entropy(data[ modname ].values)  # data['steering angle'].values
-        #
-        # elif config['alg'] == 'Naive':
-        #     ascores = get_ascores_naive(data[ modname ].values)  # data['steering angle'].values
-        #
-        # elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
-        #     ascores = get_ascores_pyod(data[cfg['columns_model']], features_models[cfg['columns_model'][0]])
-        #
+            ascores = get_ascores_entropy(data[ modname ].values)
+
+        elif config['alg'] == 'Naive':
+            ascores = get_ascores_naive(data[ modname ].values)
+
+        elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
+            ascores = get_ascores_pyod(data[modname], modname_model[modname])  #data[cfg['columns_model']], features_models[cfg['columns_model'][0]]
+
         # else:  # ts_source alg
         #     for feat, model in features_models.items():  # Assumes single model
         #         break
@@ -144,12 +144,10 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model):
                                                                  modname=modname,
                                                                  filenames_data=filenames_data_static,
                                                                  modname_model=modname_model)
-
     # agg ascore to wllevel
     wllevels_ascores, wllevels_pcounts, wllevels_totalascores = get_wllevels_outputs(filenames_ascores=filenames_ascores,
                                                                                      filenames_pcounts=filenames_pcounts,
                                                                                      wllevels_filenames=config['wllevels_filenames'])
-
     # write outputs
     print(f"  Writing outputs to --> {outnames_dirs['anomaly']}")
     print("    Boxplots...")
@@ -284,7 +282,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
     subj = list(subjects_features_models.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
     modnames_df1s = {}
-    print(f'\nrun_posthoc; modnames = {modnames}')
+    print(f'\nrun_realtime; modnames = {modnames}')
     for modname in modnames:
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
@@ -295,43 +293,12 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
             print(f"\n  subj = {subj}")
             dir_out_subj = os.path.join(dir_out_modname, subj)
             os.makedirs(dir_out_subj, exist_ok=True)
-            dir_in_subj = os.path.join(config['dirs']['input'], subj)
             # loop over testfiles
             model = subjects_features_models[subj][modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
                 aScores, wl_changepoints_detected = list(), list()
-                # data_test = subjects_filenames_data[subj][testfile]
-                path_test = os.path.join(dir_in_subj, testfile)
-                data_test = config['read_func'](path_test)
-
-                # data_test.columns = config['colnames']
-                # HACK - ADD COLUMN
-                data_test.columns = [c for c in config['colnames'] if c != 'steering angle 2']
-                data_test.insert(loc=2, column='steering angle 2', value=data_test['steering angle'].values)
-
-                # proprocess data -- DON'T select_by_autocorr() since it'll make the wl_changepoints invalid
-                # drop columns
-                cols_drop = [config['time_col']] + [c for c in config['colnames'] if c not in config['columns_model']]
-                data_test.drop(columns=cols_drop, inplace=True)
-
-                # agg
-                agg = int(config['hzs']['baseline'] / config['hzs']['convertto'])
-                data_test = data_test.groupby(data_test.index // agg).mean()
-                # clip both ends
-                clip_count_start = int(data_test.shape[0] * (config['clip_percents']['start'] / 100))
-                clip_count_end = data_test.shape[0] - int(data_test.shape[0] * (config['clip_percents']['end'] / 100))
-                data_test = data_test[clip_count_start:clip_count_end]
-                # subtract mean
-                feats_medians = {feat: m for feat, m in dict(data_test.median()).items()}
-                for feat, median in feats_medians.items():
-                    data_test[feat] = data_test[feat] - median
-                # transform
-                data_test = prep_data(data_test, config['preprocess'])
-
-                # add timecol
-                if config['time_col'] not in data_test:
-                    data_test = add_timecol(data_test, config['time_col'])
+                data_test = subjects_filenames_data[subj][testfile]
 
                 # get wl_changepoints
                 wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
@@ -720,8 +687,6 @@ def run_wl(config, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
 
     # Get subjects data
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd)
-
-    """ PREPROCESS DATA """
 
     # Train subjects models
     config, subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
