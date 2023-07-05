@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 
@@ -20,11 +21,12 @@ def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
                               hz_convertto=cfg['hzs']['convertto'])
     # Clip both ends
     filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
-    # Subtract mean
-    filenames_data = subtract_median(filenames_data=filenames_data, wllevels_filenames=cfg['wllevels_filenames'],
-                                     time_col=cfg['time_col'])
+    # Subtract median
+    filenames_data = subtract_median(filenames_data=filenames_data)
+    # Differece/Standardize/MA
+    filenames_data = {fn: diff_standard_ma(data, cfg['preprocess']) for fn, data in filenames_data.items()}
     # Transform
-    filenames_data = transform_data(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'])
+    filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training', 'static'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                            columns_model=cfg['columns_model'])
@@ -37,21 +39,9 @@ def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
     return filenames_data, df_train
 
 
-def subtract_median(filenames_data, wllevels_filenames, time_col='timestamp'):
-    filenames_wllevels = {}
-    wllevels_medians = {}
-    for wl, filenames in wllevels_filenames.items():
-        dfs = [filenames_data[f] for f in filenames]
-        df = pd.concat(dfs, axis=0)
-        feats_medians = {feat: m for feat, m in dict(df.median()).items() if feat != time_col}
-        wllevels_medians[wl] = feats_medians
-        for f in filenames:
-            filenames_wllevels[f] = wl
+def subtract_median(filenames_data):
     for fn, data in filenames_data.items():
-        if fn not in filenames_wllevels:
-            continue
-        wl = filenames_wllevels[fn]
-        feats_medians = wllevels_medians[wl]
+        feats_medians = {feat: m for feat, m in dict(data.median()).items()}
         for feat, median in feats_medians.items():
             data[feat] = data[feat] - median
     return filenames_data
@@ -171,7 +161,7 @@ def get_wllevels_indsend(wllevels_totaldfs_):
     return wllevels_indsend
 
 
-def prep_data(data, cfg_prep):
+def diff_standard_ma(data, cfg_prep):
     if cfg_prep['difference']:
         data = diff_data(data, cfg_prep['difference'])
     if cfg_prep['standardize']:
@@ -181,15 +171,18 @@ def prep_data(data, cfg_prep):
     return data
 
 
-def transform_data(subj, spaces_add, filenames_data, cfg_prep):
+def filter_by_autocorr(subj, spaces_add, filenames_data, cfg_prep, filestrs_doautocorr=['training', 'static']):
     filenames_data2 = {}
     percents_data_dropped = []
     for fn, data in filenames_data.items():
-        data = prep_data(data, cfg_prep)
-        diff_pcts = get_autocorrs(data[cfg_prep['autocorr_column']].values)
-        data_ = select_by_autocorr(data, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
-        percent_data_dropped = 1 - (len(data_) / float(len(data)))
-        percents_data_dropped.append(percent_data_dropped)
+        # do autocorr if file in filestrs_doautocorr
+        if any(filestr in fn for filestr in filestrs_doautocorr):
+            diff_pcts = get_autocorrs(data[cfg_prep['autocorr_column']].values)
+            data_ = select_by_autocorr(data, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+            percent_data_dropped = 1 - (len(data_) / float(len(data)))
+            percents_data_dropped.append(percent_data_dropped)
+        else:
+            data_ = copy.deepcopy(data)
         filenames_data2[fn] = data_.astype('float32')
     percent_data_dropped = np.sum(percents_data_dropped) / len(filenames_data)
     print(f"  {subj}{spaces_add} --> %data DROPPED: {round(percent_data_dropped * 100, 1)}")
