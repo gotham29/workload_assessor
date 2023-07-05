@@ -71,17 +71,15 @@ def get_filenames_outputs(cfg,
     filenames_ascores = {}
     filenames_pcounts = {}
 
-    # if model_for_each_feature - drop from htm_user['feautres'] all but modname & 'timestamp'
-    feats_model = config['columns_model'] + [config['time_col']]
-    if 'megamodel' not in modname:
-        feats_model = [modname, 'timestamp']
-
     for fn, data in filenames_data.items():
-        if 'static' not in fn:
-            continue
+
         if cfg['alg'] == 'HTM':
-            cfg_htm_user = {k:v for k,v in cfg['htm_config_user'].items()}
-            cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_model}
+            # if model_for_each_feature - drop from cfg_htm_user['features'] all but modname & 'timestamp'
+            if cfg['htm_config_user']['models_state']['model_for_each_feature']:  #'megamodel' not in modname:
+                feats_model = [modname, config['time_col']]
+                cfg_htm_user = {k:v for k,v in cfg['htm_config_user'].items()}
+                cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_model}
+
             feats_models, features_outputs = run_batch(cfg_user=cfg_htm_user,
                                                        cfg_model=cfg['htm_config_model'],
                                                        config_path_user=None,
@@ -91,14 +89,13 @@ def get_filenames_outputs(cfg,
                                                        iter_print=1000,
                                                        features_models=modname_model)
             ascores = features_outputs[modname]['anomaly_score']
-            # filenames_ascores[fn] = features_outputs[modname]['anomaly_score']
             filenames_pcounts[fn] = features_outputs[modname]['pred_count']
 
         elif config['alg'] == 'SteeringEntropy':
-            ascores = get_ascores_entropy(data[ feats_model[0] ].values)  # data['steering angle'].values
+            ascores = get_ascores_entropy(data[ modname ].values)  # data['steering angle'].values
         #
         # elif config['alg'] == 'Naive':
-        #     ascores = get_ascores_naive(data[cfg['columns_model'][0]].values)  # data['steering angle'].values
+        #     ascores = get_ascores_naive(data[ modname ].values)  # data['steering angle'].values
         #
         # elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
         #     ascores = get_ascores_pyod(data[cfg['columns_model']], features_models[cfg['columns_model'][0]])
@@ -133,7 +130,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model):
     # plot training data
     plot_training(df_train, columns_model=cfg['columns_model'], out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
     # plot filenames_data
-    make_data_plots(filenames_data=filenames_data, file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
+    make_data_plots(filenames_data=filenames_data, columns_model=cfg['columns_model'], file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
     # get behavior data (dfs) for all wllevels
     wllevels_totaldfs = get_wllevels_totaldfs(wllevels_filenames=cfg['wllevels_filenames'],
                                               filenames_data=filenames_data,
@@ -141,10 +138,11 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model):
                                               out_dir_files=outnames_dirs['data_files'])
     # get indicies dividing the wllevels
     wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
-    # get model outputs for each file
+    # get model outputs for each 'static' file
+    filenames_data_static = {k:v for k,v in filenames_data.items() if 'static' in k}
     filenames_ascores, filenames_pcounts = get_filenames_outputs(cfg=config,
                                                                  modname=modname,
-                                                                 filenames_data=filenames_data,
+                                                                 filenames_data=filenames_data_static,
                                                                  modname_model=modname_model)
 
     # agg ascore to wllevel
@@ -658,12 +656,12 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
         print(f"  --> {subj}")
         # Train model(s)
         if config['train_models']:
-            features_models = train_save_models(df_train=df_train,
-                                                alg=config['alg'],
-                                                dir_output= dir_out,  #dir_out_subj_models,
-                                                config=config,
-                                                htm_config_user=config['htm_config_user'],
-                                                htm_config_model=config['htm_config_model'])
+            config, features_models = train_save_models(df_train=df_train,
+                                                        alg=config['alg'],
+                                                        dir_output= dir_out,  #dir_out_subj_models,
+                                                        config=config,
+                                                        htm_config_user=config['htm_config_user'],
+                                                        htm_config_model=config['htm_config_model'])
         # Load model(s)
         else:
             if config['alg'] == 'HTM':
@@ -672,7 +670,8 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
                 features_models = load_models_darts(dir_out, alg=config['alg'])  #dir_out_subj_models
         # Store models
         subjects_features_models[subj] = features_models
-    return subjects_features_models
+
+    return config, subjects_features_models
 
 
 def has_expected_files(dir_in, files_exp):
@@ -684,13 +683,13 @@ def has_expected_files(dir_in, files_exp):
         return False
 
 
-def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
+def run_wl(config, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
 
     subjects_all = ['aranoff', 'balaji']
 
-    files_exp = list(cfg['wllevels_filenames'].values())
+    files_exp = list(config['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
     subjects_invalid = [s for s in subjects_all if s not in subjects]
@@ -708,24 +707,24 @@ def run_wl(cfg, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
 
     # make alg dir & reset dir_out
     if make_dir_alg:
-        dir_out_alg = os.path.join(dir_out, cfg['alg'])
+        dir_out_alg = os.path.join(dir_out, config['alg'])
         os.makedirs(dir_out_alg, exist_ok=True)
         dir_out = dir_out_alg
 
     # make metadata dir
     if make_dir_metadata:
-        preproc = '-'.join([f"{k}={v}" for k, v in cfg['preprocess'].items() if v])
-        metadata_dir = os.path.join(dir_out, f"preproc--{preproc}; hz={cfg['hzs']['convertto']}")
+        preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
+        metadata_dir = os.path.join(dir_out, f"preproc--{preproc}; hz={config['hzs']['convertto']}")
         os.makedirs(metadata_dir, exist_ok=True)
         dir_out = metadata_dir
 
     # Get subjects data
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, subjects, subjects_spacesadd)
 
+    """ PREPROCESS DATA """
+
     # Train subjects models
-    """ BUG --> getting 'timestamp' model """
-    subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
-    print(f"\nsubjects_features_models = {subjects_features_models}")
+    config, subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)
 
     # Run
     if config['mode'] == 'post-hoc':
@@ -757,4 +756,4 @@ if __name__ == '__main__':
                                          PERMDECS=config['htm_gridsearch']['PERMDEC='],
                                          PADDINGS=config['htm_gridsearch']['PADDING%='])
     else:
-        run_wl(cfg=config, dir_in=config['dirs']['input'], dir_out=dir_out)
+        run_wl(config=config, dir_in=config['dirs']['input'], dir_out=dir_out)

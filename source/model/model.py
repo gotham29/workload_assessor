@@ -73,6 +73,11 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
     # dir_output_models = os.path.join(dir_output, 'models')
     features_model = list(htm_config_user['features'].keys())
     if alg == 'HTM':
+        # drop timestamp feature if megamodel
+        if not htm_config_user['models_state']['model_for_each_feature']:
+            htm_features = {k:v for k,v in htm_config_user['features'].items() if v['type'] != 'timestamp'}
+            htm_config_user['features'] = htm_features
+            config['htm_config_user'] = htm_config_user
         # htm_source
         features_models, features_outputs = run_batch(cfg_user=htm_config_user,
                                                       cfg_model=htm_config_model,
@@ -106,4 +111,4 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
 
     # save_models(features_models, dir_output)
 
-    return features_models
+    return config, features_models
