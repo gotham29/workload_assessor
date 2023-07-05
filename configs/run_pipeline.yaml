@@ -1,15 +1,8 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
 alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
-
-#TODO
-## DONE--1) plot only colnames_model in data_plots
-## DONE--2) drop timestamp from cfg_htm_user['features'] for megamodel (model_for_each_feature=False)
-## DONE--3) move data preprocessing to run_wl(), before run_posthoc() & run_realtime()
-## DONE--4) do select_by_autocorr() only on training data
-##5) debug 'levels--aScoreTotals--bar' - numbers sometimes printing far above bars
 
 preprocess:
   difference: false  #1
@@ -2596,12 +2589,12 @@ dirs:
 colnames:
   - timestamp
   - steering angle
-  - steering angle 2
+#  - steering angle 2
   - brake pressure
 
 columns_model:
   - steering angle
-  - steering angle 2
+#  - steering angle 2
 
 hzs:
   baseline: 100
@@ -2817,11 +2810,11 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-    steering angle 2:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    steering angle 2:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     timestamp:
       custom: 0
       dayOfWeek: 0
@@ -2835,7 +2828,7 @@ htm_config_user:
       weekend: 0
       weight: 0
   models_state:
-    model_for_each_feature: false  #true
+    model_for_each_feature: true  #false
     return_pred_count: true
     use_sp: true
   timesteps_stop:

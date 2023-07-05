@@ -219,12 +219,14 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     modnames = list(subjects_features_models[subj].keys())
     print(f'\nrun_posthoc; modnames = {modnames}')
     modnames_percentchangesfrombaseline = {}
+
     # loop over modname
     for modname in modnames:
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
         subjects_wllevels_ascores = {}
+
         # loop over subjects
         for subj, filenames_data in subjects_filenames_data.items():
             dir_out_subj = os.path.join(dir_out_modname, subj)
@@ -278,26 +280,28 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
 
 def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data):
 
-    # loop over modnames
     subj = list(subjects_features_models.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
     modnames_df1s = {}
     print(f'\nrun_realtime; modnames = {modnames}')
+
+    # loop over modnames
     for modname in modnames:
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
+
         # loop over subjects
         rows = list()
         for subj, features_models in subjects_features_models.items():
             print(f"\n  subj = {subj}")
             dir_out_subj = os.path.join(dir_out_modname, subj)
             os.makedirs(dir_out_subj, exist_ok=True)
+
             # loop over testfiles
             model = subjects_features_models[subj][modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
-                aScores, wl_changepoints_detected = list(), list()
                 data_test = subjects_filenames_data[subj][testfile]
 
                 # get wl_changepoints
@@ -306,6 +310,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 print(f"        wl_changepoints = {wl_changepoints}")
 
                 # run data thru model
+                aScores, wl_changepoints_detected = list(), list()
                 pred_prev = None
                 for _, row in data_test.iterrows():
                     if config['alg'] == 'HTM':
@@ -653,9 +658,8 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(config, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
-
-    subjects_all = ['aranoff', 'balaji']
-
+    # HACK - limit number of subjects
+    # subjects_all = subjects_all[:5]
     files_exp = list(config['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]

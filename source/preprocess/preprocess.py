@@ -26,7 +26,7 @@ def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
     # Differece/Standardize/MA
     filenames_data = {fn: diff_standard_ma(data, cfg['preprocess']) for fn, data in filenames_data.items()}
     # Transform
-    filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training', 'static'])
+    filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training','static'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                            columns_model=cfg['columns_model'])
@@ -34,7 +34,7 @@ def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
     df_train = add_timecol(df_train, cfg['time_col'])
     for fn, data in filenames_data.items():
         data.drop(columns=[cfg['time_col']], inplace=True)
-        data = add_timecol(data, cfg['time_col'])
+        filenames_data[fn] = add_timecol(data, cfg['time_col'])
 
     return filenames_data, df_train
 
@@ -75,12 +75,10 @@ def select_by_autocorr(data, diff_pcts, diff_thresh):
 
 def update_colnames(filenames_data:dict, colnames:list):
     for fname, data in filenames_data.items():
-
-        # data.columns = colnames
+        data.columns = colnames
         # HACK - ADD COLUMN
-        data.columns = [c for c in colnames if c != 'steering angle 2']
-        data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
-
+        # data.columns = [c for c in colnames if c != 'steering angle 2']
+        # data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
     return filenames_data
 
 
