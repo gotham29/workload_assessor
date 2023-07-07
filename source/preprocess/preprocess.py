@@ -127,7 +127,8 @@ def clip_start(filenames_data, cfg):
     return filenames_data_
 
 
-def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_model:list, out_dir_files:str, levels_order:list=['baseline', 'distraction', 'rain', 'fog']):
+def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_model:list, out_dir_files:str):
+    levels_order = [v for v in list(wllevels_filenames.keys()) if v != 'training']
     wllevels_totaldfs = {}
     print('  test data...')
     for wllevel, wllevel_filenames in wllevels_filenames.items():

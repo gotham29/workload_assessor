@@ -38,11 +38,12 @@ def combine_dicts(dicts):
     return d_comb
 
 
-def load_files(dir_input: str, file_type: str, read_func: str):
+def load_files(dir_input: str, file_type: str, read_func: str, filenames: list):
     filenames_data = {}
     fdir_allfiles = [f for f in os.listdir(dir_input)]
     fdir_typefiles = [f for f in fdir_allfiles if f.split('.')[-1] == file_type]
-    for f in fdir_typefiles:
+    fdir_usefiles = [f for f in fdir_typefiles if f in filenames]
+    for f in fdir_usefiles:
         d_path = os.path.join(dir_input, f)
         data = read_func(d_path).replace(np.nan, 0, inplace=False)
         filenames_data[f] = data

@@ -24,12 +24,12 @@ MODES_CONVERT = {
 }
 
 
-def make_boxplots(data_dict, ylabel, title, path_out, suptitle=None, ylim=None):
+def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=None, ylim=None):
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     fig, ax = plt.subplots()
     bplot = ax.boxplot(data_dict.values(), patch_artist=True)
     ax.set_xticklabels(data_dict.keys())
-    colors = ['grey', 'orange', 'blue', 'green']
+    colors = list(levels_colors.values())  #['grey', 'orange', 'blue', 'green']
     for patch, color in zip(bplot['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.5)
@@ -74,9 +74,8 @@ def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_alr
     return df_overlaps
 
 
-def get_tlx_overlaps(subjects_wllevelsascores):
-    PATH_TLX = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
-    df_tlx = pd.read_csv(PATH_TLX)
+def get_tlx_overlaps(subjects_wllevelsascores, path_tlx):
+    df_tlx = pd.read_csv(path_tlx)
     ## get tlx orders
     subscales = ['Mental Demand', 'Physical Demand', 'Temporal Demand', 'Performance', 'Effort', 'Frustration',
                  'Raw TLX']

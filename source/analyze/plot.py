@@ -29,9 +29,10 @@ def make_data_plots(filenames_data: dict, columns_model: list, file_type: str, o
         plt.close()
 
 
-def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel, ylabel):
+def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, out_dir, xlabel, ylabel):
     outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
                       'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png')}
+    colors = [levels_colors[wllevel] for wllevel in data_plot1]
     # Plot -- Violin
     outtypes_data = {ot: [] for ot in outtypes_paths}
     for testlevel, ascores in data_plot1.items():
@@ -50,7 +51,8 @@ def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel
         df_2 = pd.concat(outtypes_data['pCounts'], axis=0)
     vplot_anom = sns.violinplot(data=df_1,
                                 x="Task WL",
-                                y='Anomaly Score')
+                                y='Anomaly Score',
+                                colors=colors)
     plt.title(title_1)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -60,7 +62,8 @@ def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel
     if len(data_plot2['baseline']) > 0:
         vplot_pred = sns.violinplot(data=df_2,
                                     x="Task WL",
-                                    y='Prediction Count')
+                                    y='Prediction Count',
+                                    colors=colors)
         plt.title(title_2)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
@@ -75,7 +78,7 @@ def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel
         outtypes_ddicts['pCounts'] = data_plot2
     for outtype, ddict in outtypes_ddicts.items():
         fig, ax = plt.subplots()
-        ax.boxplot(ddict.values())
+        bp = ax.boxplot(ddict.values())
         ax.set_xticklabels(ddict.keys(), rotation=90)
         ax.yaxis.grid(True)
         outp = outtypes_paths[outtype].replace('.png', '--box.png')
@@ -83,43 +86,51 @@ def plot_outputs_boxes(data_plot1, data_plot2, title_1, title_2, out_dir, xlabel
         plt.close()
 
 
-def plot_wllevels_totaldfs(wllevels_totaldfs, columns_model, levels_colors = {'baseline': 'grey', 'rain': 'blue', 'fog': 'green', 'distraction': 'orange'}):
-    ## plot - behavior (total)
-    alldata_task = pd.concat(list(wllevels_totaldfs.values()), axis=0)
-    for feat in columns_model:
-        feat_data = alldata_task[feat].values
-        f_min, f_max = min(feat_data), max(feat_data)
-        # plt.cla()
-        plt.figure(figsize=(15, 3))
-        # plt.rcParams['axes.facecolor'] = 'grey'
-        plt.plot(feat_data)
-        plt.title(f'Behavior - Validation')
-        # plt.xlabel('time')
-        plt.ylabel(feat)
-        ind_prev = 0
-        for wllevel, ind in wllevels_indsend.items():
-            plt.axvline(x=ind, color='r', linestyle='--')
-            plt.axvspan(ind_prev, ind, facecolor=levels_colors[wllevel], alpha=0.5, label=wllevel)
-            ind_prev = ind
-        # plt.grid(False)
-        plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
-        out_path = os.path.join(out_dir, f'time--validation--{feat}.png')
-        plt.savefig(out_path)
-        plt.close()
-
-        ## by level
-        for level, data in wllevels_totaldfs.items():
-            d_feat = data[feat].values
-            # plt.cla()
-            plt.figure(figsize=(15, 3))
-            plt.plot(d_feat, color=levels_colors[level])
-            # plt.xlabel('time')
-            plt.ylabel(feat)
-            plt.ylim(f_min, f_max)
-            # plt.title(f'{level}')  #f'Behavior - {feat} - {level}'
-            out_path = os.path.join(out_dir, f'time--validation--{feat}--{level}.png')
-            plt.savefig(out_path)
-            plt.close()
+# def plot_wllevels_totaldfs(wllevels_totaldfs, columns_model, colors=['grey', 'blue', 'orange', 'red']):
+#     assert len(wllevels_totaldfs) <= len(colors), f"more wllevels found ({len(wllevels_totaldfs)}) than colors ({len(colors)})"
+#     colors = ['grey', 'blue', 'orange', 'red']
+#     levels_colors = {}
+#     for wllevel in wllevels_totaldfs:
+#         color = colors[0]
+#         levels_colors[wllevel] = color
+#         colors.remove(color)
+#
+#     ## plot - behavior (total)
+#     alldata_task = pd.concat(list(wllevels_totaldfs.values()), axis=0)
+#     for feat in columns_model:
+#         feat_data = alldata_task[feat].values
+#         f_min, f_max = min(feat_data), max(feat_data)
+#         # plt.cla()
+#         plt.figure(figsize=(15, 3))
+#         # plt.rcParams['axes.facecolor'] = 'grey'
+#         plt.plot(feat_data)
+#         plt.title(f'Behavior - Validation')
+#         # plt.xlabel('time')
+#         plt.ylabel(feat)
+#         ind_prev = 0
+#         for wllevel, ind in wllevels_indsend.items():
+#             plt.axvline(x=ind, color='r', linestyle='--')
+#             plt.axvspan(ind_prev, ind, facecolor=levels_colors[wllevel], alpha=0.5, label=wllevel)
+#             ind_prev = ind
+#         # plt.grid(False)
+#         plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
+#         out_path = os.path.join(out_dir, f'time--validation--{feat}.png')
+#         plt.savefig(out_path)
+#         plt.close()
+#
+#         ## by level
+#         for level, data in wllevels_totaldfs.items():
+#             d_feat = data[feat].values
+#             # plt.cla()
+#             plt.figure(figsize=(15, 3))
+#             plt.plot(d_feat, color=levels_colors[level])
+#             # plt.xlabel('time')
+#             plt.ylabel(feat)
+#             plt.ylim(f_min, f_max)
+#             # plt.title(f'{level}')  #f'Behavior - {feat} - {level}'
+#             out_path = os.path.join(out_dir, f'time--validation--{feat}--{level}.png')
+#             plt.savefig(out_path)
+#             plt.close()
 
 
 def plot_training(df_train: pd.DataFrame,
@@ -142,12 +153,12 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
                wllevels_predcounts_: dict,
                wllevels_indsend:dict,
                get_pcounts: bool,
-               out_dir: str,
-               levels_colors = {'baseline': 'grey', 'rain': 'blue', 'fog': 'green', 'distraction': 'orange'}):
+               levels_order: list,
+               levels_colors: dict,
+               out_dir: str):
 
     # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
     wllevels_anomscores, wllevels_predcounts = {}, {}
-    levels_order = ['baseline', 'distraction', 'rain', 'fog']
     for k in levels_order:
         wllevels_anomscores[k] = wllevels_anomscores_[k]
         if k in wllevels_predcounts_:
@@ -233,12 +244,10 @@ def plot_hists(algs_data, dir_out, title, density=False):
     plt.close()
 
 
-def plot_outputs_bars(mydict, title, xlabel, ylabel, path_out, xtickrotation=0, colors=None, print_barheights=True):
-    if colors is None:
-        colors = ['black' for _ in range(len(mydict))]
+def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
     mydict = {k:round(v,3) for k,v in mydict.items()}
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
-    plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
+    plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=list(levels_colors.values()), alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)
     if print_barheights:
         xlocs = [i+1 for i in range(0,len(mydict))]
@@ -310,6 +319,7 @@ def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_su
         dpath = os.path.join(dir_data_subj, fn)
         fn = fn.replace(f'.{file_type}', '')
         data = pd.read_excel(dpath)
+        """ BUG --> HARD CODING"""
         data.columns = ['time', 'steering angle', 'break']
         # agg
         data = data.groupby(data.index // agg).mean()
@@ -348,6 +358,7 @@ def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_su
 
 
 def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
+    """ BUG --> HARD CODING """
     files_types = {'static1': 'rain',
                    'static2': 'fog',
                    'static3': 'pennies',
