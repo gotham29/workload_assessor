@@ -2605,7 +2605,7 @@ columns_model:
 
 hzs:
   baseline: 16.67  #5
-  convertto: 3
+  convertto: 5
 
 wllevels_filenames:
   training:
