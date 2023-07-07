@@ -43,22 +43,18 @@ def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=No
     plt.close()
 
 
-def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_already_set=False):
+def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_already_set=False):
     subjects_orders_1 = {}
-    for subj, wllevels_ascores in subjects_wllevelsascores1.items():
-        subj = subj.lower().strip()
-        wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
-        wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
-        subjects_orders_1[subj] = list(wllevels_ascoresums.keys())
+    for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
+        subjects_orders_1[subj.lower().strip()] = list(wllevels_totalascores.keys())
     if order_already_set:
-        subjects_orders_2 = subjects_wllevelsascores2
+        subjects_orders_2 = subjects_tlxorders
     else:
         subjects_orders_2 = {}
-        for subj, wllevels_ascores in subjects_wllevelsascores2.items():
-            subj = subj.lower().strip()
+        for subj, wllevels_ascores in subjects_tlxorders.items():
             wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
             wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
-            subjects_orders_2[subj] = list(wllevels_ascoresums.keys())
+            subjects_orders_2[subj.lower().strip()] = list(wllevels_ascoresums.keys())
     # get overlaps
     subjects_overlaps = {}
     for subj, order_1 in subjects_orders_1.items():
@@ -74,7 +70,7 @@ def get_overlaps(subjects_wllevelsascores1, subjects_wllevelsascores2, order_alr
     return df_overlaps
 
 
-def get_tlx_overlaps(subjects_wllevelsascores, path_tlx):
+def get_tlx_overlaps(subjects_wllevels_totalascores, path_tlx):
     df_tlx = pd.read_csv(path_tlx)
     ## get tlx orders
     subscales = ['Mental Demand', 'Physical Demand', 'Temporal Demand', 'Performance', 'Effort', 'Frustration',
@@ -93,7 +89,7 @@ def get_tlx_overlaps(subjects_wllevelsascores, path_tlx):
             modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
             subjects_tlxorders[subj] = list(modes_scores.keys())
         ## get df_overlaps
-        df_overlaps = get_overlaps(subjects_wllevelsascores, subjects_tlxorders, order_already_set=True)
+        df_overlaps = get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_already_set=True)
         df_overlaps.columns = [subscale]
         mean_percent_overlap = 100 * round(np.mean(df_overlaps[subscale]), 3)
         subscales_meanoverlaps[subscale] = mean_percent_overlap

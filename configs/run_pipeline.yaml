@@ -2596,12 +2596,12 @@ colnames:
 columns_model:
   - pitch_stick
   - roll_stick
-#  - rudder_pedals
-#  - throttle
+  - rudder_pedals
+  - throttle
 
 hzs:
-  baseline: 5  #100  #16.67
-  convertto: 5
+  baseline: 16.67  #5
+  convertto: 3
 
 clip_percents:
   start: 0
@@ -2609,30 +2609,30 @@ clip_percents:
 
 wllevels_filenames:
   training:
-    - rt_run24.csv  #rt_run1.csv
-    - rt_run30.csv  #rt_run3.csv
+    - run24_mfr.csv  #run1_ss.csv
+    - run30_mc.csv  #run3_mc.csv
   baseline:  #delay=0
-    - rt_run31.csv  #rt_run10.csv
-    - rt_run33.csv  #rt_run14.csv
-    - rt_run34.csv  #rt_run20.csv
+    - run31_ap.csv  #run10_ap.csv
+    - run33_nc.csv  #run14_mfr.csv
+    - run34_ss.csv  #run20_nc.csv
   delay=0.048:
-    - rt_run22.csv  #rt_run2.csv
-    - rt_run29.csv  #rt_run6.csv
-    - rt_run32.csv  #rt_run8.csv
-    - rt_run37.csv  #rt_run9.csv
-    - rt_run39.csv  #rt_run16.csv
+    - run22_mc.csv  #run2_ss.csv
+    - run29_ap.csv  #run6_mc.csv
+    - run32_mfr.csv  #run8_nc.csv
+    - run37_nc.csv  #run9_mfr.csv
+    - run39_ss.csv  #run16_ap.csv
   delay=0.096:
-    - rt_run21.csv  #rt_run5.csv
-    - rt_run23.csv  #rt_run7.csv
-    - rt_run25.csv  #rt_run11.csv
-    - rt_run28.csv  #rt_run17.csv
-    - rt_run40.csv  #rt_run19.csv
+    - run21_ss.csv  #run5_ap.csv
+    - run23_nc.csv  #run7_nc.csv
+    - run25_mfr.csv  #run11_mfr.csv
+    - run28_ap.csv  #run17_mc.csv
+    - run40_mc.csv  #run19_ss.csv
   delay=0.192:
-    - rt_run26.csv  #rt_run4.csv
-    - rt_run27.csv  #rt_run12.csv
-    - rt_run35.csv  #rt_run13.csv
-    - rt_run36.csv  #rt_run15.csv
-    - rt_run38.csv  #rt_run18.csv
+    - run26_mfr.csv  #run4_ss.csv
+    - run27_nc.csv  #run12_mc.csv
+    - run35_ap.csv  #run13_nc.csv
+    - run36_mc.csv  #run15_mfr.csv
+    - run38_ss.csv  #run18_ap.csv
 
 modnames_grids:
   ARIMA:
@@ -2828,16 +2828,16 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-#    rudder_pedals:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
-#    throttle:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
+    rudder_pedals:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+    throttle:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
   models_state:
     model_for_each_feature: true  #false
     return_pred_count: true

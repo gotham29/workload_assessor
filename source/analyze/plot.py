@@ -33,8 +33,7 @@ def make_data_plots(filenames_data: dict, modname: str, columns_model: list, fil
 def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, out_dir, xlabel, ylabel):
     outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
                       'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png')}
-    colors = [levels_colors[wllevel] for wllevel in data_plot1]
-    # Plot -- Violin
+    # Plot -- violin
     outtypes_data = {ot: [] for ot in outtypes_paths}
     for testlevel, ascores in data_plot1.items():
         df_dict_1 = {'Task WL': [testlevel for _ in range(len(ascores))],
@@ -53,7 +52,7 @@ def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, 
     vplot_anom = sns.violinplot(data=df_1,
                                 x="Task WL",
                                 y='Anomaly Score',
-                                colors=colors)
+                                pallette=levels_colors)
     plt.title(title_1)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -64,14 +63,14 @@ def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, 
         vplot_pred = sns.violinplot(data=df_2,
                                     x="Task WL",
                                     y='Prediction Count',
-                                    colors=colors)
+                                    pallette=levels_colors)
         plt.title(title_2)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig(outtypes_paths['pCounts'].replace('.png', '--violin.png'), bbox_inches="tight")
         plt.close()
-    # Plot -- Box
-    # plt.cla()
+
+    # Plot -- box
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     outtypes_ddicts = {'aScores': data_plot1}
@@ -79,7 +78,7 @@ def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, 
         outtypes_ddicts['pCounts'] = data_plot2
     for outtype, ddict in outtypes_ddicts.items():
         fig, ax = plt.subplots()
-        bp = ax.boxplot(ddict.values())
+        ax.boxplot(ddict.values())
         ax.set_xticklabels(ddict.keys(), rotation=90)
         ax.yaxis.grid(True)
         outp = outtypes_paths[outtype].replace('.png', '--box.png')
@@ -246,9 +245,10 @@ def plot_hists(algs_data, dir_out, title, density=False):
 
 
 def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
-    mydict = {k:round(v,3) for k,v in mydict.items()}
+    colors = list(levels_colors.values()) if levels_colors else None
+    mydict = {k:round(v,2) for k,v in mydict.items()}
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
-    plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=list(levels_colors.values()), alpha=0.5)
+    plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)
     if print_barheights:
         xlocs = [i+1 for i in range(0,len(mydict))]

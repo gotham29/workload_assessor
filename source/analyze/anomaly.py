@@ -121,18 +121,18 @@ def get_normdiff(wl_t0, wl_t1):
     return normalized_diff
 
 
-def get_subjects_wldiffs(subjects_wllevels_ascores):
+def get_subjects_wldiffs(subjects_wllevels_totalascores):
     print("\n  ** get_subjects_wldiffs")
     subjects_wldiffs = {}
     subjects_levels_wldiffs = {}
-    for subj, wllevels_ascores in subjects_wllevels_ascores.items():
+    for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
         print(f"    {subj}")
-        wl_t0 = np.sum(wllevels_ascores['baseline'])
         wl_t1t0_diffs = {}
-        for wllevel, ascores in wllevels_ascores.items():
+        wl_t0 = wllevels_totalascores['baseline']
+        for wllevel, totalascore in wllevels_totalascores.items():
             if wllevel == 'baseline':
                 continue
-            normalized_diff = get_normdiff(wl_t0, np.sum(ascores))
+            normalized_diff = get_normdiff(wl_t0, totalascore)
             print(f"      wllevel = {wllevel}; diff = {normalized_diff}")
             wl_t1t0_diffs[wllevel] = round(normalized_diff, 2)
         subjects_levels_wldiffs[subj] = wl_t1t0_diffs

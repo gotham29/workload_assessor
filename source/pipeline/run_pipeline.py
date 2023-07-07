@@ -62,9 +62,8 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filename
     wllevels_totalascores = {wllevel: np.sum(ascores)*wllevels_coeffs[wllevel] for wllevel, ascores in wllevels_ascores.items()}
 
     # sort - levels
-    wllevels_totalascores_ = {}
-    for k in levels_order:
-        wllevels_totalascores_[k] = wllevels_totalascores[k]
+    index_map = {v: i for i, v in enumerate(levels_order)}
+    wllevels_totalascores = dict(sorted(wllevels_totalascores.items(), key=lambda pair: index_map[pair[0]]))
 
     return wllevels_ascores, wllevels_pcounts, wllevels_totalascores
 
@@ -176,7 +175,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model, 
                   ylim=None)
     plot_outputs_bars(mydict=wllevels_totalascores,
                       levels_colors=levels_colors,
-                      title=f"{cfg['alg']} WL Scores by Run Mode",
+                      title=f"{cfg['alg']} WL Scores by Level",
                       xlabel='WL Levels',
                       ylabel=f"{cfg['alg']} WL",
                       path_out=os.path.join(outnames_dirs['anomaly'], "levels--aScoreTotals--bar.png"),
@@ -198,23 +197,21 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model, 
                        levels_colors=levels_colors,
                        out_dir=outnames_dirs['anomaly'])
 
-    return wllevels_ascores, levels_colors
+    return filenames_ascores, wllevels_ascores, wllevels_totalascores, levels_colors
 
 
-def get_scores(subjects_wldiffs, subjects_wllevelsascores):
+def get_scores(subjects_wldiffs, subjects_wllevels_totalascores):
     # percent_change_from_baseline
     percent_change_from_baseline = round(sum(subjects_wldiffs.values()))
     # subjects_wldiffs_positive
     subjects_wldiffs_positive = {subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0}
     # subjs_baseline_lowest
     subjs_baseline_lowest = []
-    for subj, wllevels_ascores in subjects_wllevelsascores.items():
-        ascorestotal_baseline = np.sum(wllevels_ascores['baseline'])
+    for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
+        ascorestotal_baseline = wllevels_totalascores.pop('baseline')
         baseline_lowest = True
-        for wllevel, ascores in wllevels_ascores.items():
-            if wllevel == 'baseline':
-                continue
-            if np.sum(ascores) < ascorestotal_baseline:
+        for wllevel, totalascore in wllevels_totalascores.items():
+            if totalascore < ascorestotal_baseline:
                 baseline_lowest = False
         if baseline_lowest:
             subjs_baseline_lowest.append(subj)
@@ -246,37 +243,42 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
         subjects_wllevels_ascores = {}
+        subjects_wllevels_totalascores = {}
+        subjects_filenames_totalascores = {}
 
         # loop over subjects
         for subj, filenames_data in subjects_filenames_data.items():
             dir_out_subj = os.path.join(dir_out_modname, subj)
             modname_model = {modname: subjects_features_models[subj][modname]}
-            wllevels_ascores, levels_colors = run_subject(cfg=cfg,
-                                                          modname=modname,
-                                                          df_train=subjects_dfs_train[subj],
-                                                          dir_out=dir_out_subj,
-                                                          filenames_data=filenames_data,
-                                                          modname_model=modname_model,
-                                                          levels_order=[v for v in cfg['wllevels_filenames'] if v!='training'])
+            filenames_ascores, wllevels_ascores, wllevels_totalascores, levels_colors = run_subject(cfg=cfg,
+                                                                                                    dir_out=dir_out_subj,
+                                                                                                    df_train=subjects_dfs_train[subj],
+                                                                                                    modname=modname,
+                                                                                                    modname_model=modname_model,
+                                                                                                    filenames_data=filenames_data,
+                                                                                                    levels_order=[v for v in cfg['wllevels_filenames'] if v!='training'])
             subjects_wllevels_ascores[subj] = wllevels_ascores
+            subjects_wllevels_totalascores[subj] = wllevels_totalascores
+            subjects_filenames_totalascores[subj] = {fn:np.sum(ascores) for fn, ascores in filenames_ascores.items()}
 
         # write results for each modname
-        subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevels_ascores)
+        subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevels_totalascores)
         percent_change_from_baseline, subjects_increased_from_baseline, subjects_baseline_lowest = get_scores(
-            subjects_wldiffs, subjects_wllevels_ascores)
+            subjects_wldiffs, subjects_wllevels_totalascores)
         percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevels_ascores))
 
         # get overlap w/TLX
         path_tlx = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
         subscales_meanoverlaps, df_overlaps = {}, pd.DataFrame()
         if os.path.exists(path_tlx):
-            subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_ascores, path_tlx)
+            subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, path_tlx)
 
         # rename dirs based on scores
         rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out_modname)
 
         # save results
         path_out_scores = os.path.join(dir_out_modname, 'scores.csv')
+        path_out_subjects_totalascores = os.path.join(dir_out_modname, 'subjects_filenames_totalascores.csv')
         path_out_subjects_wldiffs = os.path.join(dir_out_modname, 'subjects_wldiffs.csv')
         path_out_subjects_levels_wldiffs = os.path.join(dir_out_modname, 'subjects_levels_wldiffs.csv')
         path_out_subjects_overlaps = os.path.join(dir_out_modname, 'subjects_tlxoverlaps.csv')
@@ -285,18 +287,20 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         for subscale, meanoverlap in subscales_meanoverlaps.items():
             scores[subscale] = meanoverlap
         scores = pd.DataFrame(scores, index=[0])
-        df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs)
+        df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs).T
+        df_subjects_filenames_totalascores = pd.DataFrame(subjects_filenames_totalascores).round(3)
         df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0]).T
         df_subjects_wldiffs.columns = ['Difference from Baseline']
         scores.to_csv(path_out_scores)
         df_overlaps.to_csv(path_out_subjects_overlaps, index=True)
         df_subjects_wldiffs.to_csv(path_out_subjects_wldiffs, index=True)
         df_subjects_levels_wldiffs.to_csv(path_out_subjects_levels_wldiffs, index=True)
+        df_subjects_filenames_totalascores.to_csv(path_out_subjects_totalascores, index=True)
         make_save_plots(dir_out=dir_out_modname,
                         levels_colors=levels_colors,
                         subjects_wldiffs=subjects_wldiffs,
-                        percent_change_from_baseline=percent_change_from_baseline,
-                        subjects_wllevelsascores=subjects_wllevels_ascores)
+                        subjects_wllevelsascores=subjects_wllevels_ascores,
+                        percent_change_from_baseline=percent_change_from_baseline)
         modnames_percentchangesfrombaseline[modname] = percent_change_from_baseline
 
     mean_percentchangefrombaseline = np.mean(list(modnames_percentchangesfrombaseline.values()))
@@ -397,7 +401,7 @@ def make_save_plots(dir_out,
                     subjects_wllevelsascores):
     # subjects WLdiffs
     plot_outputs_bars(mydict=subjects_wldiffs,
-                      levels_colors=levels_colors,
+                      levels_colors=None,
                       title=f'Total WL Difference = {round(percent_change_from_baseline, 3)}',
                       xlabel='Subjects',
                       ylabel='WL Difference from Level 0 to 1-3',
@@ -429,7 +433,8 @@ def make_save_plots(dir_out,
     df = pd.DataFrame(dfdict)
     vplot_anom = sns.violinplot(data=df,
                                 x="Task WL",
-                                y='Anomaly Score')
+                                y='Anomaly Score',
+                                pallette=levels_colors)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.ylim(0, 1.0)
@@ -688,9 +693,7 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(config, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
-
-    subjects_all = subjects_all[:1]  # HACK - limit number of subjects
-
+    # subjects_all = subjects_all[:1]  # HACK - limit number of subjects
     files_exp = list(config['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
     subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
