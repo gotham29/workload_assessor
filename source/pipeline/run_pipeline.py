@@ -49,13 +49,19 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, wllevels_filename
         for fn in fns:
             filenames_wllevels[fn] = level
 
+    # get htm anomaly scores - filenames
     for fn, ascores in filenames_ascores.items():
         wllevel = filenames_wllevels[fn]
         wllevels_ascores[wllevel] += ascores
         if fn in filenames_pcounts:
             wllevels_pcounts[wllevel] += filenames_pcounts[fn]
 
-    wllevels_totalascores = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
+    # get total WL - levels
+    wllevels_coeffs = {wllevel: len(wllevels_filenames['baseline'])/len(fileslist) for wllevel,fileslist in wllevels_filenames.items()}
+    print(f"\n  ** wllevels_coeffs = {wllevels_coeffs}\n")
+    wllevels_totalascores = {wllevel: np.sum(ascores)*wllevels_coeffs[wllevel] for wllevel, ascores in wllevels_ascores.items()}
+
+    # sort - levels
     wllevels_totalascores_ = {}
     for k in levels_order:
         wllevels_totalascores_[k] = wllevels_totalascores[k]
@@ -130,7 +136,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model, 
     # plot training data
     plot_training(df_train, columns_model=cfg['columns_model'], out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
     # plot filenames_data
-    make_data_plots(filenames_data=filenames_data, columns_model=cfg['columns_model'], file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
+    make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=cfg['columns_model'], file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
     # remove training data from filenames_data
     filenames_data = {fn:data for fn,data in filenames_data.items() if fn not in cfg['wllevels_filenames']['training']}
     # get behavior data (dfs) for all wllevels
@@ -142,7 +148,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model, 
     wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
 
     # set valid colors for plots
-    colors = ['grey','blue','green','red','cyan','magenta','yellow','black']
+    colors = ['grey','yellow','orange','red','blue','green','cyan','magenta','black']
     assert len(wllevels_totaldfs) <= len(colors), f"more wllevels found ({len(wllevels_totaldfs)}) than colors ({len(colors)})"
     levels_colors = {}
     for _,wllevel in enumerate(wllevels_totaldfs):
@@ -682,7 +688,8 @@ def has_expected_files(dir_in, files_exp):
 def run_wl(config, dir_in, dir_out, make_dir_alg=True, make_dir_metadata=True):
     # Collect subjects
     subjects_all = [f for f in os.listdir(dir_in) if os.path.isdir(os.path.join(dir_in, f)) if 'drop' not in f]
-    # subjects_all = subjects_all[:1]  # HACK - limit number of subjects
+
+    subjects_all = subjects_all[:1]  # HACK - limit number of subjects
 
     files_exp = list(config['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))

@@ -2596,8 +2596,8 @@ colnames:
 columns_model:
   - pitch_stick
   - roll_stick
-  - rudder_pedals
-  - throttle
+#  - rudder_pedals
+#  - throttle
 
 hzs:
   baseline: 5  #100  #16.67
@@ -2609,30 +2609,30 @@ clip_percents:
 
 wllevels_filenames:
   training:
-    - rt_run1.csv
-    - rt_run3.csv
+    - rt_run24.csv  #rt_run1.csv
+    - rt_run30.csv  #rt_run3.csv
   baseline:  #delay=0
-    - rt_run10.csv
-    - rt_run14.csv
-    - rt_run20.csv
+    - rt_run31.csv  #rt_run10.csv
+    - rt_run33.csv  #rt_run14.csv
+    - rt_run34.csv  #rt_run20.csv
   delay=0.048:
-    - rt_run2.csv
-    - rt_run6.csv
-    - rt_run8.csv
-    - rt_run9.csv
-    - rt_run16.csv
+    - rt_run22.csv  #rt_run2.csv
+    - rt_run29.csv  #rt_run6.csv
+    - rt_run32.csv  #rt_run8.csv
+    - rt_run37.csv  #rt_run9.csv
+    - rt_run39.csv  #rt_run16.csv
   delay=0.096:
-    - rt_run5.csv
-    - rt_run7.csv
-    - rt_run11.csv
-    - rt_run17.csv
-    - rt_run19.csv
+    - rt_run21.csv  #rt_run5.csv
+    - rt_run23.csv  #rt_run7.csv
+    - rt_run25.csv  #rt_run11.csv
+    - rt_run28.csv  #rt_run17.csv
+    - rt_run40.csv  #rt_run19.csv
   delay=0.192:
-    - rt_run4.csv
-    - rt_run12.csv
-    - rt_run13.csv
-    - rt_run15.csv
-    - rt_run18.csv
+    - rt_run26.csv  #rt_run4.csv
+    - rt_run27.csv  #rt_run12.csv
+    - rt_run35.csv  #rt_run13.csv
+    - rt_run36.csv  #rt_run15.csv
+    - rt_run38.csv  #rt_run18.csv
 
 modnames_grids:
   ARIMA:
@@ -2806,26 +2806,6 @@ htm_config_model:
 
 htm_config_user:
   features:
-    pitch_stick:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-    roll_stick:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-    rudder_pedals:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-    throttle:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
     timestamp:
       custom: 0
       dayOfWeek: 0
@@ -2838,6 +2818,26 @@ htm_config_user:
       type: timestamp
       weekend: 0
       weight: 0
+    pitch_stick:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+    roll_stick:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+#    rudder_pedals:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
+#    throttle:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
   models_state:
     model_for_each_feature: true  #false
     return_pred_count: true
@@ -2857,18 +2857,3 @@ file_type: csv  #xls
 scale: false
 do_gridsearch: false
 learn_in_testing: false
-
-#dir_data = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-#subjs_found = [f for f in os.listdir(dir_data) if 'subj' in f]
-#subj_dirs = [os.path.join(dir_data,subj) for subj in subjs_found]
-#colnames = ['timestamp', 'pitch_stick', 'roll_stick', 'rudder_pedals', 'throttle']
-
-#for sd in subj_dirs:
-#  d_files = [f for f in os.listdir(sd) if '.csv' in f]
-#  for d in d_files:
-#    path_in = os.path.join(sd,d)
-#    df = pd.read_csv(path_in)
-#    cols_drop = [c for c in df.columns if 'Unnamed' in c]
-#    df.drop(columns=cols_drop, inplace=True)
-#    df.columns = colnames
-#    df.to_csv(path_in, index=False)

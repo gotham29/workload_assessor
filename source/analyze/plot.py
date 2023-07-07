@@ -16,12 +16,13 @@ sys.path.append(_TS_SOURCE_DIR)
 from source.preprocess.preprocess import preprocess_data, diff_data, standardize_data, movingavg_data
 from ts_source.utils.utils import load_config
 
-def make_data_plots(filenames_data: dict, columns_model: list, file_type: str, out_dir_plots: str):
+def make_data_plots(filenames_data: dict, modname: str, columns_model: list, file_type: str, out_dir_plots: str):
+    columns_plot = columns_model if 'megamodel' in modname else [modname]
     for fname, data in filenames_data.items():
         fname = fname.replace(f".{file_type}", "")
         path_out = os.path.join(out_dir_plots, f"{fname}.png")
         plt.figure(figsize=(15, 3))
-        for c in columns_model:
+        for c in columns_plot:
             plt.plot(data[c], label=c)
         plt.title(fname)
         plt.legend()
