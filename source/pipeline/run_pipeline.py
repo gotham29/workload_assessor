@@ -202,7 +202,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, modname_model, 
 
 def get_scores(subjects_wldiffs, subjects_wllevels_totalascores):
     # percent_change_from_baseline
-    percent_change_from_baseline = round(sum(subjects_wldiffs.values()))
+    percent_change_from_baseline = round(sum(subjects_wldiffs.values()),3)
     # subjects_wldiffs_positive
     subjects_wldiffs_positive = {subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0}
     # subjs_baseline_lowest

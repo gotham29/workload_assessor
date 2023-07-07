@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: SteeringEntropy
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -2582,6 +2582,10 @@ features:
   pred:
     - steering angle
 
+clip_percents:
+  start: 0
+  end: 0
+
 dirs:
   input: /Users/samheiserman/Desktop/repos/workload_assessor/data
   output: /Users/samheiserman/Desktop/repos/workload_assessor/results
@@ -2602,10 +2606,6 @@ columns_model:
 hzs:
   baseline: 16.67  #5
   convertto: 3
-
-clip_percents:
-  start: 0
-  end: 0
 
 wllevels_filenames:
   training:
