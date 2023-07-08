@@ -247,6 +247,7 @@ def plot_hists(algs_data, dir_out, title, density=False):
 def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
     colors = list(levels_colors.values()) if levels_colors else None
     mydict = {k:round(v,2) for k,v in mydict.items()}
+    plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)

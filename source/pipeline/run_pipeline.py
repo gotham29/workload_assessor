@@ -102,6 +102,9 @@ def get_filenames_outputs(cfg,
         elif config['alg'] == 'Naive':
             ascores = get_ascores_naive(data[ modname ].values)
 
+        elif config['alg'] == 'PSD':
+            ascores = list(plt.psd(x=data[modname].values, Fs=1)[0])
+
         elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
             ascores = get_ascores_pyod(data[modname], modname_model[modname])  #data[cfg['columns_model']], features_models[cfg['columns_model'][0]]
 
@@ -122,7 +125,6 @@ def get_filenames_outputs(cfg,
         #         0]].values))  # list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
 
         filenames_ascores[fn] = ascores
-        # data.drop(columns=[config['time_col']], inplace=True)
 
     return filenames_ascores, filenames_pcounts
 

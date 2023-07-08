@@ -87,6 +87,8 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                       data=df_train[features_model],
                                                       iter_print=1000,
                                                       features_models={})
+    elif alg == 'PSD':
+        features_models = {feat: None for feat in features_model if feat != config['time_col']}
     elif alg == 'Naive':
         features_models = {feat: NaiveModel() for feat in features_model if feat != config['time_col']}
     elif alg == 'SteeringEntropy':
@@ -94,20 +96,20 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
     elif alg in PYOD_MODNAMES_MODELS:
         model = PYOD_MODNAMES_MODELS[alg]
         features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if feat != config['time_col']}
-    else:
-        # ts_source
-        config_ts = {k: v for k, v in config.items()}
-        config_ts['train_models'] = True
-        config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
-        output_dirs = {'data': os.path.join(dir_output, 'data_files'),
-                       'results': os.path.join(dir_output, 'anomaly'),
-                       'models': dir_output}
-        modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
-                                                                     data=df_train,
-                                                                     data_path=False,
-                                                                     output_dir=False,
-                                                                     output_dirs=output_dirs)
-        features_models = {modname_best: modnames_models[modname_best]}
+    # else:
+    #     # ts_source
+    #     config_ts = {k: v for k, v in config.items()}
+    #     config_ts['train_models'] = True
+    #     config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
+    #     output_dirs = {'data': os.path.join(dir_output, 'data_files'),
+    #                    'results': os.path.join(dir_output, 'anomaly'),
+    #                    'models': dir_output}
+    #     modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
+    #                                                                  data=df_train,
+    #                                                                  data_path=False,
+    #                                                                  output_dir=False,
+    #                                                                  output_dirs=output_dirs)
+    #     features_models = {modname_best: modnames_models[modname_best]}
 
     # save_models(features_models, dir_output)
 
