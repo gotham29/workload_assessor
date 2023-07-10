@@ -197,7 +197,7 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
     plt.figure(figsize=(15, 3))
     max_ascoreaccum = 0
     for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
-        wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 3)
+        wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 4)
         plt.plot(ascoresaccum, label=f"{wllevel} (total={wllevel_ascores_total})", color=levels_colors[wllevel])
         max_ascoreaccum = max(max_ascoreaccum, max(ascoresaccum))
         # loc_x = len(ascoresaccum)
