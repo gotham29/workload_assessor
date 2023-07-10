@@ -1,7 +1,7 @@
-mode: post-hoc
+mode: real-time
 #post-hoc, real-time
-alg: PSD
-#HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
+alg: HTM
+#HTM, PSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 preprocess:
@@ -2609,30 +2609,77 @@ hzs:
 
 wllevels_filenames:
   training:
-    - run24_mfr.csv  #run1_ss.csv
-    - run30_mc.csv  #run3_mc.csv
+    - run1_ss.csv  #run24_mfr.csv
+    - run3_mc.csv  #run30_mc.csv
   baseline:  #delay=0
-    - run31_ap.csv  #run10_ap.csv
-    - run33_nc.csv  #run14_mfr.csv
-    - run34_ss.csv  #run20_nc.csv
+    - run10_ap.csv  #run31_ap.csv
+    - run14_mfr.csv  #run33_nc.csv
+    - run20_nc.csv  #run34_ss.csv
   delay=0.048:
-    - run22_mc.csv  #run2_ss.csv
-    - run29_ap.csv  #run6_mc.csv
-    - run32_mfr.csv  #run8_nc.csv
-    - run37_nc.csv  #run9_mfr.csv
-    - run39_ss.csv  #run16_ap.csv
+    - run2_ss.csv  #run22_mc.csv
+    - run6_mc.csv  #run29_ap.csv
+    - run8_nc.csv  #run32_mfr.csv
+    - run9_mfr.csv  #run37_nc.csv
+    - run16_ap.csv  #run39_ss.csv
   delay=0.096:
-    - run21_ss.csv  #run5_ap.csv
-    - run23_nc.csv  #run7_nc.csv
-    - run25_mfr.csv  #run11_mfr.csv
-    - run28_ap.csv  #run17_mc.csv
-    - run40_mc.csv  #run19_ss.csv
+    - run5_ap.csv  #run21_ss.csv
+    - run7_nc.csv  #run23_nc.csv
+    - run11_mfr.csv  #run25_mfr.csv
+    - run17_mc.csv  #run28_ap.csv
+    - run19_ss.csv  #run40_mc.csv
   delay=0.192:
-    - run26_mfr.csv  #run4_ss.csv
-    - run27_nc.csv  #run12_mc.csv
-    - run35_ap.csv  #run13_nc.csv
-    - run36_mc.csv  #run15_mfr.csv
-    - run38_ss.csv  #run18_ap.csv
+    - run4_ss.csv  #run26_mfr.csv
+    - run12_mc.csv  #run27_nc.csv
+    - run13_nc.csv  #run35_ap.csv
+    - run15_mfr.csv  #run36_mc.csv
+    - run18_ap.csv  #run38_ss.csv
+
+groups_filenames:
+  _ss:
+    - run1_ss.csv
+    - run34_ss.csv
+    - run2_ss.csv
+    - run39_ss.csv
+    - run19_ss.csv
+    - run21_ss.csv
+    - run4_ss.csv
+    - run38_ss.csv
+  _ap:
+    - run10_ap.csv
+    - run31_ap.csv
+    - run16_ap.csv
+    - run29_ap.csv
+    - run5_ap.csv
+    - run28_ap.csv
+    - run18_ap.csv
+    - run35_ap.csv
+  _nc:
+    - run20_nc.csv
+    - run33_nc.csv
+    - run8_nc.csv
+    - run37_nc.csv
+    - run7_nc.csv
+    - run23_nc.csv
+    - run13_nc.csv
+    - run27_nc.csv
+  _mc:
+    - run3_mc.csv
+    - run30_mc.csv
+    - run6_mc.csv
+    - run22_mc.csv
+    - run17_mc.csv
+    - run40_mc.csv
+    - run12_mc.csv
+    - run36_mc.csv
+  _mfr:
+    - run24_mfr.csv
+    - run14_mfr.csv
+    - run9_mfr.csv
+    - run32_mfr.csv
+    - run11_mfr.csv
+    - run25_mfr.csv
+    - run15_mfr.csv
+    - run26_mfr.csv
 
 modnames_grids:
   ARIMA:

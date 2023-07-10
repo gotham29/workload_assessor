@@ -115,6 +115,16 @@ print(f"\n\n{title}")
 run_stat_tests(algs_data)
 
 
+""" Check for performance variation across compensation algorithms """
+dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+algs_wl = [f for f in os.listdir(dir_results) if '.DS' not in f]
+
+df_dict = {'WL Alg': [], 'HZ': [], 'MC Scenario': [], 'Model': [], 'Sensitivity': [], '%Lowest': []}
+rows = []
+
+df = pd.DataFrame(rows)
+
+
 #
 # if __name__ == "__main__":
 #     main()

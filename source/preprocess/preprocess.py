@@ -17,8 +17,7 @@ from ts_source.utils.utils import add_timecol
 
 def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
     # Agg
-    filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
-                              hz_convertto=cfg['hzs']['convertto'])
+    filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
     # Clip both ends
     filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
     # Subtract median
@@ -131,6 +130,7 @@ def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_
     levels_order = [v for v in list(wllevels_filenames.keys()) if v != 'training']
     wllevels_totaldfs = {}
     print('  test data...')
+    print(f"    filenames = {filenames_data.keys()}")
     for wllevel, wllevel_filenames in wllevels_filenames.items():
         if wllevel == 'training':
             continue
@@ -138,7 +138,6 @@ def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_
         print(f"    wllevel = {wllevel}")
         for fn in wllevel_filenames:
             wllevel_datas.append(filenames_data[fn])
-            print(f"      {fn}")
         wllevel_data = pd.concat(wllevel_datas, axis=0)[columns_model]
         wllevels_totaldfs[wllevel] = wllevel_data
         # save data
