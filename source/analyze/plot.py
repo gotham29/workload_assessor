@@ -133,18 +133,18 @@ def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, 
 #             plt.close()
 
 
-def plot_training(df_train: pd.DataFrame,
-                  columns_model: list,
+def plot_write_data(df: pd.DataFrame,
                   out_dir_plots: str,
-                  out_dir_files: str):
-    df_train.to_csv( os.path.join(out_dir_files, 'training.csv') )
-    for feat in columns_model:
+                  out_dir_files: str,
+                  out_name: str):
+    df.to_csv( os.path.join(out_dir_files, f"{out_name}.csv") )  #'training.csv'
+    for feat in df:
         plt.figure(figsize=(15, 3))
-        plt.plot(df_train[feat].values)
-        plt.title(f'Behavior - Training')
+        plt.plot(df[feat].values)
+        plt.title(f"Behavior - {out_name}")
         plt.xlabel('time')
         plt.ylabel(feat)
-        out_path = os.path.join(out_dir_plots, f'training--all--{feat}.png')
+        out_path = os.path.join(out_dir_plots, f'{out_name}--all--{feat}.png')
         plt.savefig(out_path)
         plt.close()
 
@@ -186,7 +186,7 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
         fdata_level = wllevels_anomscores[wllevel]
         loc_x = np.percentile([ind, prev_ind], 25)
         loc_y = np.percentile(fdata_level, 25)
-        fdata_total = round(np.sum(fdata_level), 2)
+        fdata_total = round(np.sum(fdata_level), 3)
         plt.text(loc_x, loc_y, f"total={fdata_total}")
         prev_ind = ind
     out_path = os.path.join(out_dir, f'time--validation--aScores.png')
@@ -197,7 +197,7 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
     plt.figure(figsize=(15, 3))
     max_ascoreaccum = 0
     for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
-        wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 2)
+        wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 3)
         plt.plot(ascoresaccum, label=f"{wllevel} (total={wllevel_ascores_total})", color=levels_colors[wllevel])
         max_ascoreaccum = max(max_ascoreaccum, max(ascoresaccum))
         # loc_x = len(ascoresaccum)
@@ -224,7 +224,7 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
             fdata_level = wllevels_predcounts[wllevel]
             loc_x = np.percentile([ind, prev_ind], 25)
             loc_y = np.percentile(fdata_level, 25)
-            fdata_total = round(np.sum(fdata_level), 2)
+            fdata_total = round(np.sum(fdata_level), 3)
             plt.text(loc_x, loc_y, f"total={fdata_total}")
             prev_ind = ind
         out_path = os.path.join(out_dir, f'time--validation--pCounts.png')
@@ -246,7 +246,7 @@ def plot_hists(algs_data, dir_out, title, density=False):
 
 def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
     colors = list(levels_colors.values()) if levels_colors else None
-    mydict = {k:round(v,2) for k,v in mydict.items()}
+    mydict = {k:round(v,3) for k,v in mydict.items()}
     plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)

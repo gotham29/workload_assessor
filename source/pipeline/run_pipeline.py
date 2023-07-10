@@ -22,7 +22,7 @@ from source.preprocess.preprocess import update_colnames, preprocess_data, get_w
     get_wllevels_indsend
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import make_data_plots, plot_outputs_boxes, plot_outputs_lines, plot_outputs_bars, get_accum, \
-    plot_training
+    plot_write_data
 from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
     get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_f1score, get_ascore_entropy, get_entropy_ts
 from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
@@ -52,7 +52,7 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, filenames_wllevel
 
     # get total WL - levels
     wllevels_coeffs = {wllevel: len(wllevels_filenames['baseline'])/len(fileslist) for wllevel,fileslist in wllevels_filenames.items()}
-    print(f"\n  ** wllevels_coeffs = {wllevels_coeffs}\n")
+    print(f"  ** wllevels_coeffs = {wllevels_coeffs}\n")
     wllevels_totalascores = {wllevel: np.sum(ascores)*wllevels_coeffs[wllevel] for wllevel, ascores in wllevels_ascores.items()}
 
     # sort - levels
@@ -128,8 +128,6 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
     outnames_dirs = make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models'])
     # save models
     save_models(modname_model, outnames_dirs['models'])
-    # plot training data
-    plot_training(df_train, columns_model=cfg['columns_model'], out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
     # plot filenames_data
     make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=cfg['columns_model'], file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
     # remove training data from filenames_data
@@ -139,6 +137,11 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
                                               filenames_data=filenames_data,
                                               columns_model=cfg['columns_model'],
                                               out_dir_files=outnames_dirs['data_files'])
+    # plot levels data
+    plot_write_data(df_train, out_name='training', out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
+    for wllevel, df in wllevels_totaldfs.items():
+        plot_write_data(df, out_name=wllevel, out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
+
     # get indicies dividing the wllevels
     wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
 
@@ -150,7 +153,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
         levels_colors[wllevel] = colors[_]
 
     # get model outputs for each 'static' file
-    filenames_ascores, filenames_pcounts = get_filenames_outputs(cfg=config,
+    filenames_ascores, filenames_pcounts = get_filenames_outputs(cfg=cfg,
                                                                  modname=modname,
                                                                  filenames_data=filenames_data,
                                                                  modname_model=modname_model)
@@ -158,7 +161,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
     wllevels_ascores, wllevels_pcounts, wllevels_totalascores = get_wllevels_outputs(filenames_ascores=filenames_ascores,
                                                                                      filenames_pcounts=filenames_pcounts,
                                                                                      filenames_wllevels=filenames_wllevels,
-                                                                                     wllevels_filenames=config['wllevels_filenames'],
+                                                                                     wllevels_filenames=cfg['wllevels_filenames'],
                                                                                      levels_order=levels_order)
     # write outputs
     print(f"  Writing outputs to --> {outnames_dirs['anomaly']}")
@@ -208,7 +211,7 @@ def get_scores(subjects_wldiffs, subjects_wllevels_totalascores):
         ascorestotal_baseline = wllevels_totalascores.pop('baseline')
         baseline_lowest = True
         for wllevel, totalascore in wllevels_totalascores.items():
-            if totalascore < ascorestotal_baseline:
+            if totalascore <= ascorestotal_baseline:
                 baseline_lowest = False
         if baseline_lowest:
             subjs_baseline_lowest.append(subj)
@@ -371,7 +374,7 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     # get scores
     percent_change_from_baseline, subjects_increased_from_baseline, subjects_baseline_lowest = get_scores(
         subjects_wldiffs, subjects_wllevels_totalascores)
-    percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevels_ascores))
+    percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevels_ascores), 2)
 
     # get overlap w/TLX
     path_tlx = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
@@ -761,13 +764,13 @@ def filter_config_group(group, config):
 def main(config):
 
     # Set output dir
-    hzs = '-'.join([f"{k}={v}" for k, v in config['hzs'].items()])
-    preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
-    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'], f"prep--{preproc}; hz--{hzs}")
+    # hzs = '-'.join([f"{k}={v}" for k, v in config['hzs'].items()])
+    # preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
+    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'], f"hz={config['hzs']['convertto']}")  #prep--{preproc};
     os.makedirs(dir_out, exist_ok=True)
 
     # get subjects
-    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=2)
+    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
 
     # run wl - total data
     ## make dir

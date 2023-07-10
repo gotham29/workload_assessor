@@ -178,14 +178,10 @@ def main():
     # save scores sums
     percent_baselinelower = np.sum(df_sum['baseline_lower']) / len(df_sum)
     percent_baselinelowest = np.sum(df_sum['baseline_lowest']) / len(df_sum)
-    normalized_diff = np.sum(df_sum['Difference from Baseline'])  # / len(df_sum)
-    # percent_change = np.sum(df_sum['%Change from Baseline']) / len(df_sum)
-
-    scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 2),
-              'percent_baselinelowest': 100 * round(percent_baselinelowest, 2),
-              'Total sensitivity to increased task demand': normalized_diff
-              # 'percent_change': 100 * round(percent_change, 2)
-              }
+    normalized_diff = np.sum(df_sum['Difference from Baseline'])
+    scores = {'percent_baselinelower': 100 * round(percent_baselinelower, 3),
+              'percent_baselinelowest': 100 * round(percent_baselinelowest, 3),
+              'Total sensitivity to increased task demand': normalized_diff}
     path_out = os.path.join(DIR_OUT, 'scores_sum.csv')
     pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
     # save subjects_wllevelsascores

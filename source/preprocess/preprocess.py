@@ -75,9 +75,6 @@ def select_by_autocorr(data, diff_pcts, diff_thresh):
 def update_colnames(filenames_data:dict, colnames:list):
     for fname, data in filenames_data.items():
         data.columns = colnames
-        # HACK - ADD COLUMN
-        # data.columns = [c for c in colnames if c != 'steering angle 2']
-        # data.insert(loc=2, column='steering angle 2', value=data['steering angle'].values)
     return filenames_data
 
 
@@ -129,13 +126,10 @@ def clip_start(filenames_data, cfg):
 def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_model:list, out_dir_files:str):
     levels_order = [v for v in list(wllevels_filenames.keys()) if v != 'training']
     wllevels_totaldfs = {}
-    print('  test data...')
-    print(f"    filenames = {filenames_data.keys()}")
     for wllevel, wllevel_filenames in wllevels_filenames.items():
         if wllevel == 'training':
             continue
         wllevel_datas = []
-        print(f"    wllevel = {wllevel}")
         for fn in wllevel_filenames:
             wllevel_datas.append(filenames_data[fn])
         wllevel_data = pd.concat(wllevel_datas, axis=0)[columns_model]
@@ -144,11 +138,9 @@ def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_
         path_out = os.path.join(out_dir_files, f"{wllevel}.csv")
         wllevel_data.to_csv(path_out)
     # reorder wllevels
-    wllevels_totaldfs_ = {}
-    for k in levels_order:
-        wllevels_totaldfs_[k] = wllevels_totaldfs[k]
-
-    return wllevels_totaldfs_
+    index_map = {v: i for i, v in enumerate(levels_order)}
+    wllevels_totaldfs = dict(sorted(wllevels_totaldfs.items(), key=lambda pair: index_map[pair[0]]))
+    return wllevels_totaldfs
 
 
 def get_wllevels_indsend(wllevels_totaldfs_):

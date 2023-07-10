@@ -134,8 +134,8 @@ def get_subjects_wldiffs(subjects_wllevels_totalascores):
                 continue
             normalized_diff = get_normdiff(wl_t0, totalascore)
             print(f"      wllevel = {wllevel}; diff = {normalized_diff}")
-            wl_t1t0_diffs[wllevel] = round(normalized_diff, 2)
+            wl_t1t0_diffs[wllevel] = round(normalized_diff, 3)
         subjects_levels_wldiffs[subj] = wl_t1t0_diffs
-        subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 2)
+        subjects_wldiffs[subj] = round(sum(list(wl_t1t0_diffs.values())), 3)
     return subjects_wldiffs, subjects_levels_wldiffs
 
