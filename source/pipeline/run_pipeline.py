@@ -208,9 +208,11 @@ def get_scores(subjects_wldiffs, subjects_wllevels_totalascores):
     # subjs_baseline_lowest
     subjs_baseline_lowest = []
     for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
-        ascorestotal_baseline = wllevels_totalascores.pop('baseline')
+        ascorestotal_baseline = wllevels_totalascores['baseline']
         baseline_lowest = True
         for wllevel, totalascore in wllevels_totalascores.items():
+            if wllevel == 'baseline':
+                continue
             if totalascore <= ascorestotal_baseline:
                 baseline_lowest = False
         if baseline_lowest:
@@ -387,9 +389,10 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
 
     # save results
     path_out_scores = os.path.join(dir_out, 'scores.csv')
-    path_out_subjects_totalascores = os.path.join(dir_out, 'subjects_filenames_totalascores.csv')
+    path_out_subjects_filenames_totalascores = os.path.join(dir_out, 'subjects_filenames_totalascores.csv')
+    path_out_subjects_wllevels_totalascores = os.path.join(dir_out, 'subjects_wllevels_totalascores.csv')
     path_out_subjects_wldiffs = os.path.join(dir_out, 'subjects_wldiffs.csv')
-    path_out_subjects_levels_wldiffs = os.path.join(dir_out, 'subjects_levels_wldiffs.csv')
+    path_out_subjects_levels_wldiffs = os.path.join(dir_out, 'subjects_wllevels_wldiffs.csv')
     path_out_subjects_overlaps = os.path.join(dir_out, 'subjects_tlxoverlaps.csv')
     scores = {'Total sensitivity to increased task demands': percent_change_from_baseline,
               'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest}
@@ -398,13 +401,15 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     scores = pd.DataFrame(scores, index=[0])
     df_subjects_levels_wldiffs = pd.DataFrame(subjects_levels_wldiffs).T
     df_subjects_filenames_totalascores = pd.DataFrame(subjects_filenames_totalascores).round(3)
+    df_subjects_wllevels_totalascores = pd.DataFrame(subjects_wllevels_totalascores).round(3)
     df_subjects_wldiffs = pd.DataFrame(subjects_wldiffs, index=[0]).T
     df_subjects_wldiffs.columns = ['Difference from Baseline']
     scores.to_csv(path_out_scores)
     df_overlaps.to_csv(path_out_subjects_overlaps, index=True)
     df_subjects_wldiffs.to_csv(path_out_subjects_wldiffs, index=True)
     df_subjects_levels_wldiffs.to_csv(path_out_subjects_levels_wldiffs, index=True)
-    df_subjects_filenames_totalascores.to_csv(path_out_subjects_totalascores, index=True)
+    df_subjects_filenames_totalascores.to_csv(path_out_subjects_filenames_totalascores, index=True)
+    df_subjects_wllevels_totalascores.to_csv(path_out_subjects_wllevels_totalascores, index=True)
     make_save_plots(dir_out=dir_out,
                     levels_colors=levels_colors,
                     subjects_wldiffs=subjects_wldiffs,
@@ -764,8 +769,6 @@ def filter_config_group(group, config):
 def main(config):
 
     # Set output dir
-    # hzs = '-'.join([f"{k}={v}" for k, v in config['hzs'].items()])
-    # preproc = '-'.join([f"{k}={v}" for k, v in config['preprocess'].items() if v])
     dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'], f"hz={config['hzs']['convertto']}")  #prep--{preproc};
     os.makedirs(dir_out, exist_ok=True)
 
@@ -801,10 +804,10 @@ def main(config):
         # get inputs - group
         subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group, subjects, subjects_spacesadd)
 
-        # train models
+        # train models - group
         config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group, subjects_dfs_train_group)
 
-        # run
+        # run - group
         run_wl(config=config_group,
                subjects_filenames_data=subjects_filenames_data_group,
                subjects_dfs_train=subjects_dfs_train_group,

@@ -2,22 +2,27 @@ import copy
 import os
 import sys
 
+import matplotlib
+matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.patches import Patch
 from scipy.stats import ttest_ind, kstest, mannwhitneyu
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 DIR_OUT = os.path.join(_SOURCE_DIR, 'results')
 
 sys.path.append(_SOURCE_DIR)
-from source.analyze.plot import plot_hists
 
-ALGS_DIRS_IN = {
-    'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
-    'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
-    'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
-}
+
+# ALGS_DIRS_IN = {
+#     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
+#     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
+#     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
+# }
 
 
 def run_stat_tests(algs_data):
@@ -118,9 +123,7 @@ Test for statistically significant performance differences between Algs
 # run_stat_tests(algs_data)
 
 
-""" Check for performance variation across compensation algorithms """
-dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
-
+""" Violinplots - check performance variation """
 def plot_violin(df_, xlabel, ylabel, title, feats_colors, path_out, y_lim=None):
     vplot_anom = sns.violinplot(data=df_,
                                 x=xlabel,
@@ -148,7 +151,6 @@ def filter_df(df, filter_dict):
         df_ = df_[df_[feat].isin(vals)]
     return df_
 
-# Gather scores from all runs
 def get_df_summary(dir_results):
     rows = []
     algs_wl = [f for f in os.listdir(dir_results) if '.DS' not in f and '.png' not in f and 'Score' not in f]
@@ -175,120 +177,223 @@ def get_df_summary(dir_results):
     df_summary = pd.DataFrame(rows)
     return df_summary
 
+def get_df_wllevels_totalascores(dir_results):
+    comp_algs = [f for f in os.listdir(dir_results) if '.DS' not in f and f!='total']
+    rows = []
+    for comp_alg in comp_algs:
+        dir_comp = os.path.join(dir_results, comp_alg)
+        model_names = [f for f in os.listdir(dir_comp) if 'modname=' in f]
+        for model_name in model_names:
+            dir_mod = os.path.join(dir_comp, model_name)
+            subjs_wllevels_totalascores = pd.read_csv( os.path.join(dir_mod, 'subjects_wllevels_totalascores.csv') )
+            for _, row_ in subjs_wllevels_totalascores.iterrows():
+                wllevel = row_['Unnamed: 0']
+                total_ascores = [v for v in row_.values if isinstance(v,float)]
+                row = {'comp-alg':comp_alg, 'model-name':model_name, 'wl-level':wllevel, 'total-ascores':total_ascores}
+                rows.append(row)
+    df_wllevels_totalascores = pd.DataFrame(rows)
+    return df_wllevels_totalascores
+
+def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
+    df_filter = filter_df(df_wllevels_totalascores,filter_)
+    gpby = df_filter.groupby(feat_groupby)
+    groutps_datasets = {}
+    for gr, df_gr in gpby:
+        wllevels_totalascores = {wl:[] for wl in df_gr['wl-level'].unique()}
+        gpby_ = df_gr.groupby('wl-level')
+        for wllevel, df_wllevel in gpby_:
+            wllevels_totalascores[wllevel] +=  df_wllevel['total-ascores'].values[0]
+        dataset = pd.DataFrame(wllevels_totalascores)
+        groutps_datasets[gr] = dataset
+    return groutps_datasets
+
+def make_boxplot_groups(datasets, colours, groups, ylabel, title, whis, path_out):
+
+    # Set figsize
+    plt.rc('figure', figsize=[15,5])
+    # Set x-positions for boxes
+    x_pos_range = np.arange(len(datasets)) / (len(datasets) - 1)
+    x_pos = (x_pos_range * 0.5) + 0.75
+    # Plot
+    for i, data in enumerate(datasets):
+        bp = plt.boxplot(
+            np.array(data), sym='', whis=whis, widths=0.6 / len(datasets),
+            labels=list(datasets[0]), patch_artist=True,
+            positions=[x_pos[i] + j * 1 for j in range(len(data.T))]
+        )
+        # Fill the boxes with colours (requires patch_artist=True)
+        k = i % len(colours)
+        edge_color = 'black'
+        fill_color = colours[k]
+        for element in ['boxes', 'whiskers', 'fliers', 'means', 'medians', 'caps']:
+            plt.setp(bp[element], color=edge_color)
+        for patch in bp['boxes']:
+            patch.set(facecolor=fill_color)
+
+    # Titles
+    plt.title(title)
+    plt.ylabel(ylabel)
+    # Axis ticks and labels
+    plt.xticks(np.arange(len(list(datasets[0]))) + 1)
+    plt.gca().xaxis.set_minor_locator(ticker.FixedLocator(
+        np.array(range(len(list(datasets[0])) + 1)) + 0.5)
+    )
+    plt.gca().tick_params(axis='x', which='minor', length=4)
+    plt.gca().tick_params(axis='x', which='major', length=0)
+    # Change the limits of the x-axis
+    plt.xlim([0.5, len(list(datasets[0])) + 0.5])
+
+    # Legend
+    legend_elements = []
+    for i in range(len(datasets)):
+        j = i % len(groups)
+        k = i % len(colours)
+        legend_elements.append(Patch(facecolor=colours[k], edgecolor=edge_color, label=groups[j]))
+    plt.legend(handles=legend_elements, fontsize=8)
+
+    plt.savefig(path_out)
+    plt.close()
+
 
 # MAKE PLOTS
-df_summary = get_df_summary(dir_results)
-algs_colors = {'HTM': 'blue', 'PSD': 'green', 'SteeringEntropy': 'red', 'Naive': 'grwy'}
+make_plots_violin = False
+make_boxplots_groups = True
 
-pltdatas = [
-## 1) by wl-algs
-    {'filter':None,
-     'y_lim': [0,100],
-     'dir_out':'Score-Sensitivity',
-     'feat_gpby':'WL-Alg',
-     'feat_score':'Score-Sensitivity'},
-    {'filter':None,
-     'y_lim': [0, 100],
-     'dir_out':'Score-%BaselineLowest',
-     'feat_gpby':'WL-Alg',
-     'feat_score':'Score-%BaselineLowest'},
+if make_plots_violin:
+    dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    algs_colors = {'HTM': 'blue', 'PSD': 'green', 'SteeringEntropy': 'red', 'Naive': 'grwy'}
+    df_summary = get_df_summary(dir_results)
+    pltdatas = [
+    ## 1) by wl-algs
+        {'filter':None,
+         'y_lim': [0,100],
+         'dir_out':'Score-Sensitivity',
+         'feat_gpby':'WL-Alg',
+         'feat_score':'Score-Sensitivity'},
+        {'filter':None,
+         'y_lim': [0, 100],
+         'dir_out':'Score-%BaselineLowest',
+         'feat_gpby':'WL-Alg',
+         'feat_score':'Score-%BaselineLowest'},
 
-## 2) by modnames
-    {'filter':None,
-     'y_lim': None,
-     'dir_out': 'Score-Sensitivity',
-     'feat_gpby': 'Model-Name',
-     'feat_score': 'Score-Sensitivity'},
-    {'filter':None,
-     'y_lim': [0, 100],
-     'dir_out': 'Score-%BaselineLowest',
-     'feat_gpby': 'Model-Name',
-     'feat_score': 'Score-%BaselineLowest'},
+    ## 2) by modnames
+        {'filter':None,
+         'y_lim': None,
+         'dir_out': 'Score-Sensitivity',
+         'feat_gpby': 'Model-Name',
+         'feat_score': 'Score-Sensitivity'},
+        {'filter':None,
+         'y_lim': [0, 100],
+         'dir_out': 'Score-%BaselineLowest',
+         'feat_gpby': 'Model-Name',
+         'feat_score': 'Score-%BaselineLowest'},
 
-## 3) by scenarios
-    {'filter':None,
-     'y_lim': None,
-     'dir_out': 'Score-Sensitivity',
-     'feat_gpby': 'MC-Scenario',
-     'feat_score': 'Score-Sensitivity'},
-    {'filter':None,
-     'y_lim': [0, 100],
-     'dir_out': 'Score-%BaselineLowest',
-     'feat_gpby': 'MC-Scenario',
-     'feat_score': 'Score-%BaselineLowest'},
+    ## 3) by scenarios
+        {'filter':None,
+         'y_lim': None,
+         'dir_out': 'Score-Sensitivity',
+         'feat_gpby': 'MC-Scenario',
+         'feat_score': 'Score-Sensitivity'},
+        {'filter':None,
+         'y_lim': [0, 100],
+         'dir_out': 'Score-%BaselineLowest',
+         'feat_gpby': 'MC-Scenario',
+         'feat_score': 'Score-%BaselineLowest'},
 
-## 4) by comp-algs
-    {'filter': {
-        'MC-Scenario': ['offset'],
-        'Model-Name': ['roll_stick']
-    },
-     'y_lim': None,
-     'dir_out': 'Score-Sensitivity',
-     'feat_gpby': 'Comp-Alg',
-     'feat_score': 'Score-Sensitivity'},
-    {'filter': {
-        'MC-Scenario': ['offset'],
-        'Model-Name': ['roll_stick']
-    },
-     'y_lim': [0, 100],
-     'dir_out': 'Score-%BaselineLowest',
-     'feat_gpby': 'Comp-Alg',
-     'feat_score': 'Score-%BaselineLowest'},
-
-    {'filter': None,
-     'y_lim': None,
-     'dir_out': 'Score-Sensitivity',
-     'feat_gpby': 'Comp-Alg',
-     'feat_score': 'Score-Sensitivity'},
-    {'filter': None,
-     'y_lim': [0, 100],
-     'dir_out': 'Score-%BaselineLowest',
-     'feat_gpby': 'Comp-Alg',
-     'feat_score': 'Score-%BaselineLowest'},
-
-## 5) by wl-alg (offset)
-    {'filter': {
-        'MC-Scenario': ['offset'],
+    ## 4) by comp-algs
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            'Model-Name': ['roll_stick']
+            },
+         'y_lim': None,
+         'dir_out': 'Score-Sensitivity',
+         'feat_gpby': 'Comp-Alg',
+         'feat_score': 'Score-Sensitivity'},
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            'Model-Name': ['roll_stick']
         },
-    'y_lim': None,
-    'dir_out': 'Score-Sensitivity',
-    'feat_gpby': 'WL-Alg',
-    'feat_score': 'Score-Sensitivity'},
+         'y_lim': [0, 100],
+         'dir_out': 'Score-%BaselineLowest',
+         'feat_gpby': 'Comp-Alg',
+         'feat_score': 'Score-%BaselineLowest'},
 
-    {'filter': {
-        'MC-Scenario': ['offset'],
+        {'filter': None,
+         'y_lim': None,
+         'dir_out': 'Score-Sensitivity',
+         'feat_gpby': 'Comp-Alg',
+         'feat_score': 'Score-Sensitivity'},
+        {'filter': None,
+         'y_lim': [0, 100],
+         'dir_out': 'Score-%BaselineLowest',
+         'feat_gpby': 'Comp-Alg',
+         'feat_score': 'Score-%BaselineLowest'},
+
+    ## 5) by wl-alg (offset)
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            },
+        'y_lim': None,
+        'dir_out': 'Score-Sensitivity',
+        'feat_gpby': 'WL-Alg',
+        'feat_score': 'Score-Sensitivity'},
+
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            },
+        'y_lim': [0, 100],
+        'dir_out': 'Score-%BaselineLowest',
+        'feat_gpby': 'WL-Alg',
+        'feat_score': 'Score-%BaselineLowest'},
+
+    ## 6) by wl-alg (offset, roll)
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            'Model-Name': ['roll_stick']
         },
-    'y_lim': [0, 100],
-    'dir_out': 'Score-%BaselineLowest',
-    'feat_gpby': 'WL-Alg',
-    'feat_score': 'Score-%BaselineLowest'},
+        'y_lim': None,
+        'dir_out': 'Score-Sensitivity',
+        'feat_gpby': 'WL-Alg',
+        'feat_score': 'Score-Sensitivity'},
 
-## 6) by wl-alg (offset, roll)
-    {'filter': {
-        'MC-Scenario': ['offset'],
-        'Model-Name': ['roll_stick']
-    },
-    'y_lim': None,
-    'dir_out': 'Score-Sensitivity',
-    'feat_gpby': 'WL-Alg',
-    'feat_score': 'Score-Sensitivity'},
+        {'filter': {
+            'MC-Scenario': ['offset'],
+            'Model-Name': ['roll_stick']
+            },
+        'y_lim': [0, 100],
+        'dir_out': 'Score-%BaselineLowest',
+        'feat_gpby': 'WL-Alg',
+        'feat_score': 'Score-%BaselineLowest'},
+    ]
+    for pltdata in pltdatas:
+        df_ = filter_df(df_summary, pltdata['filter'])
+        dir_out = os.path.join(dir_results, pltdata['dir_out'])
+        os.makedirs(dir_out, exist_ok=True)
+        plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out)
 
-    {'filter': {
-        'MC-Scenario': ['offset'],
-        'Model-Name': ['roll_stick']
-        },
-    'y_lim': [0, 100],
-    'dir_out': 'Score-%BaselineLowest',
-    'feat_gpby': 'WL-Alg',
-    'feat_score': 'Score-%BaselineLowest'},
-]
+if make_boxplots_groups:
+    wl_alg = 'HTM'
+    mc_scenario = 'straight-in'  #'offset'
+    hz = '16.67'
+    feat_groupby = 'comp-alg'
+    whis = [0,100]  #None
 
-for pltdata in pltdatas:
-    df_ = filter_df(df_summary, pltdata['filter'])
-    dir_out = os.path.join(dir_results, pltdata['dir_out'])
-    os.makedirs(dir_out, exist_ok=True)
-    plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out)
+    # colours = ['blue', 'red', 'yellow', 'grey', 'orange']
+    colours = ['purple', 'yellow', 'blue', 'white', 'pink']
 
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}/hz={hz}/{mc_scenario}"
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    ylabel = "Perceived WL"
+    title = f"{ylabel} by delay & {feat_groupby} ({mc_scenario})"
+    filter_ = {
+        'model-name':['modname=roll_stick', 'modname=pitch_stick']
+        }
+    df_wllevels_totalascores = get_df_wllevels_totalascores(dir_results)
+    groups_datasets = get_datasets(df_wllevels_totalascores, filter_, feat_groupby)
+    groups_datasets = {k.replace('_',''):v for k,v in groups_datasets.items()}
+    groups = list(groups_datasets.keys())
+    path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
+    make_boxplot_groups(list( groups_datasets.values()), colours, groups, ylabel, title, whis, path_out)
 
 
 #
