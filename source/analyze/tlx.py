@@ -54,7 +54,7 @@ def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_alrea
         for subj, wllevels_ascores in subjects_tlxorders.items():
             wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
             wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
-            subjects_orders_2[subj.lower().strip()] = list(wllevels_ascoresums.keys())
+            subjects_orders_2[subj] = list(wllevels_ascoresums.keys())
     # get overlaps
     subjects_overlaps = {}
     for subj, order_1 in subjects_orders_1.items():

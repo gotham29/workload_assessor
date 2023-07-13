@@ -210,7 +210,7 @@ def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
         groutps_datasets[gr] = dataset
     return groutps_datasets
 
-def make_boxplot_groups(datasets, colours, groups, groups_legendnames, ylabel, title, whis, path_out):
+def make_boxplot_groups(datasets, colours, groups, groups_legendnames, ylabel, title, path_out):
 
     # Set figsize
     plt.rc('figure', figsize=[10, 3])
@@ -278,13 +278,13 @@ def convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes):
 
         # loop over dfs and populate df_out
         for _, row_ in df_offset.iterrows():
-            row = {'Subject': subj, 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+            row = {'Subject': f"subj{subj}", 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
                    'Mental Demand': row_['MENTAL'], 'Physical Demand': row_['PHYSICAL'], 'Temporal Demand': row_['TEMPORAL'],
                    'Performance': row_['PERF'], 'Effort': row_['EFFORT'], 'Frustration': row_['FRUST'], 'Raw TLX': row_['TLX']}
             rows_offset.append(row)
 
         for _, row_ in df_straightin.iterrows():
-            row = {'Subject': subj, 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+            row = {'Subject': f"subj{subj}", 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
                    'Mental Demand': row_['MENTAL'], 'Physical Demand': row_['PHYSICAL'], 'Temporal Demand': row_['TEMPORAL'],
                    'Performance': row_['PERF'], 'Effort': row_['EFFORT'], 'Frustration': row_['FRUST'], 'Raw TLX': row_['TLX']}
             rows_straightin.append(row)
@@ -440,7 +440,7 @@ if make_boxplots_groups:
     groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
     groups = list(groups_datasets.keys())
     path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
-    make_boxplot_groups(list( groups_datasets.values()), colours, groups, groups_legendnames, ylabel, title, whis, path_out)
+    make_boxplot_groups(list( groups_datasets.values()), colours, groups, groups_legendnames, ylabel, title, path_out)
 
 if convert_tlxs:
     runs_modes = {
