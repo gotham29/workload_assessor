@@ -16,12 +16,12 @@ sys.path.append(_SOURCE_DIR)
 from source.analyze.plot import plot_outputs_bars
 from source.analyze.anomaly import get_subjects_wldiffs
 
-MODES_CONVERT = {
-    'B': 'baseline',
-    'D': 'distraction',
-    'D.C.': 'rain',
-    'O.P.': 'fog',
-}
+# MODES_CONVERT = {
+#     'B': 'baseline',
+#     'D': 'distraction',
+#     'D.C.': 'rain',
+#     'O.P.': 'fog',
+# }
 
 
 def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=None, ylim=None):
@@ -29,7 +29,7 @@ def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=No
     fig, ax = plt.subplots()
     bplot = ax.boxplot(data_dict.values(), patch_artist=True)
     ax.set_xticklabels(data_dict.keys())
-    colors = list(levels_colors.values())  #['grey', 'orange', 'blue', 'green']
+    colors = list(levels_colors.values())
     for patch, color in zip(bplot['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.5)
@@ -70,11 +70,11 @@ def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_alrea
     return df_overlaps
 
 
-def get_tlx_overlaps(subjects_wllevels_totalascores, path_tlx):
+def get_tlx_overlaps(subjects_wllevels_totalascores, modes_convert, path_tlx):
     df_tlx = pd.read_csv(path_tlx)
     ## get tlx orders
-    subscales = ['Mental Demand', 'Physical Demand', 'Temporal Demand', 'Performance', 'Effort', 'Frustration',
-                 'Raw TLX']
+    subscales = ['Mental Demand', 'Physical Demand', 'Temporal Demand',
+                 'Performance', 'Effort', 'Frustration', 'Raw TLX']
     subscales_meanoverlaps = {}
     subscales_dfsoverlaps = {}
     gpby_subj = df_tlx.groupby('Subject')
@@ -82,10 +82,9 @@ def get_tlx_overlaps(subjects_wllevels_totalascores, path_tlx):
         subjects_tlxorders = {}
         for subj, df_subj in gpby_subj:
             modes_scores = {}
-            subj = subj.lower().strip()
             gpby_mode = df_subj.groupby('Run Mode')
             for mode, df_mode in gpby_mode:
-                modes_scores[MODES_CONVERT[mode]] = np.sum(df_mode[subscale].values)
+                modes_scores[modes_convert[mode]] = np.sum(df_mode[subscale].values)  #MODES_CONVERT
             modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
             subjects_tlxorders[subj] = list(modes_scores.keys())
         ## get df_overlaps

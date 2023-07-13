@@ -379,10 +379,10 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevels_ascores), 2)
 
     # get overlap w/TLX
-    path_tlx = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
+    # path_tlx = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
     subscales_meanoverlaps, df_overlaps = {}, pd.DataFrame()
-    if os.path.exists(path_tlx):
-        subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, path_tlx)
+    if os.path.exists(cfg['tlx']['path']):
+        subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, cfg['tlx']['modes_convert'], cfg['tlx']['path'])
 
     # rename dirs based on scores
     rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out)

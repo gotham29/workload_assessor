@@ -17,13 +17,16 @@ DIR_OUT = os.path.join(_SOURCE_DIR, 'results')
 
 sys.path.append(_SOURCE_DIR)
 
+# MAKE PLOTS
+make_plots_violin = False
+make_boxplots_groups = False
+convert_tlxs = True
 
 # ALGS_DIRS_IN = {
 #     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
 #     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
 #     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
 # }
-
 
 def run_stat_tests(algs_data):
     # T-Test
@@ -252,10 +255,50 @@ def make_boxplot_groups(datasets, colours, groups, groups_legendnames, ylabel, t
     plt.savefig(path_out)
     plt.close()
 
+def convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes):
 
-# MAKE PLOTS
-make_plots_violin = False
-make_boxplots_groups = True
+    paths_tlx = [os.path.join(dir_tlxs,f) for f in os.listdir(dir_tlxs) if 'TLX' in f]
+    rows_offset = []
+    rows_straightin = []
+
+    for path in paths_tlx:
+        # get subj & load df
+        subj = path.split('TLX TS')[-1].replace('.xls', '')
+        df = pd.read_excel(path).dropna(how='all', axis=0)
+
+        # split df by mc-scenario
+        cols = list(df.iloc[0].values)
+        df.columns = cols
+        df = df.drop([2], axis=0)
+        rownumber_offset = list(df[cols[0]].values).index('OFFSET')
+        df_offset = df[rownumber_offset:]
+        df_offset = df_offset.dropna(how='any', axis=0)
+        df_straightin = df[:rownumber_offset]
+        df_straightin = df_straightin.dropna(how='any', axis=0)
+
+        # loop over dfs and populate df_out
+        for _, row_ in df_offset.iterrows():
+            row = {'Subject': subj, 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+                   'Mental Demand': row_['MENTAL'], 'Physical Demand': row_['PHYSICAL'], 'Temporal Demand': row_['TEMPORAL'],
+                   'Performance': row_['PERF'], 'Effort': row_['EFFORT'], 'Frustration': row_['FRUST'], 'Raw TLX': row_['TLX']}
+            rows_offset.append(row)
+
+        for _, row_ in df_straightin.iterrows():
+            row = {'Subject': subj, 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+                   'Mental Demand': row_['MENTAL'], 'Physical Demand': row_['PHYSICAL'], 'Temporal Demand': row_['TEMPORAL'],
+                   'Performance': row_['PERF'], 'Effort': row_['EFFORT'], 'Frustration': row_['FRUST'], 'Raw TLX': row_['TLX']}
+            rows_straightin.append(row)
+
+    df_offset = pd.DataFrame(rows_offset)
+    df_straight = pd.DataFrame(rows_straightin)
+
+    path_out_offset = os.path.join(dir_out, 'tlx--offset.csv')
+    path_out_straight = os.path.join(dir_out, 'tlx--straightin.csv')
+
+    df_offset.to_csv(path_out_offset, index=False)
+    df_straight.to_csv(path_out_straight, index=False)
+
+
 
 if make_plots_violin:
     dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
@@ -399,7 +442,55 @@ if make_boxplots_groups:
     path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
     make_boxplot_groups(list( groups_datasets.values()), colours, groups, groups_legendnames, ylabel, title, whis, path_out)
 
+if convert_tlxs:
+    runs_modes = {
+        '1':'baseline',
+        '2':'delay=0.048',
+        '3':'baseline',
+        '4':'delay=0.192',
+        '5':'delay=0.096',
+        '6':'delay=0.048',
+        '7':'delay=0.096',
+        '8':'delay=0.048',
+        '9':'delay=0.048',
+        '10':'baseline',
+        '11':'delay=0.096',
+        '12':'delay=0.192',
+        '13':'delay=0.192',
+        '14':'baseline',
+        '15':'delay=0.192',
+        '16':'delay=0.048',
+        '17':'delay=0.096',
+        '18':'delay=0.192',
+        '19':'delay=0.096',
+        '20':'baseline',
+        '21':'delay=0.096',
+        '22':'delay=0.048',
+        '23':'delay=0.096',
+        '24':'baseline',
+        '25':'delay=0.096',
+        '26':'delay=0.192',
+        '27':'delay=0.192',
+        '28':'delay=0.096',
+        '29':'delay=0.048',
+        '30':'baseline',
+        '31':'baseline',
+        '32':'delay=0.048',
+        '33':'baseline',
+        '34':'baseline',
+        '35':'delay=0.192',
+        '36':'delay=0.192',
+        '37':'delay=0.048',
+        '38':'delay=0.192',
+        '39':'delay=0.048',
+        '40':'delay=0.096'
+    }
+    dir_tlxs = "/Users/samheiserman/Desktop/PhD/paper2 - lewin /TLX"
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes)
+
 
 #
 # if __name__ == "__main__":
 #     main()
+
