@@ -207,17 +207,17 @@ def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
         groutps_datasets[gr] = dataset
     return groutps_datasets
 
-def make_boxplot_groups(datasets, colours, groups, ylabel, title, whis, path_out):
+def make_boxplot_groups(datasets, colours, groups, groups_legendnames, ylabel, title, whis, path_out):
 
     # Set figsize
-    plt.rc('figure', figsize=[15,5])
+    plt.rc('figure', figsize=[10, 3])
     # Set x-positions for boxes
     x_pos_range = np.arange(len(datasets)) / (len(datasets) - 1)
     x_pos = (x_pos_range * 0.5) + 0.75
     # Plot
     for i, data in enumerate(datasets):
         bp = plt.boxplot(
-            np.array(data), sym='', whis=whis, widths=0.6 / len(datasets),
+            np.array(data), sym='', whis=[0,100], widths=0.6 / len(datasets),
             labels=list(datasets[0]), patch_artist=True,
             positions=[x_pos[i] + j * 1 for j in range(len(data.T))]
         )
@@ -229,7 +229,6 @@ def make_boxplot_groups(datasets, colours, groups, ylabel, title, whis, path_out
             plt.setp(bp[element], color=edge_color)
         for patch in bp['boxes']:
             patch.set(facecolor=fill_color)
-
     # Titles
     plt.title(title)
     plt.ylabel(ylabel)
@@ -242,15 +241,14 @@ def make_boxplot_groups(datasets, colours, groups, ylabel, title, whis, path_out
     plt.gca().tick_params(axis='x', which='major', length=0)
     # Change the limits of the x-axis
     plt.xlim([0.5, len(list(datasets[0])) + 0.5])
-
     # Legend
     legend_elements = []
     for i in range(len(datasets)):
         j = i % len(groups)
         k = i % len(colours)
-        legend_elements.append(Patch(facecolor=colours[k], edgecolor=edge_color, label=groups[j]))
+        legend_elements.append(Patch(facecolor=colours[k], edgecolor=edge_color, label=groups_legendnames[groups[j]] ))
     plt.legend(handles=legend_elements, fontsize=8)
-
+    # Save
     plt.savefig(path_out)
     plt.close()
 
@@ -373,14 +371,18 @@ if make_plots_violin:
 
 if make_boxplots_groups:
     wl_alg = 'HTM'
-    mc_scenario = 'straight-in'  #'offset'
+    mc_scenario = 'offset'  #'offset', 'straight-in'
     hz = '16.67'
     feat_groupby = 'comp-alg'
-    whis = [0,100]  #None
-
-    # colours = ['blue', 'red', 'yellow', 'grey', 'orange']
-    colours = ['purple', 'yellow', 'blue', 'white', 'pink']
-
+    groups_legendnames = {'nc': 'No Compensation',
+                          'mc': 'McFarland Predictor',
+                          'mfr': 'McFarland Predictor, Spike Reduced',
+                          'ap': 'Adaptive Predictor',
+                          'ss': 'State Space Predictor'
+                        }
+    # colours = ['white', 'yellow', 'aqua', 'purple', 'pink']
+    colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
+    compalgs_order = list(groups_legendnames.keys())
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}/hz={hz}/{mc_scenario}"
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     ylabel = "Perceived WL"
@@ -391,9 +393,11 @@ if make_boxplots_groups:
     df_wllevels_totalascores = get_df_wllevels_totalascores(dir_results)
     groups_datasets = get_datasets(df_wllevels_totalascores, filter_, feat_groupby)
     groups_datasets = {k.replace('_',''):v for k,v in groups_datasets.items()}
+    index_map = {v: i for i, v in enumerate(compalgs_order)}
+    groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
     groups = list(groups_datasets.keys())
     path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
-    make_boxplot_groups(list( groups_datasets.values()), colours, groups, ylabel, title, whis, path_out)
+    make_boxplot_groups(list( groups_datasets.values()), colours, groups, groups_legendnames, ylabel, title, whis, path_out)
 
 
 #
