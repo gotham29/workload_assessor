@@ -247,7 +247,7 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         for fn in fns:
             filenames_wllevels[fn] = level
 
-    # loop over modname
+    # loop over modnames
     for modname in modnames:
         dir_out_modname = os.path.join(dir_out, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
@@ -368,7 +368,7 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
                                                                                                 levels_order=[v for v in cfg['wllevels_filenames'] if v!='training'])
         subjects_wllevels_ascores[subj] = wllevels_ascores
         subjects_wllevels_totalascores[subj] = wllevels_totalascores
-        subjects_filenames_totalascores[subj] = {fn:np.sum(ascores) for fn, ascores in filenames_ascores.items()}
+        subjects_filenames_totalascores[subj] = {fn: np.sum(ascores) for fn, ascores in filenames_ascores.items()}
 
     # get normalized diffs for all subjs
     subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevels_totalascores)
@@ -379,7 +379,6 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     percent_subjects_baseline_lowest = round(100 * len(subjects_baseline_lowest) / len(subjects_wllevels_ascores), 2)
 
     # get overlap w/TLX
-    # path_tlx = os.path.join(_SOURCE_DIR, 'data', 'tlx.csv')
     subscales_meanoverlaps, df_overlaps = {}, pd.DataFrame()
     if os.path.exists(cfg['tlx']['path']):
         subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, cfg['tlx']['modes_convert'], cfg['tlx']['path'])

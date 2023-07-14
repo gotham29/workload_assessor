@@ -46,6 +46,7 @@ def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=No
 def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_already_set=False):
     subjects_orders_1 = {}
     for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
+        wllevels_totalascores = dict(sorted(wllevels_totalascores.items(), key=operator.itemgetter(1)))
         subjects_orders_1[subj.lower().strip()] = list(wllevels_totalascores.keys())
     if order_already_set:
         subjects_orders_2 = subjects_tlxorders
