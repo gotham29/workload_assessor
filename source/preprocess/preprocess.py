@@ -16,22 +16,18 @@ from ts_source.utils.utils import add_timecol
 
 
 def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
-    diff_standard_ma_list = [cfg['preprocess']['movingaverage'], cfg['preprocess']['standardize'] , cfg['preprocess']['difference']]
+    diff_standard_ma_list = [cfg['preprocess']['movingaverage'], cfg['preprocess']['standardize'],
+                             cfg['preprocess']['difference']]
     do_agg = True if cfg['hzs']['baseline'] != cfg['hzs']['convertto'] else False
     do_clip = True if not (cfg['clip_percents']['start'] == 0 and cfg['clip_percents']['end'] == 0) else False
     do_subtractmedian = True if cfg['preprocess']['subtract_median'] else False
     do_diff_standard_ma = True if any(diff_standard_ma_list) else False
     do_filter_by_autocorr = True if cfg['preprocess']['autocorr'] else False
-    print("\nPREPROCESS_DATA()")
-    print(f"  do_agg --> {do_agg}")
-    print(f"  do_clip --> {do_clip}")
-    print(f"  do_subtractmedian --> {do_subtractmedian}")
-    print(f"  do_diff_standard_ma --> {do_diff_standard_ma}")
-    print(f"  do_filter_by_autocorr --> {do_filter_by_autocorr}\n")
 
     # Agg
     if do_agg:
-        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
+        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'],
+                                  hz_convertto=cfg['hzs']['convertto'])
     # Clip both ends
     if do_clip:
         filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
@@ -43,7 +39,8 @@ def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
         filenames_data = {fn: diff_standard_ma(data, cfg['preprocess']) for fn, data in filenames_data.items()}
     # Transform
     if do_filter_by_autocorr:
-        filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training','static'])
+        filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'],
+                                            filestrs_doautocorr=['training', 'static'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                            columns_model=cfg['columns_model'])
@@ -65,10 +62,10 @@ def subtract_median(filenames_data):
 
 
 def get_autocorr(data_t1, data_t0):
-    diff = data_t1-data_t0
+    diff = data_t1 - data_t0
     if data_t0 == 0:
         data_t0 = 0.001
-    diff_pct = (diff / data_t0)*100
+    diff_pct = (diff / data_t0) * 100
     return diff_pct
 
 
@@ -77,7 +74,7 @@ def get_autocorrs(steering_angles):
     for _, v in enumerate(steering_angles):
         if _ == 0:
             continue
-        diff = get_autocorr(v, steering_angles[_-1])
+        diff = get_autocorr(v, steering_angles[_ - 1])
         diff_pcts.append(diff)
     return diff_pcts
 
@@ -90,13 +87,13 @@ def select_by_autocorr(data, diff_pcts, diff_thresh):
     return data[data.index.isin(inds_keep)]
 
 
-def update_colnames(filenames_data:dict, colnames:list):
+def update_colnames(filenames_data: dict, colnames: list):
     for fname, data in filenames_data.items():
         data.columns = colnames
     return filenames_data
 
 
-def agg_data(filenames_data:dict, hz_baseline:int, hz_convertto:int):
+def agg_data(filenames_data: dict, hz_baseline: int, hz_convertto: int):
     agg = int(hz_baseline / hz_convertto)
     for fname, data in filenames_data.items():
         data = data.groupby(data.index // agg).mean()
@@ -113,10 +110,10 @@ def get_dftrain(wllevels_filenames, filenames_data, columns_model):
     return df_train
 
 
-def clip_data(filenames_data:dict, clip_percents:dict):
+def clip_data(filenames_data: dict, clip_percents: dict):
     for fname, data in filenames_data.items():
-        clip_count_start = int(data.shape[0] * (clip_percents['start']/100))
-        clip_count_end = data.shape[0] - int(data.shape[0] * (clip_percents['end']/100))
+        clip_count_start = int(data.shape[0] * (clip_percents['start'] / 100))
+        clip_count_end = data.shape[0] - int(data.shape[0] * (clip_percents['end'] / 100))
         filenames_data[fname] = data[clip_count_start:clip_count_end]
     return filenames_data
 
@@ -125,9 +122,9 @@ def clip_start(filenames_data, cfg):
     filenames_data_ = {}
     for fn, data in filenames_data.items():
         d_array = data[cfg['columns_model'][0]].values
-        start_positive = True if d_array[0]>0 else False
+        start_positive = True if d_array[0] > 0 else False
         cross_zero_ind = None
-        for _,val in enumerate(d_array):
+        for _, val in enumerate(d_array):
             if cross_zero_ind is not None:
                 break
             if start_positive:
@@ -141,7 +138,7 @@ def clip_start(filenames_data, cfg):
     return filenames_data_
 
 
-def get_wllevels_totaldfs(wllevels_filenames:dict, filenames_data:dict, columns_model:list, out_dir_files:str):
+def get_wllevels_totaldfs(wllevels_filenames: dict, filenames_data: dict, columns_model: list, out_dir_files: str):
     levels_order = [v for v in list(wllevels_filenames.keys()) if v != 'training']
     wllevels_totaldfs = {}
     for wllevel, wllevel_filenames in wllevels_filenames.items():

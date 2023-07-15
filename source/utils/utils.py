@@ -60,7 +60,7 @@ def make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'mod
     return outnames_dirs
 
 
-def print_realtimewl_config(path_in, file_type='xls', runs=[1,2,3,4,5,6,7,8,9]):
+def print_realtimewl_config(path_in, file_type='xls', runs=[1, 2, 3, 4, 5, 6, 7, 8, 9]):
     df = pd.read_csv(path_in)
     # loop over subjects
     for subj, df_subj in df.groupby('Subject'):
@@ -78,4 +78,3 @@ def print_realtimewl_config(path_in, file_type='xls', runs=[1,2,3,4,5,6,7,8,9]):
             print("      times_wltoggle:")
             print(f"        - {time_1}")
             print(f"        - {time_2}")
-

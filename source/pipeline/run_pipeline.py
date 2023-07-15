@@ -31,7 +31,6 @@ from ts_source.model.model import get_model_lag, LAG_MIN, get_modname, get_preds
 from htm_source.pipeline.htm_batch_runner import run_batch
 from htm_source.utils.fs import load_models as load_models_htm, save_models
 
-
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
     'csv': pd.read_csv
@@ -39,7 +38,6 @@ FILETYPES_READFUNCS = {
 
 
 def get_wllevels_outputs(filenames_ascores, filenames_pcounts, filenames_wllevels, wllevels_filenames, levels_order):
-
     wllevels_ascores = {wllevel: [] for wllevel in wllevels_filenames if wllevel != 'training'}
     wllevels_pcounts = {wllevel: [] for wllevel in wllevels_filenames if wllevel != 'training'}
 
@@ -51,9 +49,11 @@ def get_wllevels_outputs(filenames_ascores, filenames_pcounts, filenames_wllevel
             wllevels_pcounts[wllevel] += filenames_pcounts[fn]
 
     # get total WL - levels
-    wllevels_coeffs = {wllevel: len(wllevels_filenames['baseline'])/len(fileslist) for wllevel,fileslist in wllevels_filenames.items()}
+    wllevels_coeffs = {wllevel: len(wllevels_filenames['baseline']) / len(fileslist) for wllevel, fileslist in
+                       wllevels_filenames.items()}
     print(f"  ** wllevels_coeffs = {wllevels_coeffs}\n")
-    wllevels_totalascores = {wllevel: np.sum(ascores)*wllevels_coeffs[wllevel] for wllevel, ascores in wllevels_ascores.items()}
+    wllevels_totalascores = {wllevel: np.sum(ascores) * wllevels_coeffs[wllevel] for wllevel, ascores in
+                             wllevels_ascores.items()}
 
     # sort - levels
     index_map = {v: i for i, v in enumerate(levels_order)}
@@ -66,7 +66,6 @@ def get_filenames_outputs(cfg,
                           modname,
                           filenames_data,
                           modname_model):
-
     filenames_ascores = {}
     filenames_pcounts = {}
 
@@ -75,9 +74,9 @@ def get_filenames_outputs(cfg,
         if cfg['alg'] == 'HTM':
             # if model_for_each_feature - drop from cfg_htm_user['features'] all but modname & 'timestamp'
             cfg_htm_user = {k: v for k, v in cfg['htm_config_user'].items()}
-            if cfg['htm_config_user']['models_state']['model_for_each_feature']:  #'megamodel' not in modname:
+            if cfg['htm_config_user']['models_state']['model_for_each_feature']:  # 'megamodel' not in modname:
                 feats_model = [modname, config['time_col']]
-                cfg_htm_user['features'] = {k:v for k,v in cfg_htm_user['features'].items() if k in feats_model}
+                cfg_htm_user['features'] = {k: v for k, v in cfg_htm_user['features'].items() if k in feats_model}
 
             feats_models, features_outputs = run_batch(cfg_user=cfg_htm_user,
                                                        cfg_model=cfg['htm_config_model'],
@@ -100,7 +99,8 @@ def get_filenames_outputs(cfg,
             ascores = list(plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])[0])
 
         elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
-            ascores = get_ascores_pyod(data[modname], modname_model[modname])  #data[cfg['columns_model']], features_models[cfg['columns_model'][0]]
+            ascores = get_ascores_pyod(data[modname], modname_model[
+                modname])  # data[cfg['columns_model']], features_models[cfg['columns_model'][0]]
 
         # else:  # ts_source alg
         #     for feat, model in features_models.items():  # Assumes single model
@@ -123,33 +123,39 @@ def get_filenames_outputs(cfg,
     return filenames_ascores, filenames_pcounts
 
 
-def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllevels, wllevels_filenames, modname_model, levels_order):
+def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllevels, wllevels_filenames, modname_model,
+                levels_order):
     # make subj dirs
     outnames_dirs = make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models'])
     # save models
     save_models(modname_model, outnames_dirs['models'])
     # plot filenames_data
-    make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=cfg['columns_model'], file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
+    make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=cfg['columns_model'],
+                    file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
     # remove training data from filenames_data
-    filenames_data = {fn:data for fn,data in filenames_data.items() if fn not in cfg['wllevels_filenames']['training']}
+    filenames_data = {fn: data for fn, data in filenames_data.items() if
+                      fn not in cfg['wllevels_filenames']['training']}
     # get behavior data (dfs) for all wllevels
-    wllevels_totaldfs = get_wllevels_totaldfs(wllevels_filenames=wllevels_filenames,  #cfg['wllevels_filenames'],
+    wllevels_totaldfs = get_wllevels_totaldfs(wllevels_filenames=wllevels_filenames,  # cfg['wllevels_filenames'],
                                               filenames_data=filenames_data,
                                               columns_model=cfg['columns_model'],
                                               out_dir_files=outnames_dirs['data_files'])
     # plot levels data
-    plot_write_data(df_train, out_name='training', out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
+    plot_write_data(df_train, out_name='training', out_dir_plots=outnames_dirs['data_plots'],
+                    out_dir_files=outnames_dirs['data_files'])
     for wllevel, df in wllevels_totaldfs.items():
-        plot_write_data(df, out_name=wllevel, out_dir_plots=outnames_dirs['data_plots'], out_dir_files=outnames_dirs['data_files'])
+        plot_write_data(df, out_name=wllevel, out_dir_plots=outnames_dirs['data_plots'],
+                        out_dir_files=outnames_dirs['data_files'])
 
     # get indicies dividing the wllevels
     wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
 
     # set valid colors for plots
-    colors = ['grey','yellow','orange','red','blue','green','cyan','magenta','black']
-    assert len(wllevels_totaldfs) <= len(colors), f"more wllevels found ({len(wllevels_totaldfs)}) than colors ({len(colors)})"
+    colors = ['grey', 'yellow', 'orange', 'red', 'blue', 'green', 'cyan', 'magenta', 'black']
+    assert len(wllevels_totaldfs) <= len(
+        colors), f"more wllevels found ({len(wllevels_totaldfs)}) than colors ({len(colors)})"
     levels_colors = {}
-    for _,wllevel in enumerate(wllevels_totaldfs):
+    for _, wllevel in enumerate(wllevels_totaldfs):
         levels_colors[wllevel] = colors[_]
 
     # get model outputs for each 'static' file
@@ -158,11 +164,12 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
                                                                  filenames_data=filenames_data,
                                                                  modname_model=modname_model)
     # agg ascore to wllevel
-    wllevels_ascores, wllevels_pcounts, wllevels_totalascores = get_wllevels_outputs(filenames_ascores=filenames_ascores,
-                                                                                     filenames_pcounts=filenames_pcounts,
-                                                                                     filenames_wllevels=filenames_wllevels,
-                                                                                     wllevels_filenames=cfg['wllevels_filenames'],
-                                                                                     levels_order=levels_order)
+    wllevels_ascores, wllevels_pcounts, wllevels_totalascores = get_wllevels_outputs(
+        filenames_ascores=filenames_ascores,
+        filenames_pcounts=filenames_pcounts,
+        filenames_wllevels=filenames_wllevels,
+        wllevels_filenames=cfg['wllevels_filenames'],
+        levels_order=levels_order)
     # write outputs
     print(f"  Writing outputs to --> {outnames_dirs['anomaly']}")
     print("    Boxplots...")
@@ -202,7 +209,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
 
 def get_scores(subjects_wldiffs, subjects_wllevels_totalascores):
     # percent_change_from_baseline
-    percent_change_from_baseline = round(sum(subjects_wldiffs.values()),3)
+    percent_change_from_baseline = round(sum(subjects_wldiffs.values()), 3)
     # subjects_wldiffs_positive
     subjects_wldiffs_positive = {subj: diff for subj, diff in subjects_wldiffs.items() if diff > 0}
     # subjs_baseline_lowest
@@ -254,7 +261,9 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
         print(f"  --> {dir_out_modname.replace(dir_out, '')}")
 
         # run modname for all data
-        percent_change_from_baseline = run_modname(modname, cfg, filenames_wllevels, cfg['wllevels_filenames'], subjects_dfs_train, subjects_filenames_data, subjects_features_models, dir_out_modname)
+        percent_change_from_baseline = run_modname(modname, cfg, filenames_wllevels, cfg['wllevels_filenames'],
+                                                   subjects_dfs_train, subjects_filenames_data,
+                                                   subjects_features_models, dir_out_modname)
         modnames_percentchangesfrombaseline[modname] = percent_change_from_baseline
 
     mean_percentchangefrombaseline = np.mean(list(modnames_percentchangesfrombaseline.values()))
@@ -262,7 +271,6 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
 
 
 def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data):
-
     subj = list(subjects_features_models.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
     modnames_df1s = {}
@@ -300,7 +308,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                         aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
                                                                   learn=config['learn_in_testing'])
                     elif config['alg'] == 'SteeringEntropy':
-                        aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)  #feat
+                        aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)  # feat
                     elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
                         aScore = get_ascore_pyod(_, data_test[config['columns_model']], model)
                     else:
@@ -323,7 +331,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                                                                       config['windows_ascore']['change_detection'])
                 f1 = get_f1score(scores['true_pos'], scores['false_pos'], scores['false_neg'])
                 path_out = os.path.join(dir_out_subj,
-                                        f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  #feat
+                                        f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  # feat
                 pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
 
                 # plot detected wl-changepoints over changepoint windows
@@ -338,7 +346,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                                     dir_out_subj,
                                     wl_changepoints_windows,
                                     wl_changepoints_detected)
-                rows.append({'subj': subj, 'modname': modname, 'testfile': testfile, 'f1': f1})  #'feat': feat,
+                rows.append({'subj': subj, 'modname': modname, 'testfile': testfile, 'f1': f1})  # 'feat': feat,
         df_f1 = pd.DataFrame(rows)
         path_out = os.path.join(dir_out_modname, "f1_scores.csv")
         df_f1.to_csv(path_out, index=False)
@@ -348,7 +356,8 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
     return df_f1_concat
 
 
-def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_dfs_train, subjects_filenames_data, subjects_features_models, dir_out):
+def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_dfs_train, subjects_filenames_data,
+                subjects_features_models, dir_out):
     subjects_wllevels_ascores = {}
     subjects_wllevels_totalascores = {}
     subjects_filenames_totalascores = {}
@@ -359,13 +368,19 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
         modname_model = {modname: subjects_features_models[subj][modname]}
         filenames_ascores, wllevels_ascores, wllevels_totalascores, levels_colors = run_subject(cfg=cfg,
                                                                                                 dir_out=dir_out_subj,
-                                                                                                df_train=subjects_dfs_train[subj],
+                                                                                                df_train=
+                                                                                                subjects_dfs_train[
+                                                                                                    subj],
                                                                                                 modname=modname,
                                                                                                 modname_model=modname_model,
                                                                                                 filenames_data=filenames_data,
                                                                                                 filenames_wllevels=filenames_wllevels,
                                                                                                 wllevels_filenames=wllevels_filenames,
-                                                                                                levels_order=[v for v in cfg['wllevels_filenames'] if v!='training'])
+                                                                                                levels_order=[v for v in
+                                                                                                              cfg[
+                                                                                                                  'wllevels_filenames']
+                                                                                                              if
+                                                                                                              v != 'training'])
         subjects_wllevels_ascores[subj] = wllevels_ascores
         subjects_wllevels_totalascores[subj] = wllevels_totalascores
         subjects_filenames_totalascores[subj] = {fn: np.sum(ascores) for fn, ascores in filenames_ascores.items()}
@@ -381,7 +396,8 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     # get overlap w/TLX
     subscales_meanoverlaps, df_overlaps = {}, pd.DataFrame()
     if os.path.exists(cfg['tlx']['path']):
-        subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, cfg['tlx']['modes_convert'], cfg['tlx']['path'])
+        subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores,
+                                                               cfg['tlx']['modes_convert'], cfg['tlx']['path'])
 
     # rename dirs based on scores
     rename_dirs_by_scores(subjects_wldiffs, subjects_increased_from_baseline, subjects_baseline_lowest, dir_out)
@@ -663,11 +679,13 @@ def get_subjects_data(cfg, filenames, subjects, subjects_spacesadd):
     for subj in sorted(subjects):
         dir_input = os.path.join(cfg['dirs']['input'], subj)
         # Load
-        filenames_data = load_files(dir_input=dir_input, file_type=cfg['file_type'], read_func=cfg['read_func'], filenames=filenames)
+        filenames_data = load_files(dir_input=dir_input, file_type=cfg['file_type'], read_func=cfg['read_func'],
+                                    filenames=filenames)
         # Update columns
         filenames_data = update_colnames(filenames_data=filenames_data, colnames=cfg['colnames'])
         # Preprocess
-        filenames_data, df_train = preprocess_data(subj=subj, cfg=cfg, filenames_data=filenames_data, subjects_spacesadd=subjects_spacesadd)
+        filenames_data, df_train = preprocess_data(subj=subj, cfg=cfg, filenames_data=filenames_data,
+                                                   subjects_spacesadd=subjects_spacesadd)
         # Store
         subjects_dfs_train[subj] = df_train
         subjects_filenames_data[subj] = filenames_data
@@ -684,16 +702,16 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
         if config['train_models']:
             config, features_models = train_save_models(df_train=df_train,
                                                         alg=config['alg'],
-                                                        dir_output= dir_out,  #dir_out_subj_models,
+                                                        dir_output=dir_out,  # dir_out_subj_models,
                                                         config=config,
                                                         htm_config_user=config['htm_config_user'],
                                                         htm_config_model=config['htm_config_model'])
         # Load model(s)
         else:
             if config['alg'] == 'HTM':
-                features_models = load_models_htm(dir_out)  #dir_out_subj_models
+                features_models = load_models_htm(dir_out)  # dir_out_subj_models
             else:
-                features_models = load_models_darts(dir_out, alg=config['alg'])  #dir_out_subj_models
+                features_models = load_models_darts(dir_out, alg=config['alg'])  # dir_out_subj_models
         # Store models
         subjects_features_models[subj] = features_models
 
@@ -710,7 +728,6 @@ def has_expected_files(dir_in, files_exp):
 
 
 def run_wl(config, subjects_filenames_data, subjects_dfs_train, subjects_features_models, dir_out):
-
     # Run
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
@@ -747,12 +764,13 @@ def get_subjects(dir_in, subjs_lim=100):
 def filter_config_group(group, config):
     filenames_group = []
     config_group = copy.deepcopy(config)
-    files_eligible = config_group['wllevels_filenames'].pop('training') + config_group['wllevels_filenames'].pop('baseline')
+    files_eligible = config_group['wllevels_filenames'].pop('training') + config_group['wllevels_filenames'].pop(
+        'baseline')
     files_training = [f for f in files_eligible if group not in f]
     files_baseline = [f for f in files_eligible if f not in files_training]
     config_group['wllevels_filenames']['training'] = files_training
     config_group['wllevels_filenames']['baseline'] = files_baseline
-    wllevels_higher = [lev for lev in config_group['wllevels_filenames'] if lev not in ['training','baseline']]
+    wllevels_higher = [lev for lev in config_group['wllevels_filenames'] if lev not in ['training', 'baseline']]
     for lev in wllevels_higher:
         config_group['wllevels_filenames'][lev] = [f for f in config['wllevels_filenames'][lev] if group in f]
     for wllevel, filenames in config_group['wllevels_filenames'].items():
@@ -761,14 +779,15 @@ def filter_config_group(group, config):
     # reorder wllevels_filenames
     wllevels_order = ['training', 'baseline'] + wllevels_higher
     index_map = {v: i for i, v in enumerate(wllevels_order)}
-    config_group['wllevels_filenames'] = dict(sorted(config_group['wllevels_filenames'].items(), key=lambda pair: index_map[pair[0]]))
+    config_group['wllevels_filenames'] = dict(
+        sorted(config_group['wllevels_filenames'].items(), key=lambda pair: index_map[pair[0]]))
     return config_group, filenames_group
 
 
 def main(config):
-
     # Set output dir
-    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'], f"hz={config['hzs']['convertto']}")  #prep--{preproc};
+    dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'],
+                           f"hz={config['hzs']['convertto']}; features={'.'.join(config['columns_model'])}")
     os.makedirs(dir_out, exist_ok=True)
 
     # get subjects
@@ -779,7 +798,7 @@ def main(config):
     dir_out_total = os.path.join(dir_out, 'total')
     os.makedirs(dir_out_total, exist_ok=True)
     ## get inputs
-    filenames = list(itertools.chain.from_iterable( config['wllevels_filenames'].values() ))
+    filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, filenames, subjects, subjects_spacesadd)
     ## train models
     config, subjects_features_models = get_subjects_models(config, dir_out_total, subjects_dfs_train)
@@ -801,10 +820,12 @@ def main(config):
         config_group, filenames_group = filter_config_group(group, config)
 
         # get inputs - group
-        subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group, subjects, subjects_spacesadd)
+        subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group,
+                                                                                    subjects, subjects_spacesadd)
 
         # train models - group
-        config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group, subjects_dfs_train_group)
+        config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group,
+                                                                           subjects_dfs_train_group)
 
         # run - group
         run_wl(config=config_group,
@@ -823,7 +844,6 @@ def main(config):
 
 
 if __name__ == '__main__':
-
     # load config
     args_add = [{'name_abbrev': '-cp', 'name': '--config_path', 'required': True, 'help': 'path to config'}]
     config = load_config(get_args(args_add).config_path)

@@ -2608,9 +2608,9 @@ colnames:
   - throttle
 
 columns_model:
-  - pitch_stick
+#  - pitch_stick
   - roll_stick
-  - rudder_pedals
+#  - rudder_pedals
   - throttle
 
 hzs:
@@ -2904,28 +2904,28 @@ htm_config_user:
       type: timestamp
       weekend: 0
       weight: 0
-    pitch_stick:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    pitch_stick:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     roll_stick:
       type: float
       min: null
       max: null
       weight: 1.0
-    rudder_pedals:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    rudder_pedals:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     throttle:
       type: float
       min: null
       max: null
       weight: 1.0
   models_state:
-    model_for_each_feature: true  #false
+    model_for_each_feature: false  #true
     return_pred_count: true
     use_sp: true
   timesteps_stop:

@@ -36,6 +36,7 @@ PYOD_MODNAMES_MODELS = {
 class NaiveModel:
     def __init__(self):
         pass
+
     def predict(self, lag1):
         return lag1
 
@@ -43,6 +44,7 @@ class NaiveModel:
 class SteeringEntropy:
     def __init__(self):
         pass
+
     def predict(self, lag1, lag2, lag3):
         return lag1 + (lag1 - lag2) + 0.5 * ((lag1 - lag2) - (lag2 - lag3))
 
@@ -75,7 +77,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
     if alg == 'HTM':
         # drop timestamp feature if megamodel
         if not htm_config_user['models_state']['model_for_each_feature']:
-            htm_features = {k:v for k,v in htm_config_user['features'].items() if v['type'] != 'timestamp'}
+            htm_features = {k: v for k, v in htm_config_user['features'].items() if v['type'] != 'timestamp'}
             htm_config_user['features'] = htm_features
             config['htm_config_user'] = htm_config_user
         # htm_source
@@ -95,7 +97,8 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         features_models = {feat: SteeringEntropy() for feat in features_model if feat != config['time_col']}
     elif alg in PYOD_MODNAMES_MODELS:
         model = PYOD_MODNAMES_MODELS[alg]
-        features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if feat != config['time_col']}
+        features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if
+                           feat != config['time_col']}
     # else:
     #     # ts_source
     #     config_ts = {k: v for k, v in config.items()}

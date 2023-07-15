@@ -16,6 +16,7 @@ sys.path.append(_SOURCE_DIR)
 from source.analyze.plot import plot_outputs_bars
 from source.analyze.anomaly import get_subjects_wldiffs
 
+
 # MODES_CONVERT = {
 #     'B': 'baseline',
 #     'D': 'distraction',
@@ -85,7 +86,7 @@ def get_tlx_overlaps(subjects_wllevels_totalascores, modes_convert, path_tlx):
             modes_scores = {}
             gpby_mode = df_subj.groupby('Run Mode')
             for mode, df_mode in gpby_mode:
-                modes_scores[modes_convert[mode]] = np.sum(df_mode[subscale].values)  #MODES_CONVERT
+                modes_scores[modes_convert[mode]] = np.sum(df_mode[subscale].values)  # MODES_CONVERT
             modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
             subjects_tlxorders[subj] = list(modes_scores.keys())
         ## get df_overlaps
@@ -121,8 +122,10 @@ def main():
     for mode, df_mode in gpby_mode:
         modes_scores[MODES_CONVERT[mode]] = df_mode['Raw TLX'].values
     modes_scores_sum = {mode: np.sum(scores) for mode, scores in modes_scores.items()}
-    plot_outputs_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels", ylabel='Raw TLX',
-              path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'], print_barheights=True)
+    plot_outputs_bars(modes_scores_sum, title="TLX Scores by Run Mode -- All Subjects", xlabel="WL Levels",
+                      ylabel='Raw TLX',
+                      path_out=path_out, xtickrotation=0, colors=['grey', 'orange', 'blue', 'green'],
+                      print_barheights=True)
     # make_boxplots(modes_scores, ylabel='Raw TLX', title="All Subjects", path_out=path_out,
     #               suptitle='TLX Scores by Run Mode', ylim=(0, 1))
 

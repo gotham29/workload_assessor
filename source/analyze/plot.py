@@ -16,6 +16,7 @@ sys.path.append(_TS_SOURCE_DIR)
 from source.preprocess.preprocess import preprocess_data, diff_data, standardize_data, movingavg_data
 from ts_source.utils.utils import load_config
 
+
 def make_data_plots(filenames_data: dict, modname: str, columns_model: list, file_type: str, out_dir_plots: str):
     columns_plot = columns_model if 'megamodel' in modname else [modname]
     for fname, data in filenames_data.items():
@@ -134,10 +135,10 @@ def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, 
 
 
 def plot_write_data(df: pd.DataFrame,
-                  out_dir_plots: str,
-                  out_dir_files: str,
-                  out_name: str):
-    df.to_csv( os.path.join(out_dir_files, f"{out_name}.csv") )  #'training.csv'
+                    out_dir_plots: str,
+                    out_dir_files: str,
+                    out_name: str):
+    df.to_csv(os.path.join(out_dir_files, f"{out_name}.csv"))  # 'training.csv'
     for feat in df:
         plt.figure(figsize=(15, 3))
         plt.plot(df[feat].values)
@@ -150,13 +151,12 @@ def plot_write_data(df: pd.DataFrame,
 
 
 def plot_outputs_lines(wllevels_anomscores_: dict,
-               wllevels_predcounts_: dict,
-               wllevels_indsend:dict,
-               get_pcounts: bool,
-               levels_order: list,
-               levels_colors: dict,
-               out_dir: str):
-
+                       wllevels_predcounts_: dict,
+                       wllevels_indsend: dict,
+                       get_pcounts: bool,
+                       levels_order: list,
+                       levels_colors: dict,
+                       out_dir: str):
     # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
     wllevels_anomscores, wllevels_predcounts = {}, {}
     for k in levels_order:
@@ -246,15 +246,15 @@ def plot_hists(algs_data, dir_out, title, density=False):
 
 def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
     colors = list(levels_colors.values()) if levels_colors else None
-    mydict = {k:round(v,3) for k,v in mydict.items()}
+    mydict = {k: round(v, 3) for k, v in mydict.items()}
     plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)
     plt.xticks(range(len(mydict)), list(mydict.keys()), rotation=xtickrotation)
     if print_barheights:
-        xlocs = [i+1 for i in range(0,len(mydict))]
+        xlocs = [i + 1 for i in range(0, len(mydict))]
         for i, v in enumerate(list(mydict.values())):
-            plt.text(xlocs[i]-1.15, v + 0.1, str(v))
+            plt.text(xlocs[i] - 1.15, v + 0.1, str(v))
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -281,7 +281,8 @@ def plot_subjects_timeserieses(dir_data, dir_out, path_cfg):
         dir_out_subj = os.path.join(dir_out, subj)
         realtime_wl_subj = realtime_wl[realtime_wl['Subject'] == subj]
         os.makedirs(dir_out_subj, exist_ok=True)
-        plot_subject_timeserieses(cfg['preprocess'], cfg['file_type'], dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
+        plot_subject_timeserieses(cfg['preprocess'], cfg['file_type'], dir_data_subj, dir_out_subj, realtime_wl_subj,
+                                  hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
 
 
 def atoi(text):
@@ -297,7 +298,8 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
-def plot_subject_timeserieses(cfg_prep, file_type, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=3):
+def plot_subject_timeserieses(cfg_prep, file_type, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100,
+                              hz_convertto=3):
     dir_files = [f for f in os.listdir(dir_data_subj) if f'.{file_type}' in f]
     files_train = [f for f in dir_files if 'training' in f]
     files_static = [f for f in dir_files if 'static' in f]
@@ -306,14 +308,21 @@ def plot_subject_timeserieses(cfg_prep, file_type, dir_data_subj, dir_out_subj, 
     files_static.sort(key=natural_keys)
     files_realtime.sort(key=natural_keys)
     # training
-    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_train, title='Training', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_train, title='Training',
+                             dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline,
+                             hz_convertto=hz_convertto)
     # static
-    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_static, title='Static', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries_combined(cfg_prep=cfg_prep, file_type=file_type, files=files_static, title='Static',
+                             dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, hz_baseline=hz_baseline,
+                             hz_convertto=hz_convertto)
     # realtime
-    plot_timeseries(cfg_prep=cfg_prep, file_type=file_type, files=files_realtime, title='RealTime', dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj, hz_baseline=hz_baseline, hz_convertto=hz_convertto)
+    plot_timeseries(cfg_prep=cfg_prep, file_type=file_type, files=files_realtime, title='RealTime',
+                    dir_data_subj=dir_data_subj, dir_out_subj=dir_out_subj, realtime_wl_subj=realtime_wl_subj,
+                    hz_baseline=hz_baseline, hz_convertto=hz_convertto)
 
 
-def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_subj, realtime_wl_subj, hz_baseline=100,
+                    hz_convertto=6.67):
     agg = int(hz_baseline / hz_convertto)
     # ind_prev = 0
     for fn in files:
@@ -327,13 +336,14 @@ def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_su
         data = data.groupby(data.index // agg).mean()
         # subtract mean
         mean_ = np.mean(data['steering angle'])
-        data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        data['steering angle'] = [v - mean_ for v in data['steering angle']]
         # preprocess
         filenames_data = preprocess_data({'data': data}, cfg_prep)
         data = filenames_data['data']
         # drop low autocorr timesteps
         diff_pcts = get_autocorrs(data['steering angle'].values)
-        data_selected = select_by_autocorr(data['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+        data_selected = select_by_autocorr(data['steering angle'].values, diff_pcts,
+                                           diff_thresh=cfg_prep['autocorr_thresh'])
         data = pd.DataFrame({'steering angle': data_selected})
         # get times wl imposed
         run_number = int(fn.split('realtime')[1])
@@ -343,7 +353,7 @@ def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_su
         wl_imposed1_seconds = realtime_wl_subj[wl_imposed1_col].values[0]
         wl_imposed2_seconds = realtime_wl_subj[wl_imposed2_col].values[0]
         wl_total_seconds = realtime_wl_subj[wl_runtime_col].values[0]
-        wl_imposed1 = int((wl_imposed1_seconds/wl_total_seconds) * data.shape[0])
+        wl_imposed1 = int((wl_imposed1_seconds / wl_total_seconds) * data.shape[0])
         wl_imposed2 = int((wl_imposed2_seconds / wl_total_seconds) * data.shape[0])
         # plot
         steering_angles = data['steering angle'].values
@@ -359,7 +369,8 @@ def plot_timeseries(cfg_prep, file_type, files, title, dir_data_subj, dir_out_su
         plt.close()
 
 
-def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100, hz_convertto=6.67):
+def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_subj, title='Training', hz_baseline=100,
+                             hz_convertto=6.67):
     """ BUG --> HARD CODING """
     files_types = {'static1': 'rain',
                    'static2': 'fog',
@@ -390,7 +401,7 @@ def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_
         data = data.groupby(data.index // agg).mean()
         # subtract mean
         mean_ = np.mean(data['steering angle'])
-        data['steering angle'] = [v-mean_ for v in data['steering angle']]
+        data['steering angle'] = [v - mean_ for v in data['steering angle']]
         # preprocess
         filenames_data = preprocess_data({'data': data}, cfg_prep)
         data = filenames_data['data']
@@ -403,12 +414,13 @@ def plot_timeseries_combined(cfg_prep, file_type, files, dir_data_subj, dir_out_
 
     # drop low autocorr timesteps
     diff_pcts = get_autocorrs(data_total['steering angle'].values)
-    data_selected = select_by_autocorr(data_total['steering angle'].values, diff_pcts, diff_thresh=cfg_prep['autocorr_thresh'])
+    data_selected = select_by_autocorr(data_total['steering angle'].values, diff_pcts,
+                                       diff_thresh=cfg_prep['autocorr_thresh'])
 
     # steering_angles = data_total['steering angle'].values
     # plt.cla()
     plt.figure(figsize=(15, 3))
-    plt.plot(data_selected)  #steering_angles
+    plt.plot(data_selected)  # steering_angles
     # plot lines and color areas to separate runs and run types
     ind_prev = 0
     runtypes_labeled = []
@@ -446,8 +458,8 @@ def prep_data(data, cfg_prep):
 
 def save_tsplot(data, cfg_prep, path_out):
     mean_ = np.mean(data)
-    s_a = [v-mean_ for v in data]
-    d = prep_data(s_a, cfg_prep)  #data
+    s_a = [v - mean_ for v in data]
+    d = prep_data(s_a, cfg_prep)  # data
     # plt.cla()
     plt.figure(figsize=(15, 3))
     plt.plot(d)
@@ -460,8 +472,8 @@ def save_tsplot(data, cfg_prep, path_out):
 
 
 def get_autocorr(data_t1, data_t0):
-    diff = data_t1-data_t0
-    diff_pct = (diff / data_t0)*100
+    diff = data_t1 - data_t0
+    diff_pct = (diff / data_t0) * 100
     return diff_pct
 
 
@@ -470,7 +482,7 @@ def get_autocorrs(steering_angles):
     for _, v in enumerate(steering_angles):
         if _ == 0:
             continue
-        diff = get_autocorr(v, steering_angles[_-1])
+        diff = get_autocorr(v, steering_angles[_ - 1])
         diff_pcts.append(diff)
     return diff_pcts
 
@@ -496,9 +508,10 @@ def plot_venues(paper_min, venues_impactscores, venues_waittimes, path_in, path_
     wait_times = list(venues_waittimes.values())
     impact_scores = [v * 10 for v in list(venues_impactscores.values())]
     x = np.array([_ for _ in range(len(venues_counts2))])
-    plt.bar(x-0.2, paper_counts, width=0.2, color='b', align='center', label='Paper Counts', alpha=0.5)  #x - 0.5
+    plt.bar(x - 0.2, paper_counts, width=0.2, color='b', align='center', label='Paper Counts', alpha=0.5)  # x - 0.5
     plt.bar(x, wait_times, width=0.2, color='g', align='center', label='Wait Times (weeks)', alpha=0.5)
-    plt.bar(x+0.2, impact_scores, width=0.2, color='r', align='center', label='Impact Scores (x10)', alpha=0.5)  #x + 0.5
+    plt.bar(x + 0.2, impact_scores, width=0.2, color='r', align='center', label='Impact Scores (x10)',
+            alpha=0.5)  # x + 0.5
     plt.xticks(range(len(venues_counts2)), list(venues_counts2.keys()), rotation=90)
     plt.title("Common Publication Venues - WL")
     plt.legend(bbox_to_anchor=(1.0, 1), loc='upper left')
@@ -584,4 +597,3 @@ if __name__ == "__main__":
     # plot_subjects_timeserieses(dir_data="/Users/samheiserman/Desktop/repos/workload_assessor/data",
     #                            dir_out="/Users/samheiserman/Desktop/repos/workload_assessor/eda",
     #                            path_cfg="/Users/samheiserman/Desktop/repos/workload_assessor/configs/run_pipeline.yaml")
-
