@@ -423,7 +423,6 @@ if make_boxplots_groups:
                           'ap': 'Adaptive Predictor',
                           'ss': 'State Space Predictor'
                         }
-    # colours = ['white', 'yellow', 'aqua', 'purple', 'pink']
     colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
     compalgs_order = list(groups_legendnames.keys())
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}/hz={hz}/{mc_scenario}"

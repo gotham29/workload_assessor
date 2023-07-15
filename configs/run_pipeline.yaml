@@ -8,6 +8,8 @@ preprocess:
   difference: false  #1
   standardize: false
   movingaverage: false  #23
+  subtract_median: false
+  autocorr: false
   autocorr_thresh: 5
   autocorr_column: pitch_stick
 

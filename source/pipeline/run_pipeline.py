@@ -91,13 +91,13 @@ def get_filenames_outputs(cfg,
             filenames_pcounts[fn] = features_outputs[modname]['pred_count']
 
         elif config['alg'] == 'SteeringEntropy':
-            ascores = get_ascores_entropy(data[ modname ].values)
+            ascores = get_ascores_entropy(data[modname].values)
 
         elif config['alg'] == 'Naive':
-            ascores = get_ascores_naive(data[ modname ].values)
+            ascores = get_ascores_naive(data[modname].values)
 
         elif config['alg'] == 'PSD':
-            ascores = list(plt.psd(x=data[modname].values, Fs=1)[0])
+            ascores = list(plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])[0])
 
         elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
             ascores = get_ascores_pyod(data[modname], modname_model[modname])  #data[cfg['columns_model']], features_models[cfg['columns_model'][0]]

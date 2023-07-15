@@ -16,16 +16,34 @@ from ts_source.utils.utils import add_timecol
 
 
 def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
+    diff_standard_ma_list = [cfg['preprocess']['movingaverage'], cfg['preprocess']['standardize'] , cfg['preprocess']['difference']]
+    do_agg = True if cfg['hzs']['baseline'] != cfg['hzs']['convertto'] else False
+    do_clip = True if not (cfg['clip_percents']['start'] == 0 and cfg['clip_percents']['end'] == 0) else False
+    do_subtractmedian = True if cfg['preprocess']['subtract_median'] else False
+    do_diff_standard_ma = True if any(diff_standard_ma_list) else False
+    do_filter_by_autocorr = True if cfg['preprocess']['autocorr'] else False
+    print("\nPREPROCESS_DATA()")
+    print(f"  do_agg --> {do_agg}")
+    print(f"  do_clip --> {do_clip}")
+    print(f"  do_subtractmedian --> {do_subtractmedian}")
+    print(f"  do_diff_standard_ma --> {do_diff_standard_ma}")
+    print(f"  do_filter_by_autocorr --> {do_filter_by_autocorr}\n")
+
     # Agg
-    filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
+    if do_agg:
+        filenames_data = agg_data(filenames_data=filenames_data, hz_baseline=cfg['hzs']['baseline'], hz_convertto=cfg['hzs']['convertto'])
     # Clip both ends
-    filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
+    if do_clip:
+        filenames_data = clip_data(filenames_data=filenames_data, clip_percents=cfg['clip_percents'])
     # Subtract median
-    filenames_data = subtract_median(filenames_data=filenames_data)
+    if do_subtractmedian:
+        filenames_data = subtract_median(filenames_data=filenames_data)
     # Differece/Standardize/MA
-    filenames_data = {fn: diff_standard_ma(data, cfg['preprocess']) for fn, data in filenames_data.items()}
+    if do_diff_standard_ma:
+        filenames_data = {fn: diff_standard_ma(data, cfg['preprocess']) for fn, data in filenames_data.items()}
     # Transform
-    filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training','static'])
+    if do_filter_by_autocorr:
+        filenames_data = filter_by_autocorr(subj, subjects_spacesadd[subj], filenames_data, cfg['preprocess'], filestrs_doautocorr=['training','static'])
     # Train models
     df_train = get_dftrain(wllevels_filenames=cfg['wllevels_filenames'], filenames_data=filenames_data,
                            columns_model=cfg['columns_model'])
