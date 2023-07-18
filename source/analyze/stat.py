@@ -15,16 +15,16 @@ from scipy.stats import ttest_ind, kstest, mannwhitneyu
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 DIR_OUT = os.path.join(_SOURCE_DIR, 'results')
-
 sys.path.append(_SOURCE_DIR)
 
 from source.analyze.anomaly import get_subjects_wldiffs
 from source.pipeline.run_pipeline import get_scores
 
 # MAKE PLOTS
+make_boxplots_groups = True
+make_boxplots_algs = False
+make_tlx_overlaps = False
 make_plots_violin = False
-make_boxplots_algs = True
-make_boxplots_groups = False
 convert_tlxs = False
 eval_tlxs = False
 
@@ -34,6 +34,7 @@ eval_tlxs = False
 #     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
 #     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
 # }
+
 
 def run_stat_tests(algs_data):
     # T-Test
@@ -119,6 +120,8 @@ Test for statistically significant performance differences between Algs
 3) Degree of overlap with TLX
     --> 1 value per subject
 """
+
+
 # title = "Correlation with NASA TLX"
 # algs_paths = {
 #     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_overlaps.csv"),
@@ -211,9 +214,8 @@ def get_df_wllevels_totalascores(dir_results):
     return df_wllevels_totalascores
 
 
-def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
-    df_filter = filter_df(df_wllevels_totalascores, filter_)
-    gpby = df_filter.groupby(feat_groupby)
+def get_datasets(df_wllevels_totalascores, feat_groupby='comp-alg'):
+    gpby = df_wllevels_totalascores.groupby(feat_groupby)
     groups_datasets = {}
     for gr, df_gr in gpby:
         wllevels_totalascores = {wl: [] for wl in df_gr['wl-level'].unique()}
@@ -341,7 +343,9 @@ def eval_tlx(df_tlx, path_out):
 
 def get_groups_datasets(dir_in, filter_, feat_groupby, compalgs_order):
     df_wllevels_totalascores = get_df_wllevels_totalascores(dir_in)
-    groups_datasets = get_datasets(df_wllevels_totalascores, filter_, feat_groupby)
+    if filter_:
+        df_wllevels_totalascores = filter_df(df_wllevels_totalascores, filter_)
+    groups_datasets = get_datasets(df_wllevels_totalascores, feat_groupby)
     groups_datasets = {k.replace('_', ''): v for k, v in groups_datasets.items()}
     index_map = {v: i for i, v in enumerate(compalgs_order)}
     groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
@@ -356,18 +360,19 @@ def set_box_color(bp, color):
     return bp
 
 
-def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby, compalgs_order, dir_out):
+def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby,
+                                     compalgs_order, dir_out):
     comps_col = [runs_comps[run] for run in df_tlx['Run #']]
     df_tlx.insert(loc=0, column='Comp Alg', value=comps_col)
     compalgs_wlalgs_wllevelsdata = {comp.replace('_', ''): {} for comp in df_tlx['Comp Alg'].unique()}
     compalgs_wlalgs_wllevelsdata['total'] = {}
-    # get by comp-alg
+    # get by comp-alg (TLX)
     for comp, df_comp in df_tlx.groupby('Comp Alg'):
         df_dict = {}
         for mode, df_mode in df_comp.groupby('Run Mode'):
             df_dict[mode] = df_mode['Raw TLX'].values
         compalgs_wlalgs_wllevelsdata[comp.replace('_', '')]['TLX'] = pd.DataFrame(df_dict)[delays_order]
-    # get total
+    # get total (TLX)
     df_dict = {}
     for mode, df_mode in df_tlx.groupby('Run Mode'):
         df_dict[mode] = df_mode['Raw TLX'].values
@@ -500,32 +505,108 @@ if make_plots_violin:
         plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out)
 
 if make_boxplots_groups:
-    wl_alg = 'HTM'  #HTM, PSD, SteeringEntropy
-    mc_scenario = 'offset'  # 'offset', 'straight-in'
-    filter_ = {'model-name': ['modname=roll_stick']}  #, 'modname=pitch_stick'
+    wl_algs = ['HTM', 'PSD', 'SteeringEntropy', 'TLX']
+    mc_scenarios = ['offset', 'straight-in']
+    filter_ = {'model-name': ['modname=roll_stick']}  # 'modname=pitch_stick', 'modname=roll_stick'
+    features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
+    megamodel = False
+    if len(filter_['model-name']) > 1:
+        megamodel = True
+        features = '.'.join([f.replace('modname=', '') for f in sorted(filter_['model-name'])]) + ' - MEGA'
     hz = '16.67'
     feat_groupby = 'comp-alg'
     ylabel = "Perceived WL"
-    title = f"WL by delay & {feat_groupby} ({mc_scenario})"
+    dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     groups_legendnames = {'nc': 'No Compensation',
                           'mc': 'McFarland Predictor',
                           'mfr': 'McFarland Predictor, Spike Reduced',
                           'ap': 'Adaptive Predictor',
                           'ss': 'State Space Predictor'}
+    runs_comps = {
+        1: '_ss',
+        34: '_ss',
+        2: '_ss',
+        39: '_ss',
+        19: '_ss',
+        21: '_ss',
+        4: '_ss',
+        38: '_ss',
+        10: '_ap',
+        31: '_ap',
+        16: '_ap',
+        29: '_ap',
+        5: '_ap',
+        28: '_ap',
+        18: '_ap',
+        35: '_ap',
+        20: '_nc',
+        33: '_nc',
+        8: '_nc',
+        37: '_nc',
+        7: '_nc',
+        23: '_nc',
+        13: '_nc',
+        27: '_nc',
+        3: '_mc',
+        30: '_mc',
+        6: '_mc',
+        22: '_mc',
+        17: '_mc',
+        40: '_mc',
+        12: '_mc',
+        36: '_mc',
+        24: '_mfr',
+        14: '_mfr',
+        9: '_mfr',
+        32: '_mfr',
+        11: '_mfr',
+        25: '_mfr',
+        15: '_mfr',
+        26: '_mfr'
+    }
     colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
     compalgs_order = list(groups_legendnames.keys())
-    dir_out = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}"
-    dir_results = os.path.join(dir_out, f"hz={hz}; features=pitch_stick.roll_stick.rudder_pedals.throttle/{mc_scenario}")
-    groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
-    path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
-    make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, title, path_out)
-    # print means/medians by comp-alg & delay
-    for comp, data_comp in groups_datasets.items():
-        print(f"\n{comp}")
-        for delay in data_comp:
-            print(f"  delay={delay}")
-            print(f"    mean = {round(np.mean(data_comp[delay]),4)}")
-            print(f"    median = {round(np.median(data_comp[delay]),4)}")
+    dir_out_boxes = os.path.join(dir_out, 'wl_by_delay&comp')
+    os.makedirs(dir_out_boxes, exist_ok=True)
+    for mc_scenario in mc_scenarios:
+        dir_out_mc = os.path.join(dir_out_boxes, mc_scenario)
+        os.makedirs(dir_out_mc, exist_ok=True)
+        for wl_alg in wl_algs:
+            if megamodel and wl_alg != 'HTM':
+                continue
+            dir_out_wl = os.path.join(dir_out_mc, wl_alg)
+            os.makedirs(dir_out_wl, exist_ok=True)
+            if wl_alg == 'TLX':
+                path_out = os.path.join(dir_out_wl, 'NA')
+                path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
+                df_tlx = pd.read_csv(path_tlx)
+                comps_col = [runs_comps[run] for run in df_tlx['Run #']]
+                df_tlx.insert(loc=0, column='Comp Alg', value=comps_col)
+                groups_datasets = {}
+                for comp, df_comp in df_tlx.groupby('Comp Alg'):
+                    df_dict = {}
+                    for mode, df_mode in df_comp.groupby('Run Mode'):
+                        df_dict[mode] = df_mode['Raw TLX'].values
+                    groups_datasets[comp.replace('_', '')] = pd.DataFrame(df_dict)
+                    index_map = {v: i for i, v in enumerate(compalgs_order)}
+                    groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
+            else:
+                path_out = os.path.join(dir_out_wl, f"{'--'.join(filter_['model-name'])}")
+                dir_results = os.path.join(dir_out, wl_alg, f"hz={hz}; features={features}/{mc_scenario}")
+                filter__ = copy.deepcopy(filter_)
+                if megamodel:
+                    filter__ = None
+                groups_datasets = get_groups_datasets(dir_results, filter__, feat_groupby, compalgs_order)
+            title = f"WL by delay condition & {feat_groupby}"
+            make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, title, path_out)
+            # print means/medians by comp-alg & delay
+            for comp, data_comp in groups_datasets.items():
+                print(f"\n{comp}")
+                for delay in data_comp:
+                    print(f"  delay={delay}")
+                    print(f"    mean = {round(np.mean(data_comp[delay]), 4)}")
+                    print(f"    median = {round(np.median(data_comp[delay]), 4)}")
 
 if convert_tlxs:
     runs_modes = {
@@ -578,18 +659,21 @@ if eval_tlxs:
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     runs = [20, 33, 8, 37, 7, 23, 13, 27]
-    filter_ = {'Run #': runs}
+    filter_ = {'Run #': runs}  # None
     mc_scenarios = ['offset', 'straight-in']
+    dir_out_tlx = os.path.join(dir_out, 'tlx-scores')
+    os.makedirs(dir_out_tlx, exist_ok=True)
     for scenario in mc_scenarios:
         path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
-        path_out = os.path.join(dir_out, f'tlx_scores--{scenario}--{filter_}.csv')
+        path_out = os.path.join(dir_out_tlx, f'tlx_scores--{scenario}--{filter_}.csv')
         df_tlx = pd.read_csv(path_tlx)
-        df_tlx = filter_df(df_tlx, filter_)
+        if filter_:
+            df_tlx = filter_df(df_tlx, filter_)
         eval_tlx(df_tlx, path_out)
 
 if make_boxplots_algs:
     mc_scenarios = ['offset', 'straight-in']
-    filter_ = {'model-name': ['modname=roll_stick']}
+    filter_ = {'model-name': ['modname=roll_stick', 'modname=pitch_stick']}  # roll_stick
     algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}
     features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
@@ -645,10 +729,18 @@ if make_boxplots_algs:
         15: '_mfr',
         26: '_mfr'
     }
+    dir_out_boxes = os.path.join(dir_out, 'wl_by_comp')
+    os.makedirs(dir_out_boxes, exist_ok=True)
     for mc_scenario in mc_scenarios:
+        dir_out_mc = os.path.join(dir_out_boxes, mc_scenario)
+        dir_out_model = os.path.join(dir_out_mc, '--'.join(filter_['model-name']))
+        os.makedirs(dir_out_mc, exist_ok=True)
+        os.makedirs(dir_out_model, exist_ok=True)
         path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
         df_tlx = pd.read_csv(path_tlx)
-        compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby, compalgs_order, dir_out)
+        compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features,
+                                                                        mc_scenario, filter_, feat_groupby,
+                                                                        compalgs_order, dir_out)
         for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
             fig = plt.figure()
             axs_tup = fig.subplots(len(wlalgs_wllevelsdata), sharex=True)
@@ -663,12 +755,42 @@ if make_boxplots_algs:
                 bp = ax.boxplot(ds, positions=np.arange(len(ds)) + 1, showfliers=True, labels=wllevelsdata.columns)
                 bp = set_box_color(bp, color=algs_colors[wlalg])
                 bps.append(bp)
-            fig.legend([bp_["boxes"][0] for bp_ in bps], list(wlalgs_wllevelsdata.keys()), loc='upper right', fontsize=15)
+            fig.legend([bp_["boxes"][0] for bp_ in bps], list(wlalgs_wllevelsdata.keys()), loc='upper right',
+                       fontsize=15)
             plt.tight_layout()
-            path_out = os.path.join(dir_out, f"box-{mc_scenario}--{comp}.png")
+            path_out = os.path.join(dir_out_model, f"{comp}.png")
             plt.savefig(path_out)
 
+if make_tlx_overlaps:
+    mc_scenarios = ['offset', 'straight-in']
+    wl_algs = ['HTM', 'PSD', 'SteeringEntropy']
+    hz = '16.67'
+    features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    groups_legendnames = {'nc': 'No Compensation',
+                          'mc': 'McFarland Predictor',
+                          'mfr': 'McFarland Predictor, Spike Reduced',
+                          'ap': 'Adaptive Predictor',
+                          'ss': 'State Space Predictor'}
+    colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
+    compalgs_order = list(groups_legendnames.keys())
+    for wl_alg in wl_algs:
+        dir_out_alg = os.path.join(dir_out, wl_alg)
+        for mc_scenario in mc_scenarios:
+            dir_results = os.path.join(dir_out_alg, f"hz={hz}; features={features}/{mc_scenario}")
+            groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
+            break
 
+    # dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    # modes_convet = {
+    #     'baseline': 'baseline',
+    #     'delay=0.048': 'delay=0.048',
+    #     'delay=0.096': 'delay=0.096',
+    #     'delay=0.192': 'delay=0.192'
+    # }
+    # for mc_scenario in mc_scenarios:
+    #     path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
+    #     subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, modes_convert, path_tlx)
 
 #
 # if __name__ == "__main__":

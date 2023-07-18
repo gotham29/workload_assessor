@@ -18,8 +18,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 
 from source.model.model import train_save_models
 from source.utils.utils import get_args, load_files, make_dirs_subj, combine_dicts
-from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_totaldfs, diff_standard_ma, \
-    get_wllevels_indsend
+from source.preprocess.preprocess import update_colnames, preprocess_data, get_wllevels_totaldfs, get_wllevels_indsend
 from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import make_data_plots, plot_outputs_boxes, plot_outputs_lines, plot_outputs_bars, get_accum, \
     plot_write_data
@@ -794,6 +793,7 @@ def main(config):
     subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
 
     # run wl - total data
+    """
     ## make dir
     dir_out_total = os.path.join(dir_out, 'total')
     os.makedirs(dir_out_total, exist_ok=True)
@@ -808,7 +808,7 @@ def main(config):
            subjects_dfs_train=subjects_dfs_train,
            subjects_features_models=subjects_features_models,
            dir_out=dir_out_total)
-
+    """
     # run wl - groups
     for group in config['groups_filenames']:
         print(f'\n{group}...')
