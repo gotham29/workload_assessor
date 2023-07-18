@@ -214,15 +214,15 @@ def get_df_wllevels_totalascores(dir_results):
 def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
     df_filter = filter_df(df_wllevels_totalascores, filter_)
     gpby = df_filter.groupby(feat_groupby)
-    groutps_datasets = {}
+    groups_datasets = {}
     for gr, df_gr in gpby:
         wllevels_totalascores = {wl: [] for wl in df_gr['wl-level'].unique()}
         gpby_ = df_gr.groupby('wl-level')
         for wllevel, df_wllevel in gpby_:
             wllevels_totalascores[wllevel] += df_wllevel['total-ascores'].values[0]
         dataset = pd.DataFrame(wllevels_totalascores)
-        groutps_datasets[gr] = dataset
-    return groutps_datasets
+        groups_datasets[gr] = dataset
+    return groups_datasets
 
 
 def make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, title, path_out):
@@ -359,21 +359,31 @@ def set_box_color(bp, color):
 def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby, compalgs_order, dir_out):
     comps_col = [runs_comps[run] for run in df_tlx['Run #']]
     df_tlx.insert(loc=0, column='Comp Alg', value=comps_col)
-    # get comps_algs_datasets
     compalgs_wlalgs_wllevelsdata = {comp.replace('_', ''): {} for comp in df_tlx['Comp Alg'].unique()}
+    compalgs_wlalgs_wllevelsdata['total'] = {}
+    # get by comp-alg
     for comp, df_comp in df_tlx.groupby('Comp Alg'):
-        df_dict = {mode: {} for mode in df_comp['Run Mode'].unique()}
+        df_dict = {}
         for mode, df_mode in df_comp.groupby('Run Mode'):
             df_dict[mode] = df_mode['Raw TLX'].values
         compalgs_wlalgs_wllevelsdata[comp.replace('_', '')]['TLX'] = pd.DataFrame(df_dict)[delays_order]
+    # get total
+    df_dict = {}
+    for mode, df_mode in df_tlx.groupby('Run Mode'):
+        df_dict[mode] = df_mode['Raw TLX'].values
+    compalgs_wlalgs_wllevelsdata['total']['TLX'] = pd.DataFrame(df_dict)[delays_order]
     for wl_alg in algs_colors:
         if wl_alg == 'TLX':
             continue
         dir_out_alg = os.path.join(dir_out, wl_alg)
         dir_results = os.path.join(dir_out_alg, f"hz={hz}; features={features}/{mc_scenario}")
+        # get by comp-alg
         groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
         for comp, data in groups_datasets.items():
             compalgs_wlalgs_wllevelsdata[comp][wl_alg] = data
+        # get total
+        total_datasets = pd.concat(list(groups_datasets.values()), axis=0)
+        compalgs_wlalgs_wllevelsdata['total'][wl_alg] = total_datasets
     return compalgs_wlalgs_wllevelsdata
 
 
@@ -579,12 +589,20 @@ if eval_tlxs:
 
 if make_boxplots_algs:
     mc_scenarios = ['offset', 'straight-in']
-    hz = '16.67'
+    filter_ = {'model-name': ['modname=roll_stick']}
     algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}
     features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     delays_order = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    hz = '16.67'
+    feat_groupby = 'comp-alg'
+    groups_legendnames = {'nc': 'No Compensation',
+                          'mc': 'McFarland Predictor',
+                          'mfr': 'McFarland Predictor, Spike Reduced',
+                          'ap': 'Adaptive Predictor',
+                          'ss': 'State Space Predictor'}
+    compalgs_order = list(groups_legendnames.keys())
     runs_comps = {
         1: '_ss',
         34: '_ss',
