@@ -23,9 +23,10 @@ from source.pipeline.run_pipeline import get_scores
 
 # MAKE PLOTS
 make_plots_violin = False
+make_boxplots_algs = True
 make_boxplots_groups = False
 convert_tlxs = False
-eval_tlxs = True
+eval_tlxs = False
 
 
 # ALGS_DIRS_IN = {
@@ -132,9 +133,6 @@ Test for statistically significant performance differences between Algs
 # run_stat_tests(algs_data)
 
 
-""" Violinplots - check performance variation """
-
-
 def plot_violin(df_, xlabel, ylabel, title, feats_colors, path_out, y_lim=None):
     vplot_anom = sns.violinplot(data=df_,
                                 x=xlabel,
@@ -227,7 +225,9 @@ def get_datasets(df_wllevels_totalascores, filter_, feat_groupby='comp-alg'):
     return groutps_datasets
 
 
-def make_boxplot_groups(datasets, colours, groups, groups_legendnames, ylabel, title, path_out):
+def make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, title, path_out):
+    groups = list(groups_datasets.keys())
+    datasets = list(groups_datasets.values())
     # Set figsize
     plt.rc('figure', figsize=[10, 3])
     # Set x-positions for boxes
@@ -313,7 +313,7 @@ def convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes):
     df_straight = pd.DataFrame(rows_straightin)
 
     path_out_offset = os.path.join(dir_out, 'tlx--offset.csv')
-    path_out_straight = os.path.join(dir_out, 'tlx--straightin.csv')
+    path_out_straight = os.path.join(dir_out, 'tlx--straight-in.csv')
 
     df_offset.to_csv(path_out_offset, index=False)
     df_straight.to_csv(path_out_straight, index=False)
@@ -337,6 +337,44 @@ def eval_tlx(df_tlx, path_out):
               'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest}
     scores = pd.DataFrame(scores, index=[0])
     scores.to_csv(path_out)
+
+
+def get_groups_datasets(dir_in, filter_, feat_groupby, compalgs_order):
+    df_wllevels_totalascores = get_df_wllevels_totalascores(dir_in)
+    groups_datasets = get_datasets(df_wllevels_totalascores, filter_, feat_groupby)
+    groups_datasets = {k.replace('_', ''): v for k, v in groups_datasets.items()}
+    index_map = {v: i for i, v in enumerate(compalgs_order)}
+    groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
+    return groups_datasets
+
+
+def set_box_color(bp, color):
+    plt.setp(bp['boxes'], color=color)
+    plt.setp(bp['whiskers'], color=color)
+    plt.setp(bp['caps'], color=color)
+    plt.setp(bp['medians'], color=color)
+    return bp
+
+
+def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby, compalgs_order, dir_out):
+    comps_col = [runs_comps[run] for run in df_tlx['Run #']]
+    df_tlx.insert(loc=0, column='Comp Alg', value=comps_col)
+    # get comps_algs_datasets
+    compalgs_wlalgs_wllevelsdata = {comp.replace('_', ''): {} for comp in df_tlx['Comp Alg'].unique()}
+    for comp, df_comp in df_tlx.groupby('Comp Alg'):
+        df_dict = {mode: {} for mode in df_comp['Run Mode'].unique()}
+        for mode, df_mode in df_comp.groupby('Run Mode'):
+            df_dict[mode] = df_mode['Raw TLX'].values
+        compalgs_wlalgs_wllevelsdata[comp.replace('_', '')]['TLX'] = pd.DataFrame(df_dict)[delays_order]
+    for wl_alg in algs_colors:
+        if wl_alg == 'TLX':
+            continue
+        dir_out_alg = os.path.join(dir_out, wl_alg)
+        dir_results = os.path.join(dir_out_alg, f"hz={hz}; features={features}/{mc_scenario}")
+        groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
+        for comp, data in groups_datasets.items():
+            compalgs_wlalgs_wllevelsdata[comp][wl_alg] = data
+    return compalgs_wlalgs_wllevelsdata
 
 
 if make_plots_violin:
@@ -452,33 +490,32 @@ if make_plots_violin:
         plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out)
 
 if make_boxplots_groups:
-    wl_alg = 'HTM'
+    wl_alg = 'HTM'  #HTM, PSD, SteeringEntropy
     mc_scenario = 'offset'  # 'offset', 'straight-in'
+    filter_ = {'model-name': ['modname=roll_stick']}  #, 'modname=pitch_stick'
     hz = '16.67'
     feat_groupby = 'comp-alg'
+    ylabel = "Perceived WL"
+    title = f"WL by delay & {feat_groupby} ({mc_scenario})"
     groups_legendnames = {'nc': 'No Compensation',
                           'mc': 'McFarland Predictor',
                           'mfr': 'McFarland Predictor, Spike Reduced',
                           'ap': 'Adaptive Predictor',
-                          'ss': 'State Space Predictor'
-                          }
+                          'ss': 'State Space Predictor'}
     colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
     compalgs_order = list(groups_legendnames.keys())
-    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}/hz={hz}/{mc_scenario}"
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
-    ylabel = "Perceived WL"
-    title = f"{ylabel} by delay & {feat_groupby} ({mc_scenario})"
-    filter_ = {
-        'model-name': ['modname=roll_stick', 'modname=pitch_stick']
-    }
-    df_wllevels_totalascores = get_df_wllevels_totalascores(dir_results)
-    groups_datasets = get_datasets(df_wllevels_totalascores, filter_, feat_groupby)
-    groups_datasets = {k.replace('_', ''): v for k, v in groups_datasets.items()}
-    index_map = {v: i for i, v in enumerate(compalgs_order)}
-    groups_datasets = dict(sorted(groups_datasets.items(), key=lambda pair: index_map[pair[0]]))
-    groups = list(groups_datasets.keys())
+    dir_out = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{wl_alg}"
+    dir_results = os.path.join(dir_out, f"hz={hz}; features=pitch_stick.roll_stick.rudder_pedals.throttle/{mc_scenario}")
+    groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
     path_out = os.path.join(dir_out, f"{title} -- {str(filter_)}")
-    make_boxplot_groups(list(groups_datasets.values()), colours, groups, groups_legendnames, ylabel, title, path_out)
+    make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, title, path_out)
+    # print means/medians by comp-alg & delay
+    for comp, data_comp in groups_datasets.items():
+        print(f"\n{comp}")
+        for delay in data_comp:
+            print(f"  delay={delay}")
+            print(f"    mean = {round(np.mean(data_comp[delay]),4)}")
+            print(f"    median = {round(np.median(data_comp[delay]),4)}")
 
 if convert_tlxs:
     runs_modes = {
@@ -530,12 +567,90 @@ if convert_tlxs:
 if eval_tlxs:
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    mc_scenarios = ['offset', 'straightin']
+    runs = [20, 33, 8, 37, 7, 23, 13, 27]
+    filter_ = {'Run #': runs}
+    mc_scenarios = ['offset', 'straight-in']
     for scenario in mc_scenarios:
         path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
-        path_out = os.path.join(dir_out, f'tlx_scores--{scenario}.csv')
+        path_out = os.path.join(dir_out, f'tlx_scores--{scenario}--{filter_}.csv')
         df_tlx = pd.read_csv(path_tlx)
+        df_tlx = filter_df(df_tlx, filter_)
         eval_tlx(df_tlx, path_out)
+
+if make_boxplots_algs:
+    mc_scenarios = ['offset', 'straight-in']
+    hz = '16.67'
+    algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}
+    features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    delays_order = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    runs_comps = {
+        1: '_ss',
+        34: '_ss',
+        2: '_ss',
+        39: '_ss',
+        19: '_ss',
+        21: '_ss',
+        4: '_ss',
+        38: '_ss',
+        10: '_ap',
+        31: '_ap',
+        16: '_ap',
+        29: '_ap',
+        5: '_ap',
+        28: '_ap',
+        18: '_ap',
+        35: '_ap',
+        20: '_nc',
+        33: '_nc',
+        8: '_nc',
+        37: '_nc',
+        7: '_nc',
+        23: '_nc',
+        13: '_nc',
+        27: '_nc',
+        3: '_mc',
+        30: '_mc',
+        6: '_mc',
+        22: '_mc',
+        17: '_mc',
+        40: '_mc',
+        12: '_mc',
+        36: '_mc',
+        24: '_mfr',
+        14: '_mfr',
+        9: '_mfr',
+        32: '_mfr',
+        11: '_mfr',
+        25: '_mfr',
+        15: '_mfr',
+        26: '_mfr'
+    }
+    for mc_scenario in mc_scenarios:
+        path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
+        df_tlx = pd.read_csv(path_tlx)
+        compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby, compalgs_order, dir_out)
+        for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
+            fig = plt.figure()
+            axs_tup = fig.subplots(len(wlalgs_wllevelsdata), sharex=True)
+            fig.set_size_inches(15, 10)
+            fig.suptitle(f"Compensation Alg = {comp}", fontsize=25)
+            axs_tup[2].set_xlabel('Delay Conditions', fontsize=15)
+            axs_tup[1].set_ylabel('Perceived WL', fontsize=15)
+            bps = []
+            for i, (wlalg, wllevelsdata) in enumerate(wlalgs_wllevelsdata.items()):
+                ax = axs_tup[i]
+                ds = [list(wllevelsdata[c].values) for c in wllevelsdata]
+                bp = ax.boxplot(ds, positions=np.arange(len(ds)) + 1, showfliers=True, labels=wllevelsdata.columns)
+                bp = set_box_color(bp, color=algs_colors[wlalg])
+                bps.append(bp)
+            fig.legend([bp_["boxes"][0] for bp_ in bps], list(wlalgs_wllevelsdata.keys()), loc='upper right', fontsize=15)
+            plt.tight_layout()
+            path_out = os.path.join(dir_out, f"box-{mc_scenario}--{comp}.png")
+            plt.savefig(path_out)
+
+
 
 #
 # if __name__ == "__main__":

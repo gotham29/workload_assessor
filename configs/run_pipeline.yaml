@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: SteeringEntropy
 #HTM, PSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -14,7 +14,7 @@ preprocess:
   autocorr_column: pitch_stick
 
 tlx:
-  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx--offset.csv  ## straightin,offset
+  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx--straightin.csv  ## straightin,offset
   modes_convert:
     baseline: baseline
     delay=0.048: delay=0.048
@@ -2608,9 +2608,9 @@ colnames:
   - throttle
 
 columns_model:
-#  - pitch_stick
+  - pitch_stick
   - roll_stick
-#  - rudder_pedals
+  - rudder_pedals
   - throttle
 
 hzs:
@@ -2618,107 +2618,107 @@ hzs:
   convertto: 16.67
 
 ## STRAIGHT-IN
-#wllevels_filenames:
-#  training:
-#    - run1_ss.csv
-#    - run3_mc.csv
-#  baseline:
-#    - run10_ap.csv
-#    - run14_mfr.csv
-#    - run20_nc.csv
-#  delay=0.048:
-#    - run2_ss.csv
-#    - run6_mc.csv
-#    - run8_nc.csv
-#    - run9_mfr.csv
-#    - run16_ap.csv
-#  delay=0.096:
-#    - run5_ap.csv
-#    - run7_nc.csv
-#    - run11_mfr.csv
-#    - run17_mc.csv
-#    - run19_ss.csv
-#  delay=0.192:
-#    - run4_ss.csv
-#    - run12_mc.csv
-#    - run13_nc.csv
-#    - run15_mfr.csv
-#    - run18_ap.csv
-
-# OFFSET
 wllevels_filenames:
   training:
-    - run24_mfr.csv
-    - run30_mc.csv
+    - run1_ss.csv
+    - run3_mc.csv
   baseline:
-    - run31_ap.csv
-    - run33_nc.csv
-    - run34_ss.csv
+    - run10_ap.csv
+    - run14_mfr.csv
+    - run20_nc.csv
   delay=0.048:
-    - run22_mc.csv
-    - run29_ap.csv
-    - run32_mfr.csv
-    - run37_nc.csv
-    - run39_ss.csv
+    - run2_ss.csv
+    - run6_mc.csv
+    - run8_nc.csv
+    - run9_mfr.csv
+    - run16_ap.csv
   delay=0.096:
-    - run21_ss.csv
-    - run23_nc.csv
-    - run25_mfr.csv
-    - run28_ap.csv
-    - run40_mc.csv
+    - run5_ap.csv
+    - run7_nc.csv
+    - run11_mfr.csv
+    - run17_mc.csv
+    - run19_ss.csv
   delay=0.192:
-    - run26_mfr.csv
-    - run27_nc.csv
-    - run35_ap.csv
-    - run36_mc.csv
-    - run38_ss.csv
+    - run4_ss.csv
+    - run12_mc.csv
+    - run13_nc.csv
+    - run15_mfr.csv
+    - run18_ap.csv
 
-groups_filenames: {}
-#  _ss:
-#    - run1_ss.csv
-#    - run34_ss.csv
-#    - run2_ss.csv
-#    - run39_ss.csv
-#    - run19_ss.csv
-#    - run21_ss.csv
-#    - run4_ss.csv
-#    - run38_ss.csv
-#  _ap:
-#    - run10_ap.csv
-#    - run31_ap.csv
-#    - run16_ap.csv
-#    - run29_ap.csv
-#    - run5_ap.csv
-#    - run28_ap.csv
-#    - run18_ap.csv
-#    - run35_ap.csv
-#  _nc:
-#    - run20_nc.csv
-#    - run33_nc.csv
-#    - run8_nc.csv
-#    - run37_nc.csv
-#    - run7_nc.csv
-#    - run23_nc.csv
-#    - run13_nc.csv
-#    - run27_nc.csv
-#  _mc:
-#    - run3_mc.csv
-#    - run30_mc.csv
-#    - run6_mc.csv
-#    - run22_mc.csv
-#    - run17_mc.csv
-#    - run40_mc.csv
-#    - run12_mc.csv
-#    - run36_mc.csv
-#  _mfr:
+# OFFSET
+#wllevels_filenames:
+#  training:
 #    - run24_mfr.csv
-#    - run14_mfr.csv
-#    - run9_mfr.csv
+#    - run30_mc.csv
+#  baseline:
+#    - run31_ap.csv
+#    - run33_nc.csv
+#    - run34_ss.csv
+#  delay=0.048:
+#    - run22_mc.csv
+#    - run29_ap.csv
 #    - run32_mfr.csv
-#    - run11_mfr.csv
+#    - run37_nc.csv
+#    - run39_ss.csv
+#  delay=0.096:
+#    - run21_ss.csv
+#    - run23_nc.csv
 #    - run25_mfr.csv
-#    - run15_mfr.csv
+#    - run28_ap.csv
+#    - run40_mc.csv
+#  delay=0.192:
 #    - run26_mfr.csv
+#    - run27_nc.csv
+#    - run35_ap.csv
+#    - run36_mc.csv
+#    - run38_ss.csv
+
+groups_filenames: #{}
+  _ss:
+    - run1_ss.csv
+    - run34_ss.csv
+    - run2_ss.csv
+    - run39_ss.csv
+    - run19_ss.csv
+    - run21_ss.csv
+    - run4_ss.csv
+    - run38_ss.csv
+  _ap:
+    - run10_ap.csv
+    - run31_ap.csv
+    - run16_ap.csv
+    - run29_ap.csv
+    - run5_ap.csv
+    - run28_ap.csv
+    - run18_ap.csv
+    - run35_ap.csv
+  _nc:
+    - run20_nc.csv
+    - run33_nc.csv
+    - run8_nc.csv
+    - run37_nc.csv
+    - run7_nc.csv
+    - run23_nc.csv
+    - run13_nc.csv
+    - run27_nc.csv
+  _mc:
+    - run3_mc.csv
+    - run30_mc.csv
+    - run6_mc.csv
+    - run22_mc.csv
+    - run17_mc.csv
+    - run40_mc.csv
+    - run12_mc.csv
+    - run36_mc.csv
+  _mfr:
+    - run24_mfr.csv
+    - run14_mfr.csv
+    - run9_mfr.csv
+    - run32_mfr.csv
+    - run11_mfr.csv
+    - run25_mfr.csv
+    - run15_mfr.csv
+    - run26_mfr.csv
 
 modnames_grids:
   ARIMA:
@@ -2904,28 +2904,28 @@ htm_config_user:
       type: timestamp
       weekend: 0
       weight: 0
-#    pitch_stick:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
+    pitch_stick:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
     roll_stick:
       type: float
       min: null
       max: null
       weight: 1.0
-#    rudder_pedals:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
+    rudder_pedals:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
     throttle:
       type: float
       min: null
       max: null
       weight: 1.0
   models_state:
-    model_for_each_feature: false  #true
+    model_for_each_feature: true  #false
     return_pred_count: true
     use_sp: true
   timesteps_stop:
