@@ -21,9 +21,9 @@ from source.analyze.anomaly import get_subjects_wldiffs
 from source.pipeline.run_pipeline import get_scores
 
 # MAKE PLOTS
-make_boxplots_groups = True
+make_tlx_overlaps = True
+make_boxplots_groups = False
 make_boxplots_algs = False
-make_tlx_overlaps = False
 make_plots_violin = False
 convert_tlxs = False
 eval_tlxs = False
@@ -34,40 +34,6 @@ eval_tlxs = False
 #     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
 #     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
 # }
-
-
-def run_stat_tests(algs_data):
-    # T-Test
-    t_pval1 = ttest_ind(algs_data['HTM'], algs_data['SE'])[1]
-    # KS-Test
-    ks_pval1 = kstest(algs_data['HTM'], algs_data['SE'])[1]
-    # MW-Test
-    mw_pval1 = mannwhitneyu(algs_data['HTM'], algs_data['SE'])[1]
-    print("  T")
-    print(f"    HTM vs SE --> {t_pval1}")
-    print("  KS")
-    print(f"    HTM vs SE --> {ks_pval1}")
-    print("  MW")
-    print(f"    HTM vs SE --> {mw_pval1}")
-    if 'TLX' in algs_data:
-        # T-Test
-        t_pval2 = ttest_ind(algs_data['HTM'], algs_data['TLX'])[1]
-        t_pval3 = ttest_ind(algs_data['SE'], algs_data['TLX'])[1]
-        # KS-Test
-        ks_pval2 = kstest(algs_data['HTM'], algs_data['TLX'])[1]
-        ks_pval3 = kstest(algs_data['SE'], algs_data['TLX'])[1]
-        # MW-Test
-        mw_pval2 = mannwhitneyu(algs_data['HTM'], algs_data['TLX'])[1]
-        mw_pval3 = mannwhitneyu(algs_data['SE'], algs_data['TLX'])[1]
-        print("  T")
-        print(f"    HTM vs TLX --> {t_pval2}")
-        print(f"    SE vs TLX --> {t_pval3}")
-        print("  KS")
-        print(f"    HTM vs TLX --> {ks_pval2}")
-        print(f"    SE vs TLX --> {ks_pval3}")
-        print("  MW")
-        print(f"    HTM vs TLX --> {mw_pval2}")
-        print(f"    SE vs TLX --> {mw_pval3}")
 
 
 """
@@ -134,6 +100,42 @@ Test for statistically significant performance differences between Algs
 # plot_hists(algs_data, DIR_OUT, title)
 # print(f"\n\n{title}")
 # run_stat_tests(algs_data)
+
+
+""" DEFINE FUNCTIONS """
+
+def run_stat_tests(algs_data):
+    # T-Test
+    t_pval1 = ttest_ind(algs_data['HTM'], algs_data['SE'])[1]
+    # KS-Test
+    ks_pval1 = kstest(algs_data['HTM'], algs_data['SE'])[1]
+    # MW-Test
+    mw_pval1 = mannwhitneyu(algs_data['HTM'], algs_data['SE'])[1]
+    print("  T")
+    print(f"    HTM vs SE --> {t_pval1}")
+    print("  KS")
+    print(f"    HTM vs SE --> {ks_pval1}")
+    print("  MW")
+    print(f"    HTM vs SE --> {mw_pval1}")
+    if 'TLX' in algs_data:
+        # T-Test
+        t_pval2 = ttest_ind(algs_data['HTM'], algs_data['TLX'])[1]
+        t_pval3 = ttest_ind(algs_data['SE'], algs_data['TLX'])[1]
+        # KS-Test
+        ks_pval2 = kstest(algs_data['HTM'], algs_data['TLX'])[1]
+        ks_pval3 = kstest(algs_data['SE'], algs_data['TLX'])[1]
+        # MW-Test
+        mw_pval2 = mannwhitneyu(algs_data['HTM'], algs_data['TLX'])[1]
+        mw_pval3 = mannwhitneyu(algs_data['SE'], algs_data['TLX'])[1]
+        print("  T")
+        print(f"    HTM vs TLX --> {t_pval2}")
+        print(f"    SE vs TLX --> {t_pval3}")
+        print("  KS")
+        print(f"    HTM vs TLX --> {ks_pval2}")
+        print(f"    SE vs TLX --> {ks_pval3}")
+        print("  MW")
+        print(f"    HTM vs TLX --> {mw_pval2}")
+        print(f"    SE vs TLX --> {mw_pval3}")
 
 
 def plot_violin(df_, xlabel, ylabel, title, feats_colors, path_out, y_lim=None):
@@ -361,7 +363,7 @@ def set_box_color(bp, color):
 
 
 def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features, mc_scenario, filter_, feat_groupby,
-                                     compalgs_order, dir_out):
+                                     compalgs_order, delays_order, dir_out):
     comps_col = [runs_comps[run] for run in df_tlx['Run #']]
     df_tlx.insert(loc=0, column='Comp Alg', value=comps_col)
     compalgs_wlalgs_wllevelsdata = {comp.replace('_', ''): {} for comp in df_tlx['Comp Alg'].unique()}
@@ -391,6 +393,8 @@ def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, featur
         compalgs_wlalgs_wllevelsdata['total'][wl_alg] = total_datasets
     return compalgs_wlalgs_wllevelsdata
 
+
+""" RUN """
 
 if make_plots_violin:
     dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
@@ -665,7 +669,7 @@ if eval_tlxs:
     os.makedirs(dir_out_tlx, exist_ok=True)
     for scenario in mc_scenarios:
         path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
-        path_out = os.path.join(dir_out_tlx, f'tlx_scores--{scenario}--{filter_}.csv')
+        path_out = os.path.join(dir_out_tlx, f'{scenario}--{filter_}.csv')
         df_tlx = pd.read_csv(path_tlx)
         if filter_:
             df_tlx = filter_df(df_tlx, filter_)
@@ -740,7 +744,7 @@ if make_boxplots_algs:
         df_tlx = pd.read_csv(path_tlx)
         compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features,
                                                                         mc_scenario, filter_, feat_groupby,
-                                                                        compalgs_order, dir_out)
+                                                                        compalgs_order, delays_order, dir_out)
         for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
             fig = plt.figure()
             axs_tup = fig.subplots(len(wlalgs_wllevelsdata), sharex=True)
@@ -762,35 +766,88 @@ if make_boxplots_algs:
             plt.savefig(path_out)
 
 if make_tlx_overlaps:
+    filter_ = {'model-name': ['modname=pitch_stick', 'modname=roll_stick']}
     mc_scenarios = ['offset', 'straight-in']
-    wl_algs = ['HTM', 'PSD', 'SteeringEntropy']
+    wl_algs = ['HTM', 'PSD', 'TLX']  # 'SteeringEntropy'
     hz = '16.67'
+    feat_groupby = 'comp-alg'
     features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
+    delays_order = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}  # 'SteeringEntropy': 'purple'
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    dir_out_tlx = os.path.join(dir_out, 'tlx-overlaps')
+    os.makedirs(dir_out_tlx, exist_ok=True)
     groups_legendnames = {'nc': 'No Compensation',
                           'mc': 'McFarland Predictor',
                           'mfr': 'McFarland Predictor, Spike Reduced',
                           'ap': 'Adaptive Predictor',
                           'ss': 'State Space Predictor'}
-    colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
+    runs_comps = {
+        1: '_ss',
+        34: '_ss',
+        2: '_ss',
+        39: '_ss',
+        19: '_ss',
+        21: '_ss',
+        4: '_ss',
+        38: '_ss',
+        10: '_ap',
+        31: '_ap',
+        16: '_ap',
+        29: '_ap',
+        5: '_ap',
+        28: '_ap',
+        18: '_ap',
+        35: '_ap',
+        20: '_nc',
+        33: '_nc',
+        8: '_nc',
+        37: '_nc',
+        7: '_nc',
+        23: '_nc',
+        13: '_nc',
+        27: '_nc',
+        3: '_mc',
+        30: '_mc',
+        6: '_mc',
+        22: '_mc',
+        17: '_mc',
+        40: '_mc',
+        12: '_mc',
+        36: '_mc',
+        24: '_mfr',
+        14: '_mfr',
+        9: '_mfr',
+        32: '_mfr',
+        11: '_mfr',
+        25: '_mfr',
+        15: '_mfr',
+        26: '_mfr'
+    }
     compalgs_order = list(groups_legendnames.keys())
-    for wl_alg in wl_algs:
-        dir_out_alg = os.path.join(dir_out, wl_alg)
-        for mc_scenario in mc_scenarios:
-            dir_results = os.path.join(dir_out_alg, f"hz={hz}; features={features}/{mc_scenario}")
-            groups_datasets = get_groups_datasets(dir_results, filter_, feat_groupby, compalgs_order)
-            break
+    filter__ = copy.deepcopy(filter_)
+    for mc_scenario in mc_scenarios:
+        path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
+        df_tlx = pd.read_csv(path_tlx)
+        dir_out_mc = os.path.join(dir_out_tlx, mc_scenario)
+        os.makedirs(dir_out_mc, exist_ok=True)
+        path_out = os.path.join(dir_out_mc, f"filter={str(filter_)}.csv")
+        if len(filter_['model-name']) > 1:
+            filter__ = None
+            algs_colors = {alg: color for alg, color in algs_colors.items() if alg == 'HTM'}
+            features = '.'.join([f.replace('modname=', '') for f in sorted(filter_['model-name'])]) + ' - MEGA'
+        compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features,
+                                                                        mc_scenario, filter__, feat_groupby,
+                                                                        compalgs_order, delays_order, dir_out)
+        wlalgs_comps_wlvariations = {alg: {} for alg in wl_algs}
+        for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
+            for wl_alg, wllevelsdata in wlalgs_wllevelsdata.items():
+                var_cols = wllevelsdata.var(axis='columns').mean()
+                wlalgs_comps_wlvariations[wl_alg][comp] = var_cols
+        df_overlaps = pd.DataFrame(wlalgs_comps_wlvariations).round(3)
+        df_overlaps.to_csv(path_out)
 
-    # dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    # modes_convet = {
-    #     'baseline': 'baseline',
-    #     'delay=0.048': 'delay=0.048',
-    #     'delay=0.096': 'delay=0.096',
-    #     'delay=0.192': 'delay=0.192'
-    # }
-    # for mc_scenario in mc_scenarios:
-    #     path_tlx = os.path.join(dir_in, f"tlx--{mc_scenario}.csv")
-    #     subscales_meanoverlaps, df_overlaps = get_tlx_overlaps(subjects_wllevels_totalascores, modes_convert, path_tlx)
 
 #
 # if __name__ == "__main__":
