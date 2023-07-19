@@ -32,8 +32,8 @@ def make_data_plots(filenames_data: dict, modname: str, columns_model: list, fil
 
 
 def plot_outputs_boxes(data_plot1, data_plot2, levels_colors, title_1, title_2, out_dir, xlabel, ylabel):
-    outtypes_paths = {'aScores': os.path.join(out_dir, 'TaskWL_aScores.png'),
-                      'pCounts': os.path.join(out_dir, 'TaskWL_pCounts.png')}
+    outtypes_paths = {'aScores': os.path.join(out_dir, 'wllevels_aScores.png'),
+                      'pCounts': os.path.join(out_dir, 'wllevels_pCounts.png')}
     # Plot -- violin
     outtypes_data = {ot: [] for ot in outtypes_paths}
     for testlevel, ascores in data_plot1.items():
@@ -150,54 +150,94 @@ def plot_write_data(df: pd.DataFrame,
         plt.close()
 
 
-def plot_outputs_lines(wllevels_anomscores_: dict,
-                       wllevels_predcounts_: dict,
-                       wllevels_indsend: dict,
+def plot_outputs_lines(wllevels_ascores_: dict,
+                       wllevels_pcounts_: dict,
+                       # wllevels_indsend: dict,
+                       columns_model,
+                       filenames_data: dict,
+                       filenames_ascores: dict,
                        get_pcounts: bool,
                        levels_order: list,
                        levels_colors: dict,
                        out_dir: str):
-    # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_predcounts
-    wllevels_anomscores, wllevels_predcounts = {}, {}
+    # REORDER --> wllevels_alldata, wllevels_anomscores, wllevels_pcounts
+    wllevels_ascores, wllevels_pcounts = {}, {}
     for k in levels_order:
-        wllevels_anomscores[k] = wllevels_anomscores_[k]
-        if k in wllevels_predcounts_:
-            wllevels_predcounts[k] = wllevels_predcounts_[k]
+        wllevels_ascores[k] = wllevels_ascores_[k]
+        if k in wllevels_pcounts_:
+            wllevels_pcounts[k] = wllevels_pcounts_[k]
 
     # TEST
+    ## plot - aScores accum (by filename)
+    out_dir_filenames = os.path.join(out_dir, 'filenames')
+    os.makedirs(out_dir_filenames)
+    for fn, ascores in filenames_ascores.items():
+        ascores_accum = get_accum(ascores)
+
+        for feat in columns_model:
+            behavior = filenames_data[fn][feat]
+            t = [_ for _ in range(len(behavior))]
+            fig, ax1 = plt.subplots()
+
+            color1 = 'cornflowerblue'
+            ax1.set_xlabel('time')
+            ax1.set_ylabel(feat, color=color1)
+            ax1.plot(t, behavior, color=color1)
+            ax1.tick_params(axis='y', labelcolor=color1)
+
+            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+            color2 = 'black'
+            ax2.set_ylabel('Perceived WL', color=color2)  # we already handled the x-label with ax1
+            ax2.plot(t, ascores_accum, color=color2)
+            ax2.tick_params(axis='y', labelcolor=color2)
+
+            plt.plot(ascores_accum)
+            plt.title("Perceived WL")
+            plt.xlabel('Time')
+            plt.ylabel('Accumulated Anomaly Scores')
+            out_path = os.path.join(out_dir_filenames, f'aScoresAccum--time--{fn}--{feat}.png')
+            plt.savefig(out_path)
+            plt.close()
+
     ## get data & wl inds
-    ascores_accum, pcounts_accum = [], []
+    # ascores_accum, pcounts_accum = [], []
     wllevels_ascoresaccum = {}
-    for wllevel, ascores in wllevels_anomscores.items():
+    for wllevel, ascores in wllevels_ascores.items():
         ascores_accum_wllevel = get_accum(ascores)
-        ascores_accum += ascores_accum_wllevel
+        # ascores_accum += ascores_accum_wllevel
         wllevels_ascoresaccum[wllevel] = ascores_accum_wllevel
-        if get_pcounts:
-            pcounts_accum += get_accum(wllevels_predcounts[wllevel])
+        # if get_pcounts:
+        #     pcounts_accum += get_accum(wllevels_pcounts[wllevel])
 
-    ## plot - aScores
-    plt.plot(ascores_accum)
-    plt.title("Perceived WL")
-    plt.xlabel('Time')
-    plt.ylabel('Accumulated Anomaly Scores')
-    prev_ind = 0
-    for wllevel, ind in wllevels_indsend.items():
-        plt.axvline(x=ind, color='r', label=wllevel)
-        fdata_level = wllevels_anomscores[wllevel]
-        loc_x = np.percentile([ind, prev_ind], 25)
-        loc_y = np.percentile(fdata_level, 25)
-        fdata_total = round(np.sum(fdata_level), 3)
-        plt.text(loc_x, loc_y, f"total={fdata_total}")
-        prev_ind = ind
-    out_path = os.path.join(out_dir, f'time--validation--aScores.png')
-    plt.savefig(out_path)
-    plt.close()
+    wllevels_pcountsaccum = {}
+    for wllevel, pcounts in wllevels_pcounts.items():
+        pcounts_accum_wllevel = get_accum(pcounts)
+        # pcounts_accum += pcounts_accum_wllevel
+        wllevels_pcountsaccum[wllevel] = pcounts_accum_wllevel
 
-    ## plot - aScpres overlapped
+    # ## plot - aScores accum (by wllevel)
+    # plt.plot(ascores_accum)
+    # plt.title("Perceived WL")
+    # plt.xlabel('Time')
+    # plt.ylabel('Accumulated Anomaly Scores')
+    # prev_ind = 0
+    # for wllevel, ind in wllevels_indsend.items():
+    #     plt.axvline(x=ind, color='r', label=wllevel)
+    #     fdata_level = wllevels_ascores[wllevel]
+    #     loc_x = np.percentile([ind, prev_ind], 25)
+    #     loc_y = np.percentile(fdata_level, 25)
+    #     fdata_total = round(np.sum(fdata_level), 3)
+    #     plt.text(loc_x, loc_y, f"total={fdata_total}")
+    #     prev_ind = ind
+    # out_path = os.path.join(out_dir, f'time--validation--aScores.png')
+    # plt.savefig(out_path)
+    # plt.close()
+
+    ## plot - aScores accum overlapped
     plt.figure(figsize=(15, 3))
     max_ascoreaccum = 0
     for wllevel, ascoresaccum in wllevels_ascoresaccum.items():
-        wllevel_ascores_total = round(np.sum(wllevels_anomscores[wllevel]), 4)
+        wllevel_ascores_total = round(np.sum(wllevels_ascores[wllevel]), 4)
         plt.plot(ascoresaccum, label=f"{wllevel} (total={wllevel_ascores_total})", color=levels_colors[wllevel])
         max_ascoreaccum = max(max_ascoreaccum, max(ascoresaccum))
         # loc_x = len(ascoresaccum)
@@ -208,28 +248,48 @@ def plot_outputs_lines(wllevels_anomscores_: dict,
     plt.title("Perceived WL by Task Level")
     plt.ylabel('Accumulated Anomaly Scores')
     plt.legend()
-    out_path = os.path.join(out_dir, f'levels--validation--aScores.png')
+    out_path = os.path.join(out_dir, f'aScoresAccum--time--wllevels.png')
     plt.savefig(out_path)
     plt.close()
 
-    ## plot - pCounts
+    ## plot - pCounts accum overlapped
     if get_pcounts:
-        plt.plot(pcounts_accum)
-        plt.title("Perceived WL")
-        plt.xlabel('Time')
-        plt.ylabel('Accumulated Prediction Counts')
-        prev_ind = 0
-        for wllevel, ind in wllevels_indsend.items():
-            plt.axvline(x=ind, color='r', label=wllevel)
-            fdata_level = wllevels_predcounts[wllevel]
-            loc_x = np.percentile([ind, prev_ind], 25)
-            loc_y = np.percentile(fdata_level, 25)
-            fdata_total = round(np.sum(fdata_level), 3)
-            plt.text(loc_x, loc_y, f"total={fdata_total}")
-            prev_ind = ind
-        out_path = os.path.join(out_dir, f'time--validation--pCounts.png')
+        plt.figure(figsize=(15, 3))
+        max_pcountaccum = 0
+        for wllevel, pcountssaccum in wllevels_pcountsaccum.items():
+            wllevel_pcounts_total = round(np.sum(wllevels_pcounts[wllevel]), 4)
+            plt.plot(pcountssaccum, label=f"{wllevel} (total={wllevel_pcounts_total})", color=levels_colors[wllevel])
+            max_pcountaccum = max(max_pcountaccum, max(pcountssaccum))
+            # loc_x = len(ascoresaccum)
+            # loc_y = ascoresaccum[-1]
+            # plt.text(loc_x, loc_y, f"avg={wllevel_ascores_mean}")
+        max_pcountaccum = max_pcountaccum
+        plt.ylim(0, max_pcountaccum)
+        plt.title("Prediction Counts by Task Level")
+        plt.ylabel('Accumulated Predictions Counts')
+        plt.legend()
+        out_path = os.path.join(out_dir, f'pCountsAccum--time--wllevels.png')
         plt.savefig(out_path)
         plt.close()
+
+    # ## plot - pCounts
+    # if get_pcounts:
+    #     plt.plot(pcounts_accum)
+    #     plt.title("Perceived WL")
+    #     plt.xlabel('Time')
+    #     plt.ylabel('Accumulated Prediction Counts')
+    #     prev_ind = 0
+    #     for wllevel, ind in wllevels_indsend.items():
+    #         plt.axvline(x=ind, color='r', label=wllevel)
+    #         fdata_level = wllevels_pcounts[wllevel]
+    #         loc_x = np.percentile([ind, prev_ind], 25)
+    #         loc_y = np.percentile(fdata_level, 25)
+    #         fdata_total = round(np.sum(fdata_level), 3)
+    #         plt.text(loc_x, loc_y, f"total={fdata_total}")
+    #         prev_ind = ind
+    #     out_path = os.path.join(out_dir, f'pCountsAccum--time--wllevels.png')
+    #     plt.savefig(out_path)
+    #     plt.close()
 
 
 def plot_hists(algs_data, dir_out, title, density=False):

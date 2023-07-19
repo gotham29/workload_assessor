@@ -2609,9 +2609,9 @@ colnames:
 
 columns_model:
   - pitch_stick
-  - roll_stick
-  - rudder_pedals
-  - throttle
+#  - roll_stick
+#  - rudder_pedals
+#  - throttle
 
 hzs:
   baseline: 16.67
@@ -2673,52 +2673,52 @@ wllevels_filenames:
     - run36_mc.csv
     - run38_ss.csv
 
-groups_filenames: #{}
-  _ss:
-    - run1_ss.csv
-    - run34_ss.csv
-    - run2_ss.csv
-    - run39_ss.csv
-    - run19_ss.csv
-    - run21_ss.csv
-    - run4_ss.csv
-    - run38_ss.csv
-  _ap:
-    - run10_ap.csv
-    - run31_ap.csv
-    - run16_ap.csv
-    - run29_ap.csv
-    - run5_ap.csv
-    - run28_ap.csv
-    - run18_ap.csv
-    - run35_ap.csv
-  _nc:
-    - run20_nc.csv
-    - run33_nc.csv
-    - run8_nc.csv
-    - run37_nc.csv
-    - run7_nc.csv
-    - run23_nc.csv
-    - run13_nc.csv
-    - run27_nc.csv
-  _mc:
-    - run3_mc.csv
-    - run30_mc.csv
-    - run6_mc.csv
-    - run22_mc.csv
-    - run17_mc.csv
-    - run40_mc.csv
-    - run12_mc.csv
-    - run36_mc.csv
-  _mfr:
-    - run24_mfr.csv
-    - run14_mfr.csv
-    - run9_mfr.csv
-    - run32_mfr.csv
-    - run11_mfr.csv
-    - run25_mfr.csv
-    - run15_mfr.csv
-    - run26_mfr.csv
+groups_filenames: {}
+#  _ss:
+#    - run1_ss.csv
+#    - run34_ss.csv
+#    - run2_ss.csv
+#    - run39_ss.csv
+#    - run19_ss.csv
+#    - run21_ss.csv
+#    - run4_ss.csv
+#    - run38_ss.csv
+#  _ap:
+#    - run10_ap.csv
+#    - run31_ap.csv
+#    - run16_ap.csv
+#    - run29_ap.csv
+#    - run5_ap.csv
+#    - run28_ap.csv
+#    - run18_ap.csv
+#    - run35_ap.csv
+#  _nc:
+#    - run20_nc.csv
+#    - run33_nc.csv
+#    - run8_nc.csv
+#    - run37_nc.csv
+#    - run7_nc.csv
+#    - run23_nc.csv
+#    - run13_nc.csv
+#    - run27_nc.csv
+#  _mc:
+#    - run3_mc.csv
+#    - run30_mc.csv
+#    - run6_mc.csv
+#    - run22_mc.csv
+#    - run17_mc.csv
+#    - run40_mc.csv
+#    - run12_mc.csv
+#    - run36_mc.csv
+#  _mfr:
+#    - run24_mfr.csv
+#    - run14_mfr.csv
+#    - run9_mfr.csv
+#    - run32_mfr.csv
+#    - run11_mfr.csv
+#    - run25_mfr.csv
+#    - run15_mfr.csv
+#    - run26_mfr.csv
 
 modnames_grids:
   ARIMA:
@@ -2909,21 +2909,21 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-    roll_stick:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-    rudder_pedals:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-    throttle:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    roll_stick:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
+#    rudder_pedals:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
+#    throttle:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
   models_state:
     model_for_each_feature: true  #false
     return_pred_count: true

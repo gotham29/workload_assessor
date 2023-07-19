@@ -124,12 +124,16 @@ def get_filenames_outputs(cfg,
 
 def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllevels, wllevels_filenames, modname_model,
                 levels_order):
+    # get columns_model
+    columns_model = [modname]
+    if 'megamodel' in modname:
+        columns_model = cfg['columns_model']
     # make subj dirs
     outnames_dirs = make_dirs_subj(dir_out, outputs=['anomaly', 'data_files', 'data_plots', 'models'])
     # save models
     save_models(modname_model, outnames_dirs['models'])
     # plot filenames_data
-    make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=cfg['columns_model'],
+    make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=columns_model,
                     file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
     # remove training data from filenames_data
     filenames_data = {fn: data for fn, data in filenames_data.items() if
@@ -137,7 +141,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
     # get behavior data (dfs) for all wllevels
     wllevels_totaldfs = get_wllevels_totaldfs(wllevels_filenames=wllevels_filenames,  # cfg['wllevels_filenames'],
                                               filenames_data=filenames_data,
-                                              columns_model=cfg['columns_model'],
+                                              columns_model=columns_model,
                                               out_dir_files=outnames_dirs['data_files'])
     # plot levels data
     plot_write_data(df_train, out_name='training', out_dir_plots=outnames_dirs['data_plots'],
@@ -147,7 +151,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
                         out_dir_files=outnames_dirs['data_files'])
 
     # get indicies dividing the wllevels
-    wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
+    # wllevels_indsend = get_wllevels_indsend(wllevels_totaldfs)
 
     # set valid colors for plots
     colors = ['grey', 'yellow', 'orange', 'red', 'blue', 'green', 'cyan', 'magenta', 'black']
@@ -177,27 +181,30 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
                   ylabel=f"{cfg['alg']} WL",
                   title=f"{cfg['alg']} WL Scores by Run Mode",
                   suptitle=None,
-                  path_out=os.path.join(outnames_dirs['anomaly'], "levels--aScoreTotals--box.png"),
+                  path_out=os.path.join(outnames_dirs['anomaly'], "wllevels--aScoreTotals--box.png"),
                   ylim=None)
     plot_outputs_bars(mydict=wllevels_totalascores,
                       levels_colors=levels_colors,
                       title=f"{cfg['alg']} WL Scores by Level",
                       xlabel='WL Levels',
                       ylabel=f"{cfg['alg']} WL",
-                      path_out=os.path.join(outnames_dirs['anomaly'], "levels--aScoreTotals--bar.png"),
+                      path_out=os.path.join(outnames_dirs['anomaly'], "wllevels--aScoreTotals--bar.png"),
                       xtickrotation=0)
     plot_outputs_boxes(data_plot1=wllevels_ascores,
                        data_plot2=wllevels_pcounts,
                        levels_colors=levels_colors,
-                       title_1=f"Anomaly Scores by WL Level\nhz={cfg['hzs']['convertto']},; features={cfg['columns_model']}",
-                       title_2=f"Prediction Counts by WL Level\nhz={cfg['hzs']['convertto']},; features={cfg['columns_model']}",
+                       title_1=f"Anomaly Scores by WL Level\nhz={cfg['hzs']['convertto']},; features={columns_model}",
+                       title_2=f"Prediction Counts by WL Level\nhz={cfg['hzs']['convertto']},; features={columns_model}",
                        out_dir=outnames_dirs['anomaly'],
                        xlabel='WL Levels',
                        ylabel='HTM Metric')
     print("    Lineplots...")
-    plot_outputs_lines(wllevels_anomscores_=wllevels_ascores,
-                       wllevels_predcounts_=wllevels_pcounts,
-                       wllevels_indsend=wllevels_indsend,
+    plot_outputs_lines(wllevels_ascores_=wllevels_ascores,
+                       wllevels_pcounts_=wllevels_pcounts,
+                       # wllevels_indsend=wllevels_indsend,
+                       columns_model=columns_model,
+                       filenames_data=filenames_data,
+                       filenames_ascores=filenames_ascores,
                        get_pcounts=True if cfg['alg'] == 'HTM' else False,
                        levels_order=levels_order,
                        levels_colors=levels_colors,
@@ -793,7 +800,6 @@ def main(config):
     subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
 
     # run wl - total data
-    """
     ## make dir
     dir_out_total = os.path.join(dir_out, 'total')
     os.makedirs(dir_out_total, exist_ok=True)
@@ -808,7 +814,7 @@ def main(config):
            subjects_dfs_train=subjects_dfs_train,
            subjects_features_models=subjects_features_models,
            dir_out=dir_out_total)
-    """
+
     # run wl - groups
     for group in config['groups_filenames']:
         print(f'\n{group}...')
