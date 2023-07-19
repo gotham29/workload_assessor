@@ -177,8 +177,14 @@ def plot_outputs_lines(wllevels_ascores_: dict,
 
         for feat in columns_model:
             behavior = filenames_data[fn][feat]
-            t = [_ for _ in range(len(behavior))]
             fig, ax1 = plt.subplots()
+
+            second_axis = False
+            prop = len(ascores) / len(behavior)
+            if prop > 0.95:
+                second_axis = True
+                behavior = behavior[-len(ascores):]
+            t = [_ for _ in range(len(behavior))]
 
             color1 = 'cornflowerblue'
             ax1.set_xlabel('time')
@@ -186,7 +192,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
             ax1.plot(t, behavior, color=color1)
             ax1.tick_params(axis='y', labelcolor=color1)
 
-            if len(ascores_accum) == len(behavior):
+            if second_axis:
                 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
                 color2 = 'black'
                 ax2.set_ylabel('Perceived WL', color=color2)  # we already handled the x-label with ax1
