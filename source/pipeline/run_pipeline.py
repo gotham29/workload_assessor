@@ -205,6 +205,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
                        columns_model=columns_model,
                        filenames_data=filenames_data,
                        filenames_ascores=filenames_ascores,
+                       filenames_wllevels=filenames_wllevels,
                        get_pcounts=True if cfg['alg'] == 'HTM' else False,
                        levels_order=levels_order,
                        levels_colors=levels_colors,

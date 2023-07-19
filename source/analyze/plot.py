@@ -156,6 +156,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
                        columns_model,
                        filenames_data: dict,
                        filenames_ascores: dict,
+                       filenames_wllevels: dict,
                        get_pcounts: bool,
                        levels_order: list,
                        levels_colors: dict,
@@ -169,7 +170,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
 
     # TEST
     ## plot - aScores accum (by filename)
-    out_dir_filenames = os.path.join(out_dir, 'filenames')
+    out_dir_filenames = os.path.join(out_dir, 'filenames--aScoresAccum--time')
     os.makedirs(out_dir_filenames)
     for fn, ascores in filenames_ascores.items():
         ascores_accum = get_accum(ascores)
@@ -195,7 +196,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
             plt.title("Perceived WL")
             plt.xlabel('Time')
             plt.ylabel('Accumulated Anomaly Scores')
-            out_path = os.path.join(out_dir_filenames, f'aScoresAccum--time--{fn}--{feat}.png')
+            out_path = os.path.join(out_dir_filenames, f'{filenames_wllevels[fn]}--{fn}--{feat}.png')
             plt.savefig(out_path)
             plt.close()
 
@@ -248,7 +249,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
     plt.title("Perceived WL by Task Level")
     plt.ylabel('Accumulated Anomaly Scores')
     plt.legend()
-    out_path = os.path.join(out_dir, f'aScoresAccum--time--wllevels.png')
+    out_path = os.path.join(out_dir, f'wllevels--aScoresAccum--time.png')
     plt.savefig(out_path)
     plt.close()
 
@@ -268,7 +269,7 @@ def plot_outputs_lines(wllevels_ascores_: dict,
         plt.title("Prediction Counts by Task Level")
         plt.ylabel('Accumulated Predictions Counts')
         plt.legend()
-        out_path = os.path.join(out_dir, f'pCountsAccum--time--wllevels.png')
+        out_path = os.path.join(out_dir, f'wllevels--pCountsAccum--time.png')
         plt.savefig(out_path)
         plt.close()
 
