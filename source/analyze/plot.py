@@ -186,11 +186,12 @@ def plot_outputs_lines(wllevels_ascores_: dict,
             ax1.plot(t, behavior, color=color1)
             ax1.tick_params(axis='y', labelcolor=color1)
 
-            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-            color2 = 'black'
-            ax2.set_ylabel('Perceived WL', color=color2)  # we already handled the x-label with ax1
-            ax2.plot(t, ascores_accum, color=color2)
-            ax2.tick_params(axis='y', labelcolor=color2)
+            if len(ascores_accum) == len(behavior):
+                ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+                color2 = 'black'
+                ax2.set_ylabel('Perceived WL', color=color2)  # we already handled the x-label with ax1
+                ax2.plot(t, ascores_accum, color=color2)
+                ax2.tick_params(axis='y', labelcolor=color2)
 
             plt.plot(ascores_accum)
             plt.title("Perceived WL")
