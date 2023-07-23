@@ -915,15 +915,15 @@ if make_master_results:
             'offset': ['rudder_pedals'],
             'straight-in': ['throttle'],
         },
-        'PSD-roll': {
+        'PSD-1': {
             'offset': ['roll_stick'],
             'straight-in': ['roll_stick'],
         },
-        'PSD-pitch': {
+        'PSD-2': {
             'offset': ['pitch_stick'],
             'straight-in': ['pitch_stick'],
         },
-        'PSD-rudder': {
+        'PSD-3': {
             'offset': ['rudder_pedals'],
             'straight-in': ['rudder_pedals'],
         },
@@ -931,8 +931,10 @@ if make_master_results:
     rows = []
     for wl_alg, scenarios_featuresets in wlalgs_scenarios_featuresets.items():
         wl_alg_ = wl_alg.split('-')[0]
+        print(f"\n{wl_alg}")
         for scenario, featureset in scenarios_featuresets.items():
             features = '.'.join(featureset)
+            print(f"  {scenario} --> {features}")
             modname = f"modname={features}" if len(featureset) == 1 else f"modname=megamodel_features={len(featureset)}"
             dir_ = os.path.join(dir_results,
                                 wl_alg_,
@@ -952,7 +954,7 @@ if make_master_results:
             for subj in subjs:
                 for _, row in subjs_fns_wls.iterrows():
                     row_ = {
-                        'wl alg': wl_alg,
+                        'wl alg': f"{wl_alg} - {features}",
                         'flight scenario': scenario,
                         'delay comp alg': row['comp alg'],
                         'delay condition': row['delay conditions'],
