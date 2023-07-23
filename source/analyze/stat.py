@@ -962,9 +962,9 @@ if make_master_results:
                         'wl perceived': row[subj]
                     }
                     rows.append(row_)
-        df_master = pd.DataFrame(rows)
-        path_out = os.path.join(dir_results, 'results-master.csv')
-        df_master.to_csv(path_out)
+    df_master = pd.DataFrame(rows)
+    path_out = os.path.join(dir_results, 'results-master.csv')
+    df_master.to_csv(path_out)
 
 
 
