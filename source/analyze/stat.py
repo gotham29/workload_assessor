@@ -19,9 +19,11 @@ sys.path.append(_SOURCE_DIR)
 
 from source.analyze.anomaly import get_subjects_wldiffs
 from source.pipeline.run_pipeline import get_scores
+from source.analyze.plot import plot_outputs_bars
 
 # MAKE PLOTS
-make_tlx_overlaps = True
+make_master_results = True
+make_tlx_overlaps = False
 make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
@@ -323,13 +325,14 @@ def convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes):
     df_straight.to_csv(path_out_straight, index=False)
 
 
-def eval_tlx(df_tlx, path_out):
-    # get subjects_wllevels_totalascores
+def eval_tlx(df_tlx, path_out_csv, dir_out_plt, levels_colors):
+    # get subjects_wllevels_totalascores, wllevels_totalascores
     subjects_wllevels_totalascores = {}
     for subj, df_subj in df_tlx.groupby('Subject'):
         subjects_wllevels_totalascores[subj] = {}
         for wllevel, df_subj_level in df_subj.groupby('Run Mode'):
-            subjects_wllevels_totalascores[subj][wllevel] = df_subj_level['Raw TLX'].sum()
+            totalascore = df_subj_level['Raw TLX'].sum()
+            subjects_wllevels_totalascores[subj][wllevel] = totalascore
     # get normalized diffs for all subjs
     subjects_wldiffs, subjects_levels_wldiffs = get_subjects_wldiffs(subjects_wllevels_totalascores)
     # get scores
@@ -340,7 +343,17 @@ def eval_tlx(df_tlx, path_out):
     scores = {'Total sensitivity to increased task demands': percent_change_from_baseline,
               'Rate of subjects with baseline lowest': percent_subjects_baseline_lowest}
     scores = pd.DataFrame(scores, index=[0])
-    scores.to_csv(path_out)
+    scores.to_csv(path_out_csv)
+    # make barplots
+    for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
+        path_out_plt = os.path.join(dir_out_plt, f"{subj}.png")
+        plot_outputs_bars(mydict=wllevels_totalascores,
+                          levels_colors=levels_colors,
+                          title="TLX WL Scores by Level",
+                          xlabel='WL Levels',
+                          ylabel="TLX WL",
+                          path_out=path_out_plt,
+                          xtickrotation=0)
 
 
 def get_groups_datasets(dir_in, filter_, feat_groupby, compalgs_order):
@@ -662,18 +675,23 @@ if convert_tlxs:
 if eval_tlxs:
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    runs = [20, 33, 8, 37, 7, 23, 13, 27]
-    filter_ = {'Run #': runs}  # None
+    runs = None  #[20, 33, 8, 37, 7, 23, 13, 27]
+    filter_ = None  #{'Run #': runs}  # None
     mc_scenarios = ['offset', 'straight-in']
+    levels_colors = {'baseline': 'grey', 'delay=0.048': 'yellow', 'delay=0.096': 'orange', 'delay=0.192': 'red'}
     dir_out_tlx = os.path.join(dir_out, 'tlx-scores')
     os.makedirs(dir_out_tlx, exist_ok=True)
     for scenario in mc_scenarios:
+        dir_out_mc = os.path.join(dir_out_tlx, scenario)
+        os.makedirs(dir_out_mc, exist_ok=True)
         path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
-        path_out = os.path.join(dir_out_tlx, f'{scenario}--{filter_}.csv')
         df_tlx = pd.read_csv(path_tlx)
+        path_out_csv = os.path.join(dir_out_mc, f'filter={filter_}.csv')
+        dir_out_plt = os.path.join(dir_out_mc, f'filter={filter_}--wllevels--aScoreTotals--bar')
+        os.makedirs(dir_out_plt, exist_ok=True)
         if filter_:
             df_tlx = filter_df(df_tlx, filter_)
-        eval_tlx(df_tlx, path_out)
+        eval_tlx(df_tlx, path_out_csv, dir_out_plt, levels_colors)
 
 if make_boxplots_algs:
     mc_scenarios = ['offset', 'straight-in']
@@ -847,6 +865,106 @@ if make_tlx_overlaps:
                 wlalgs_comps_wlvariations[wl_alg][comp] = var_cols
         df_overlaps = pd.DataFrame(wlalgs_comps_wlvariations).round(3)
         df_overlaps.to_csv(path_out)
+
+if make_master_results:
+    dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    fns_delays = {
+        'run10_ap.csv': 'baseline',
+        'run14_mfr.csv': 'baseline',
+        'run20_nc.csv': 'baseline',
+        'run2_ss.csv': 'delay=0.048',
+        'run6_mc.csv': 'delay=0.048',
+        'run8_nc.csv': 'delay=0.048',
+        'run9_mfr.csv': 'delay=0.048',
+        'run16_ap.csv': 'delay=0.048',
+        'run5_ap.csv': 'delay=0.096',
+        'run7_nc.csv': 'delay=0.096',
+        'run11_mfr.csv': 'delay=0.096',
+        'run17_mc.csv': 'delay=0.096',
+        'run19_ss.csv': 'delay=0.096',
+        'run4_ss.csv': 'delay=0.192',
+        'run12_mc.csv': 'delay=0.192',
+        'run13_nc.csv': 'delay=0.192',
+        'run15_mfr.csv': 'delay=0.192',
+        'run18_ap.csv': 'delay=0.192',
+        'run31_ap.csv': 'baseline',
+        'run33_nc.csv': 'baseline',
+        'run34_ss.csv': 'baseline',
+        'run22_mc.csv': 'delay=0.048',
+        'run29_ap.csv': 'delay=0.048',
+        'run32_mfr.csv': 'delay=0.048',
+        'run37_nc.csv': 'delay=0.048',
+        'run39_ss.csv': 'delay=0.048',
+        'run21_ss.csv': 'delay=0.096',
+        'run23_nc.csv': 'delay=0.096',
+        'run25_mfr.csv': 'delay=0.096',
+        'run28_ap.csv': 'delay=0.096',
+        'run40_mc.csv': 'delay=0.096',
+        'run26_mfr.csv': 'delay=0.192',
+        'run27_nc.csv': 'delay=0.192',
+        'run35_ap.csv': 'delay=0.192',
+        'run36_mc.csv': 'delay=0.192',
+        'run38_ss.csv': 'delay=0.192'
+    }
+    wlalgs_scenarios_featuresets = {
+        'HTM': {
+            'offset': ['roll_stick'],
+            'straight-in': ['pitch_stick','roll_stick'],
+        },
+        'SteeringEntropy': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['throttle'],
+        },
+        'PSD-roll': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'PSD-pitch': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'PSD-rudder': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
+    }
+    rows = []
+    for wl_alg, scenarios_featuresets in wlalgs_scenarios_featuresets.items():
+        wl_alg_ = wl_alg.split('-')[0]
+        for scenario, featureset in scenarios_featuresets.items():
+            features = '.'.join(featureset)
+            modname = f"modname={features}" if len(featureset) == 1 else f"modname=megamodel_features={len(featureset)}"
+            dir_ = os.path.join(dir_results,
+                                wl_alg_,
+                                f"hz=16.67; features={features}",
+                                scenario,
+                                'total',
+                                modname)
+            subjs_fns_wls = pd.read_csv(os.path.join(dir_, "subjects_filenames_totalascores.csv"))
+            comp_algs = []
+            delay_conditions = []
+            for fn in subjs_fns_wls['Unnamed: 0']:
+                comp_algs.append(fn.split('_')[1].replace('.csv', ''))
+                delay_conditions.append(fns_delays[fn])
+            subjs_fns_wls.insert(loc=0, column='delay conditions', value=delay_conditions)
+            subjs_fns_wls.insert(loc=0, column='comp alg', value=comp_algs)
+            subjs = [c for c in subjs_fns_wls if 'subj' in c]
+            for subj in subjs:
+                for _, row in subjs_fns_wls.iterrows():
+                    row_ = {
+                        'wl alg': wl_alg,
+                        'flight scenario': scenario,
+                        'delay comp alg': row['comp alg'],
+                        'delay condition': row['delay conditions'],
+                        'subject': subj,
+                        'wl perceived': row[subj]
+                    }
+                    rows.append(row_)
+        df_master = pd.DataFrame(rows)
+        path_out = os.path.join(dir_results, 'results-master.csv')
+        df_master.to_csv(path_out)
+
+
 
 
 #
