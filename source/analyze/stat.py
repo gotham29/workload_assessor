@@ -868,6 +868,7 @@ if make_tlx_overlaps:
 
 if make_master_results:
     dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     fns_delays = {
         'run10_ap.csv': 'baseline',
         'run14_mfr.csv': 'baseline',
@@ -928,6 +929,48 @@ if make_master_results:
             'straight-in': ['rudder_pedals'],
         },
     }
+    runs_comps = {
+        1: '_ss',
+        34: '_ss',
+        2: '_ss',
+        39: '_ss',
+        19: '_ss',
+        21: '_ss',
+        4: '_ss',
+        38: '_ss',
+        10: '_ap',
+        31: '_ap',
+        16: '_ap',
+        29: '_ap',
+        5: '_ap',
+        28: '_ap',
+        18: '_ap',
+        35: '_ap',
+        20: '_nc',
+        33: '_nc',
+        8: '_nc',
+        37: '_nc',
+        7: '_nc',
+        23: '_nc',
+        13: '_nc',
+        27: '_nc',
+        3: '_mc',
+        30: '_mc',
+        6: '_mc',
+        22: '_mc',
+        17: '_mc',
+        40: '_mc',
+        12: '_mc',
+        36: '_mc',
+        24: '_mfr',
+        14: '_mfr',
+        9: '_mfr',
+        32: '_mfr',
+        11: '_mfr',
+        25: '_mfr',
+        15: '_mfr',
+        26: '_mfr'
+    }
     rows = []
     for wl_alg, scenarios_featuresets in wlalgs_scenarios_featuresets.items():
         wl_alg_ = wl_alg.split('-')[0]
@@ -963,8 +1006,25 @@ if make_master_results:
                     }
                     rows.append(row_)
     df_master = pd.DataFrame(rows)
+    # Get df_master for TLX & concat
+    rows = []
+    for scenario in scenarios_featuresets:
+        path_tlx = path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
+        df_tlx = pd.read_csv(path_tlx)
+        for _, row in df_tlx.iterrows():
+            row_ = {
+                'wl alg': "TLX",
+                'flight scenario': scenario,
+                'delay comp alg': runs_comps[row['Run #']].replace('_', ''),
+                'delay condition': row['Run Mode'],
+                'subject': row['Subject'],
+                'wl perceived': row['Raw TLX']
+            }
+            rows.append(row_)
+    df_master_tlx = pd.DataFrame(rows)
+    df_master_total = pd.concat([df_master, df_master_tlx], axis=0)
     path_out = os.path.join(dir_results, 'results-master.csv')
-    df_master.to_csv(path_out)
+    df_master_total.to_csv(path_out)
 
 
 
