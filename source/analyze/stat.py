@@ -22,7 +22,8 @@ from source.pipeline.run_pipeline import get_scores
 from source.analyze.plot import plot_outputs_bars
 
 # MAKE PLOTS
-make_master_results = True
+make_table_1 = True
+make_master_results = False
 make_tlx_overlaps = False
 make_boxplots_groups = False
 make_boxplots_algs = False
@@ -867,12 +868,15 @@ if make_tlx_overlaps:
         df_overlaps.to_csv(path_out)
 
 if make_master_results:
-    dir_results = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    training = "training=40%-2"  #training=40%-1, training=40%-2, "training=100%
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     fns_delays = {
         'run10_ap.csv': 'baseline',
         'run14_mfr.csv': 'baseline',
         'run20_nc.csv': 'baseline',
+        'run1_ss.csv': 'baseline',
+        'run3_mc.csv': 'baseline',
         'run2_ss.csv': 'delay=0.048',
         'run6_mc.csv': 'delay=0.048',
         'run8_nc.csv': 'delay=0.048',
@@ -888,6 +892,8 @@ if make_master_results:
         'run13_nc.csv': 'delay=0.192',
         'run15_mfr.csv': 'delay=0.192',
         'run18_ap.csv': 'delay=0.192',
+        'run24_mfr.csv': 'baseline',
+        'run30_mc.csv': 'baseline',
         'run31_ap.csv': 'baseline',
         'run33_nc.csv': 'baseline',
         'run34_ss.csv': 'baseline',
@@ -910,24 +916,24 @@ if make_master_results:
     wlalgs_scenarios_featuresets = {
         'HTM': {
             'offset': ['roll_stick'],
-            'straight-in': ['pitch_stick','roll_stick'],
+            'straight-in': ['pitch_stick', 'roll_stick'],
         },
         'SteeringEntropy': {
             'offset': ['rudder_pedals'],
             'straight-in': ['throttle'],
         },
-        'PSD-1': {
-            'offset': ['roll_stick'],
-            'straight-in': ['roll_stick'],
-        },
-        'PSD-2': {
-            'offset': ['pitch_stick'],
-            'straight-in': ['pitch_stick'],
-        },
-        'PSD-3': {
-            'offset': ['rudder_pedals'],
-            'straight-in': ['rudder_pedals'],
-        },
+        # 'PSD-1': {
+        #     'offset': ['roll_stick'],
+        #     'straight-in': ['roll_stick'],
+        # },
+        # 'PSD-2': {
+        #     'offset': ['pitch_stick'],
+        #     'straight-in': ['pitch_stick'],
+        # },
+        # 'PSD-3': {
+        #     'offset': ['rudder_pedals'],
+        #     'straight-in': ['rudder_pedals'],
+        # },
     }
     runs_comps = {
         1: '_ss',
@@ -1026,7 +1032,44 @@ if make_master_results:
     path_out = os.path.join(dir_results, 'results-master.csv')
     df_master_total.to_csv(path_out)
 
-
+if make_table_1:
+    """ How often does WL drop from comp. to no comp.? """
+    training = "training=40%-2"  #training=40%-1, training=40%-2, training=100%
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+    path_in = os.path.join(dir_results, 'results-master.csv')
+    path_out = os.path.join(dir_results, 'table1-wldrop-from-nc.csv')
+    df_master_total = pd.read_csv(path_in)
+    compalgs = ['mc', 'mfr', 'ap', 'ss']
+    scenarios = ['straight-in', 'offset']
+    delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    wl_algs = ['HTM', 'SteeringEntropy']  #'HTM','SteeringEntropy','PSD'
+    rows = []
+    for wl_alg in wl_algs:
+        print(f"\n{wl_alg}")
+        vals_wlalg = [c for c in df_master_total['wl alg'].unique() if wl_alg in c]
+        df = df_master_total[df_master_total['wl alg'].isin(vals_wlalg)]
+        for compalg in compalgs:
+            for scenario in scenarios:
+                for delay in delays:
+                    print(f"      {compalg}--{scenario}--{delay}")
+                    filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario], 'delay condition': [delay]}
+                    df_ = filter_df(df, filter_dict)
+                    # report if WL(comp) < WL(no comp)
+                    if len(df_['delay comp alg'].unique()) == 1:
+                        print("          **EMPTY")
+                    else:
+                        wl_nc = round(df_[df_['delay comp alg'] == 'nc']['wl perceived'].sum(), 2)
+                        wl_comp = round(df_[df_['delay comp alg'] == compalg]['wl perceived'].sum(), 2)
+                        print(f"        comp/nc = {wl_comp}/{wl_nc}")
+                        drop = 'no'
+                        if wl_nc > wl_comp:
+                            drop = 'YES'
+                            print("          GOOD")
+                        row = {'wl alg': wl_alg, 'delay comp alg': compalg,
+                               'flight approach': scenario, 'delay (ms)': delay, 'WL drop from no comp': drop}
+                        rows.append(row)
+    df_table = pd.DataFrame(rows)
+    df_table.to_csv(path_out)
 
 
 #

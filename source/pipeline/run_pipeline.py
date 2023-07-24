@@ -135,7 +135,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
     # plot filenames_data
     make_data_plots(filenames_data=filenames_data, modname=modname, columns_model=columns_model,
                     file_type=cfg['file_type'], out_dir_plots=outnames_dirs['data_plots'])
-    # remove training data from filenames_data
+    # remove training data from filenames_data - assumes not files in training are repeated at other level(s)
     filenames_data = {fn: data for fn, data in filenames_data.items() if
                       fn not in cfg['wllevels_filenames']['training']}
     # get behavior data (dfs) for all wllevels
