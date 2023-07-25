@@ -23,7 +23,7 @@ from source.analyze.plot import plot_outputs_bars
 
 # MAKE PLOTS
 make_table_3 = False
-make_table_2_foldsavg = True
+make_table_2_foldsavg = False
 make_table_2_fold = False
 make_table_1 = False
 
@@ -1187,8 +1187,9 @@ if make_table_2_foldsavg:
     df.to_csv(path_out)
 
 if make_table_3:
+    """ Are the same high perfoming subjects found by HTM """
     training = "training=40%"
-    fold = '1'  # 1,2
+    fold = '2'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}/{fold}"
     path_in = os.path.join(dir_results, 'results-master.csv')
     path_out = os.path.join(dir_results, 'table3-high-performing-subjects.csv')
@@ -1219,7 +1220,7 @@ if make_table_3:
             'straight-in': ['rudder_pedals'],
         },
     }
-    rows - []
+    rows = []
     for compalg in compalgs:
         for scenario in scenarios:
             for delay in delays:
@@ -1227,15 +1228,21 @@ if make_table_3:
                 filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario],
                                'delay condition': [delay], 'wl alg': [f"{wl_alg} - {v}" for v in wlalgs_scenarios_featuresets['HTM'][scenario]]}
                 df_ = filter_df(df_master_total, filter_dict)
-                gpby = df_.groupby('subject')
-                for subj, df_subj in gpby:
-                    wl_comp = df_subj[df_subj['delay comp alg'] == compalg]['wl perceived'].values[0]
-                    wl_nc = df_subj[df_subj['delay comp alg'] == 'nc']['wl perceived'].values[0]
-
-                    pct_drop = round((wl_nc - wl_comp) / wl_nc * 100, 2)
-
+                if len(df_['delay comp alg'].unique()) == 1:
+                    print("          **EMPTY")
                     row = {'delay comp alg': compalg, 'flight approach': scenario,
-                           'delay (ms)': delay, '%WL drop from no comp': pct_drop}
+                           'delay (ms)': delay, 'subj': 'N/A', '%WL drop from no comp': 'N/A'}
+                else:
+                    gpby = df_.groupby('subject')
+                    for subj, df_subj in gpby:
+                        wl_comp = df_subj[df_subj['delay comp alg'] == compalg]['wl perceived'].values[0]
+                        wl_nc = df_subj[df_subj['delay comp alg'] == 'nc']['wl perceived'].values[0]
+                        pct_drop = round((wl_nc - wl_comp) / wl_nc * 100, 2)
+                        row = {'delay comp alg': compalg, 'flight approach': scenario,
+                               'delay (ms)': delay, 'subj': subj, '%WL drop from no comp': pct_drop}
+                        rows.append(row)
+    df = pd.DataFrame(rows)
+    df.to_csv(path_out)
 
 
 # if __name__ == "__main__":
