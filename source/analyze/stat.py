@@ -22,11 +22,12 @@ from source.pipeline.run_pipeline import get_scores
 from source.analyze.plot import plot_outputs_bars
 
 # MAKE PLOTS
-make_table_12_mean = True
+make_table_3 = False
+make_table_2_foldsavg = True
+make_table_2_fold = False
 make_table_1 = False
-make_table_2 = False
-make_master_results = False
 
+make_master_results = False
 make_tlx_overlaps = False
 make_boxplots_groups = False
 make_boxplots_algs = False
@@ -891,15 +892,12 @@ if make_tlx_overlaps:
         df_overlaps.to_csv(path_out)
 
 if make_master_results:
-    # training = "training=40%-2"  # training=40%-1, training=40%-2, "training=100%
-    # dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
     training = "training=40%"  # training=40%-1, training=40%-2, training=100%
     fold = '2'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
     os.makedirs(dir_results, exist_ok=True)
     dir_results = os.path.join(dir_results, fold)
     os.makedirs(dir_results, exist_ok=True)
-
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     fns_delays = {
         'run10_ap.csv': 'baseline',
@@ -1064,16 +1062,12 @@ if make_master_results:
 
 if make_table_1:
     """ How often does WL drop from comp. to no comp.? """
-    # training = "training=40%-2"  # training=40%-1, training=40%-2, training=100%
-    # dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
-
     training = "training=40%"  # training=40%-1, training=40%-2, training=100%
     fold = '2'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
     os.makedirs(dir_results, exist_ok=True)
     dir_results = os.path.join(dir_results, fold)
     os.makedirs(dir_results, exist_ok=True)
-
     path_in = os.path.join(dir_results, 'results-master.csv')
     path_out = os.path.join(dir_results, 'table1-wldrop-from-nc.csv')
     df_master_total = pd.read_csv(path_in)
@@ -1113,7 +1107,7 @@ if make_table_1:
     df_table = pd.DataFrame(rows)
     df_table.to_csv(path_out)
 
-if make_table_2:
+if make_table_2_fold:
     """ How clear are WL drops from comp. to no comp.? """
     training = "training=40%"
     fold = '2'  # 1,2
@@ -1121,7 +1115,6 @@ if make_table_2:
     os.makedirs(dir_results, exist_ok=True)
     dir_results = os.path.join(dir_results, fold)
     os.makedirs(dir_results, exist_ok=True)
-
     path_in = os.path.join(dir_results, 'results-master.csv')
     path_out = os.path.join(dir_results, 'table2-wldrop-from-nc.csv')
     df_master_total = pd.read_csv(path_in)
@@ -1150,7 +1143,7 @@ if make_table_2:
                     else:
                         wl_nc = df_[df_['delay comp alg'] == 'nc']['wl perceived']
                         wl_comp = df_[df_['delay comp alg'] == compalg]['wl perceived']
-                        pct_drop = round((wl_nc.mean() - wl_comp.mean()) / wl_comp.mean() * 100, 2)
+                        pct_drop = round((wl_nc.mean() - wl_comp.mean()) / wl_nc.mean() * 100, 2)
                         coeff_var = round(100 * wl_comp.std() / wl_comp.mean(), 2)
                         t_stat, p_value = paired_ttest_2samp(wl_nc, wl_comp)
                         row = {'wl alg': wl_alg, 'delay comp alg': compalg, 'flight approach': scenario,
@@ -1160,7 +1153,8 @@ if make_table_2:
     df_table = pd.DataFrame(rows)
     df_table.to_csv(path_out)
 
-if make_table_12_mean:
+if make_table_2_foldsavg:
+    """ How clear are WL drops from comp. to no comp.? """
     table2_1 = pd.read_csv(
         "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/1/table2-wldrop-from-nc.csv")
     table2_2 = pd.read_csv(
@@ -1192,5 +1186,65 @@ if make_table_12_mean:
     df = pd.DataFrame(rows)
     df.to_csv(path_out)
 
+if make_table_3:
+    training = "training=40%"
+    fold = '1'  # 1,2
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}/{fold}"
+    path_in = os.path.join(dir_results, 'results-master.csv')
+    path_out = os.path.join(dir_results, 'table3-high-performing-subjects.csv')
+    df_master_total = pd.read_csv(path_in)
+    compalgs = ['mc', 'mfr', 'ap', 'ss']
+    scenarios = ['straight-in', 'offset']
+    delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    wl_alg = 'HTM'
+    wlalgs_scenarios_featuresets = {
+        'HTM': {
+            'offset': ['roll_stick'],
+            'straight-in': ['pitch_stick', 'roll_stick'],
+        },
+        'SteeringEntropy': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['throttle'],
+        },
+        'PSD-1': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'PSD-2': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'PSD-3': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
+    }
+    rows - []
+    for compalg in compalgs:
+        for scenario in scenarios:
+            for delay in delays:
+                print(f"      {compalg}--{scenario}--{delay}")
+                filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario],
+                               'delay condition': [delay], 'wl alg': [f"{wl_alg} - {v}" for v in wlalgs_scenarios_featuresets['HTM'][scenario]]}
+                df_ = filter_df(df_master_total, filter_dict)
+                gpby = df_.groupby('subject')
+                for subj, df_subj in gpby:
+                    wl_comp = df_subj[df_subj['delay comp alg'] == compalg]['wl perceived'].values[0]
+                    wl_nc = df_subj[df_subj['delay comp alg'] == 'nc']['wl perceived'].values[0]
+
+                    pct_drop = round((wl_nc - wl_comp) / wl_nc * 100, 2)
+
+                    row = {'delay comp alg': compalg, 'flight approach': scenario,
+                           'delay (ms)': delay, '%WL drop from no comp': pct_drop}
+
+
 # if __name__ == "__main__":
 #     main()
+
+
+# df = pd.read_csv("/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/2/table2-wldrop-from-nc.csv")
+# col = '%WL drop from no comp'
+# gpby = df.groupby('wl alg')
+# for wl, df_wl in gpby:
+#     print(f"\n{wl}")
+#     print(f"  {col}  -->  {round(df_wl[col].mean(), 3)}")
