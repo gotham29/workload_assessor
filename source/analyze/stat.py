@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Patch
-from scipy.stats import ttest_ind, kstest, mannwhitneyu
+from scipy.stats import ttest_ind, ttest_rel, kstest, mannwhitneyu
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 DIR_OUT = os.path.join(_SOURCE_DIR, 'results')
@@ -22,15 +22,17 @@ from source.pipeline.run_pipeline import get_scores
 from source.analyze.plot import plot_outputs_bars
 
 # MAKE PLOTS
-make_table_1 = True
+make_table_12_mean = True
+make_table_1 = False
+make_table_2 = False
 make_master_results = False
+
 make_tlx_overlaps = False
 make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
 convert_tlxs = False
 eval_tlxs = False
-
 
 # ALGS_DIRS_IN = {
 #     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
@@ -90,7 +92,6 @@ Test for statistically significant performance differences between Algs
     --> 1 value per subject
 """
 
-
 # title = "Correlation with NASA TLX"
 # algs_paths = {
 #     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_overlaps.csv"),
@@ -106,6 +107,7 @@ Test for statistically significant performance differences between Algs
 
 
 """ DEFINE FUNCTIONS """
+
 
 def run_stat_tests(algs_data):
     # T-Test
@@ -408,6 +410,27 @@ def get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, featur
     return compalgs_wlalgs_wllevelsdata
 
 
+def paired_ttest_2samp(sample1, sample2):
+    """
+    Conducts a paired sample t-test for two small samples.
+
+    Parameters:
+        sample1 (list): First sample data (should be a list of numerical values).
+        sample2 (list): Second sample data (should be a list of numerical values).
+
+    Returns:
+        t_stat (float): T-statistic value.
+        p_value (float): Two-tailed p-value.
+    """
+    if len(sample1) != len(sample2):
+        raise ValueError("Both samples should have the same length.")
+
+    # Conduct paired t-test
+    t_stat, p_value = ttest_rel(sample1, sample2)
+
+    return t_stat, p_value
+
+
 """ RUN """
 
 if make_plots_violin:
@@ -676,8 +699,8 @@ if convert_tlxs:
 if eval_tlxs:
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    runs = None  #[20, 33, 8, 37, 7, 23, 13, 27]
-    filter_ = None  #{'Run #': runs}  # None
+    runs = None  # [20, 33, 8, 37, 7, 23, 13, 27]
+    filter_ = None  # {'Run #': runs}  # None
     mc_scenarios = ['offset', 'straight-in']
     levels_colors = {'baseline': 'grey', 'delay=0.048': 'yellow', 'delay=0.096': 'orange', 'delay=0.192': 'red'}
     dir_out_tlx = os.path.join(dir_out, 'tlx-scores')
@@ -868,8 +891,15 @@ if make_tlx_overlaps:
         df_overlaps.to_csv(path_out)
 
 if make_master_results:
-    training = "training=40%-2"  #training=40%-1, training=40%-2, "training=100%
+    # training = "training=40%-2"  # training=40%-1, training=40%-2, "training=100%
+    # dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+    training = "training=40%"  # training=40%-1, training=40%-2, training=100%
+    fold = '2'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+    os.makedirs(dir_results, exist_ok=True)
+    dir_results = os.path.join(dir_results, fold)
+    os.makedirs(dir_results, exist_ok=True)
+
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     fns_delays = {
         'run10_ap.csv': 'baseline',
@@ -922,18 +952,18 @@ if make_master_results:
             'offset': ['rudder_pedals'],
             'straight-in': ['throttle'],
         },
-        # 'PSD-1': {
-        #     'offset': ['roll_stick'],
-        #     'straight-in': ['roll_stick'],
-        # },
-        # 'PSD-2': {
-        #     'offset': ['pitch_stick'],
-        #     'straight-in': ['pitch_stick'],
-        # },
-        # 'PSD-3': {
-        #     'offset': ['rudder_pedals'],
-        #     'straight-in': ['rudder_pedals'],
-        # },
+        'PSD-1': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'PSD-2': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'PSD-3': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
     }
     runs_comps = {
         1: '_ss',
@@ -1034,15 +1064,24 @@ if make_master_results:
 
 if make_table_1:
     """ How often does WL drop from comp. to no comp.? """
-    training = "training=40%-2"  #training=40%-1, training=40%-2, training=100%
+    # training = "training=40%-2"  # training=40%-1, training=40%-2, training=100%
+    # dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+
+    training = "training=40%"  # training=40%-1, training=40%-2, training=100%
+    fold = '2'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+    os.makedirs(dir_results, exist_ok=True)
+    dir_results = os.path.join(dir_results, fold)
+    os.makedirs(dir_results, exist_ok=True)
+
     path_in = os.path.join(dir_results, 'results-master.csv')
     path_out = os.path.join(dir_results, 'table1-wldrop-from-nc.csv')
     df_master_total = pd.read_csv(path_in)
     compalgs = ['mc', 'mfr', 'ap', 'ss']
     scenarios = ['straight-in', 'offset']
     delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
-    wl_algs = ['HTM', 'SteeringEntropy']  #'HTM','SteeringEntropy','PSD'
+    wl_algs = ['HTM', 'SteeringEntropy', 'PSD-1 - roll_stick', 'PSD-2 - pitch_stick',
+               'PSD-3 - rudder_pedals']  # 'HTM','SteeringEntropy','PSD'
     rows = []
     for wl_alg in wl_algs:
         print(f"\n{wl_alg}")
@@ -1052,11 +1091,14 @@ if make_table_1:
             for scenario in scenarios:
                 for delay in delays:
                     print(f"      {compalg}--{scenario}--{delay}")
-                    filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario], 'delay condition': [delay]}
+                    filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario],
+                                   'delay condition': [delay]}
                     df_ = filter_df(df, filter_dict)
                     # report if WL(comp) < WL(no comp)
                     if len(df_['delay comp alg'].unique()) == 1:
                         print("          **EMPTY")
+                        row = {'wl alg': wl_alg, 'delay comp alg': compalg,
+                               'flight approach': scenario, 'delay (ms)': delay, 'WL drop from no comp': 'N/A'}
                     else:
                         wl_nc = round(df_[df_['delay comp alg'] == 'nc']['wl perceived'].sum(), 2)
                         wl_comp = round(df_[df_['delay comp alg'] == compalg]['wl perceived'].sum(), 2)
@@ -1067,11 +1109,88 @@ if make_table_1:
                             print("          GOOD")
                         row = {'wl alg': wl_alg, 'delay comp alg': compalg,
                                'flight approach': scenario, 'delay (ms)': delay, 'WL drop from no comp': drop}
-                        rows.append(row)
+                    rows.append(row)
     df_table = pd.DataFrame(rows)
     df_table.to_csv(path_out)
 
+if make_table_2:
+    """ How clear are WL drops from comp. to no comp.? """
+    training = "training=40%"
+    fold = '2'  # 1,2
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
+    os.makedirs(dir_results, exist_ok=True)
+    dir_results = os.path.join(dir_results, fold)
+    os.makedirs(dir_results, exist_ok=True)
 
-#
+    path_in = os.path.join(dir_results, 'results-master.csv')
+    path_out = os.path.join(dir_results, 'table2-wldrop-from-nc.csv')
+    df_master_total = pd.read_csv(path_in)
+    compalgs = ['mc', 'mfr', 'ap', 'ss']
+    scenarios = ['straight-in', 'offset']
+    delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
+    wl_algs = ['HTM', 'SteeringEntropy', 'TLX', 'PSD-1 - roll_stick', 'PSD-2 - pitch_stick', 'PSD-3 - rudder_pedals']
+    rows = []
+    for wl_alg in wl_algs:
+        print(f"\n{wl_alg}")
+        vals_wlalg = [c for c in df_master_total['wl alg'].unique() if wl_alg in c]
+        df = df_master_total[df_master_total['wl alg'].isin(vals_wlalg)]
+        for compalg in compalgs:
+            for scenario in scenarios:
+                for delay in delays:
+                    print(f"      {compalg}--{scenario}--{delay}")
+                    filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario],
+                                   'delay condition': [delay]}
+                    df_ = filter_df(df, filter_dict)
+                    # get %change in WL from comp to no-comp & coefficient of variation of comp
+                    if len(df_['delay comp alg'].unique()) == 1:
+                        print("          **EMPTY")
+                        row = {'wl alg': wl_alg, 'delay comp alg': compalg, 'flight approach': scenario,
+                               'delay (ms)': delay, '%WL drop from no comp': 'N/A', 'coeff of variance': 'N/A',
+                               'paired ttest p-value': 'NA'}
+                    else:
+                        wl_nc = df_[df_['delay comp alg'] == 'nc']['wl perceived']
+                        wl_comp = df_[df_['delay comp alg'] == compalg]['wl perceived']
+                        pct_drop = round((wl_nc.mean() - wl_comp.mean()) / wl_comp.mean() * 100, 2)
+                        coeff_var = round(100 * wl_comp.std() / wl_comp.mean(), 2)
+                        t_stat, p_value = paired_ttest_2samp(wl_nc, wl_comp)
+                        row = {'wl alg': wl_alg, 'delay comp alg': compalg, 'flight approach': scenario,
+                               'delay (ms)': delay, '%WL drop from no comp': pct_drop, 'coeff of variance': coeff_var,
+                               'paired ttest p-value': round(p_value, 4)}
+                    rows.append(row)
+    df_table = pd.DataFrame(rows)
+    df_table.to_csv(path_out)
+
+if make_table_12_mean:
+    table2_1 = pd.read_csv(
+        "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/1/table2-wldrop-from-nc.csv")
+    table2_2 = pd.read_csv(
+        "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/2/table2-wldrop-from-nc.csv")
+    path_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
+    cols_score = ['%WL drop from no comp', 'coeff of variance', 'paired ttest p-value']
+    gpby = table2_1.groupby('wl alg')
+    rows = []
+    for wl, df_wl_1 in gpby:
+        print(f"\n{wl}")
+        df_wl_1 = df_wl_1[cols_score].reset_index().drop(columns=['index'])
+        df_wl_2 = table2_2[table2_2['wl alg'] == wl][cols_score].reset_index().drop(columns=['index'])
+        for _, row_1 in df_wl_1.iterrows():
+            row_2 = df_wl_2.iloc[_]
+            nans_1 = [v for v in row_1 if np.isnan(v)]
+            nans_2 = [v for v in row_2 if np.isnan(v)]
+            isnan_1 = True if len(nans_1) > 0 else False
+            isnan_2 = True if len(nans_2) > 0 else False
+            if not isnan_1 and not isnan_2:
+                row_3 = (row_1 + row_2) / 2
+            else:
+                if isnan_1:
+                    row_3 = row_2
+                else:  # isnan_2
+                    row_3 = row_1
+            row_3 = {k: round(v, 3) for k, v in dict(row_3).items()}
+            row_3['wl alg'] = wl
+            rows.append(row_3)
+    df = pd.DataFrame(rows)
+    df.to_csv(path_out)
+
 # if __name__ == "__main__":
 #     main()

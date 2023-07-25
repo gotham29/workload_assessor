@@ -1,6 +1,6 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: HTM
+alg: PSD
 #HTM, PSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -14,7 +14,7 @@ preprocess:
   autocorr_column: pitch_stick
 
 tlx:
-  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx--offset.csv  ## straight-in,offset
+  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx--straight-in.csv  ## straight-in,offset
   modes_convert:
     baseline: baseline
     delay=0.048: delay=0.048
@@ -2618,70 +2618,70 @@ hzs:
   convertto: 16.67
 
 # STRAIGHT-IN
-#wllevels_filenames:
-#  training:
-#    - run10_ap.csv
-#    - run14_mfr.csv
-##    - run1_ss.csv
-##    - run3_mc.csv
-#  baseline: # no 'ss' files in baseline
-#    - run1_ss.csv
-#    - run3_mc.csv
-#    - run20_nc.csv
-##    - run10_ap.csv
-##    - run14_mfr.csv
-##    - run20_nc.csv
-#  delay=0.048:
-#    - run2_ss.csv
-#    - run6_mc.csv
-#    - run8_nc.csv
-#    - run9_mfr.csv
-#    - run16_ap.csv
-#  delay=0.096:
-#    - run5_ap.csv
-#    - run7_nc.csv
-#    - run11_mfr.csv
-#    - run17_mc.csv
-#    - run19_ss.csv
-#  delay=0.192:
-#    - run4_ss.csv
-#    - run12_mc.csv
-#    - run13_nc.csv
-#    - run15_mfr.csv
-#    - run18_ap.csv
-
-# OFFSET
 wllevels_filenames:
   training:
+    - run10_ap.csv
+    - run14_mfr.csv
+#    - run1_ss.csv
+#    - run3_mc.csv
+  baseline: # no 'ss' files in baseline
+    - run1_ss.csv
+    - run3_mc.csv
+    - run20_nc.csv
+#    - run10_ap.csv
+#    - run14_mfr.csv
+#    - run20_nc.csv
+  delay=0.048:
+    - run2_ss.csv
+    - run6_mc.csv
+    - run8_nc.csv
+    - run9_mfr.csv
+    - run16_ap.csv
+  delay=0.096:
+    - run5_ap.csv
+    - run7_nc.csv
+    - run11_mfr.csv
+    - run17_mc.csv
+    - run19_ss.csv
+  delay=0.192:
+    - run4_ss.csv
+    - run12_mc.csv
+    - run13_nc.csv
+    - run15_mfr.csv
+    - run18_ap.csv
+
+# OFFSET
+#wllevels_filenames:
+#  training:
+##    - run24_mfr.csv
+##    - run30_mc.csv
+#    - run31_ap.csv
+#    - run34_ss.csv
+#  baseline:
 #    - run24_mfr.csv
 #    - run30_mc.csv
-    - run31_ap.csv
-    - run34_ss.csv
-  baseline:
-    - run24_mfr.csv
-    - run30_mc.csv
-    - run33_nc.csv
-#    - run31_ap.csv
 #    - run33_nc.csv
-#    - run34_ss.csv
-  delay=0.048:
-    - run22_mc.csv
-    - run29_ap.csv
-    - run32_mfr.csv
-    - run37_nc.csv
-    - run39_ss.csv
-  delay=0.096:
-    - run21_ss.csv
-    - run23_nc.csv
-    - run25_mfr.csv
-    - run28_ap.csv
-    - run40_mc.csv
-  delay=0.192:
-    - run26_mfr.csv
-    - run27_nc.csv
-    - run35_ap.csv
-    - run36_mc.csv
-    - run38_ss.csv
+##    - run31_ap.csv
+##    - run33_nc.csv
+##    - run34_ss.csv
+#  delay=0.048:
+#    - run22_mc.csv
+#    - run29_ap.csv
+#    - run32_mfr.csv
+#    - run37_nc.csv
+#    - run39_ss.csv
+#  delay=0.096:
+#    - run21_ss.csv
+#    - run23_nc.csv
+#    - run25_mfr.csv
+#    - run28_ap.csv
+#    - run40_mc.csv
+#  delay=0.192:
+#    - run26_mfr.csv
+#    - run27_nc.csv
+#    - run35_ap.csv
+#    - run36_mc.csv
+#    - run38_ss.csv
 
 groups_filenames: {}
 #  _ss:
