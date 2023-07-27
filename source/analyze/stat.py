@@ -20,8 +20,11 @@ sys.path.append(_SOURCE_DIR)
 from source.analyze.anomaly import get_subjects_wldiffs
 from source.pipeline.run_pipeline import get_scores
 from source.analyze.plot import plot_outputs_bars
+from source.analyze.tlx import make_boxplots
+
 
 # MAKE PLOTS
+make_boxplots_table23 = True
 make_table_3 = False
 make_table_2_foldsavg = False
 make_table_2_fold = False
@@ -108,7 +111,6 @@ Test for statistically significant performance differences between Algs
 
 
 """ DEFINE FUNCTIONS """
-
 
 def run_stat_tests(algs_data):
     # T-Test
@@ -1244,14 +1246,52 @@ if make_table_3:
     df = pd.DataFrame(rows)
     df.to_csv(path_out)
 
+if make_boxplots_table23:
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%"
+    path_t2 = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
+    table2 = pd.read_csv(path_t2)
+    algs_colors = {
+        'TLX': 'red',
+        'IPSD RS': 'grey',
+        'IPSD PS': 'grey',
+        'IPSD RP': 'grey',
+        'SE': 'yellow',
+        'HTM': 'lightblue'
+    }
+    wls_convert = {
+        'HTM': 'HTM',
+        'TLX': 'TLX',
+        'SE': 'SteeringEntropy',
+        'IPSD RS': 'PSD-1 - roll_stick',
+        'IPSD PS': 'PSD-2 - pitch_stick',
+        'IPSD RP': 'PSD-3 - rudder_pedals'
+    }
+
+    algs_percentdrops = {}
+    algs_pvalues = {}
+    for wl in algs_colors:
+        wl_ = wls_convert[wl]
+        df_wl = table2[table2['wl alg'] == wl_]
+        algs_percentdrops[wl] = df_wl['%WL drop from no comp'].values
+        algs_pvalues[wl] = df_wl['paired ttest p-value'].values
+
+    make_boxplots(data_dict={k: v for k, v in algs_percentdrops.items() if k != 'IPSD RP'},
+                  levels_colors={k: v for k, v in algs_colors.items() if k != 'IPSD RP'},
+                  ylabel="% Drop in Workload",
+                  title="from Compensated to Non-Compensated Behavior",
+                  suptitle="% Drop in Workload",
+                  path_out=os.path.join(dir_out, "percentdrops--box.png"),
+                  ylim=None,
+                  showmeans=True)
+
+    make_boxplots(data_dict=algs_pvalues,
+                  levels_colors=algs_colors,
+                  ylabel="P-values of Paried T-Tests",
+                  title="for Significant Difference between Compensated & Non-Compensated Behavior",
+                  suptitle="P-values of Paried T-Tests",
+                  path_out=os.path.join(dir_out, "pvalues--box.png"),
+                  ylim=None,
+                  showmeans=True)
 
 # if __name__ == "__main__":
 #     main()
-
-
-# df = pd.read_csv("/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/2/table2-wldrop-from-nc.csv")
-# col = '%WL drop from no comp'
-# gpby = df.groupby('wl alg')
-# for wl, df_wl in gpby:
-#     print(f"\n{wl}")
-#     print(f"  {col}  -->  {round(df_wl[col].mean(), 3)}")

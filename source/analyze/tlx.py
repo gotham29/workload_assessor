@@ -25,10 +25,10 @@ from source.analyze.anomaly import get_subjects_wldiffs
 # }
 
 
-def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=None, ylim=None):
+def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=None, ylim=None, showmeans=True):
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     fig, ax = plt.subplots()
-    bplot = ax.boxplot(data_dict.values(), patch_artist=True)
+    bplot = ax.boxplot(data_dict.values(), patch_artist=True, showmeans=showmeans)
     ax.set_xticklabels(data_dict.keys())
     colors = list(levels_colors.values())
     for patch, color in zip(bplot['boxes'], colors):
