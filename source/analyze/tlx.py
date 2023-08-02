@@ -25,11 +25,11 @@ from source.analyze.anomaly import get_subjects_wldiffs
 # }
 
 
-def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=None, ylim=None, showmeans=True):
+def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, xtickrotation=0, suptitle=None, ylim=None, showmeans=True):
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     fig, ax = plt.subplots()
     bplot = ax.boxplot(data_dict.values(), patch_artist=True, showmeans=showmeans)
-    ax.set_xticklabels(data_dict.keys())
+    ax.set_xticklabels(data_dict.keys(), rotation=xtickrotation)
     colors = list(levels_colors.values())
     for patch, color in zip(bplot['boxes'], colors):
         patch.set_facecolor(color)
@@ -40,6 +40,7 @@ def make_boxplots(data_dict, levels_colors, ylabel, title, path_out, suptitle=No
     if suptitle:
         plt.suptitle(suptitle)
     plt.title(title)
+    plt.tight_layout()
     plt.savefig(path_out)
     plt.close()
 

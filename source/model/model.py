@@ -89,7 +89,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                       data=df_train[features_model],
                                                       iter_print=1000,
                                                       features_models={})
-    elif alg == 'PSD':
+    elif alg in ['IPSD', 'FPSD']:
         features_models = {feat: None for feat in features_model if feat != config['time_col']}
     elif alg == 'Naive':
         features_models = {feat: NaiveModel() for feat in features_model if feat != config['time_col']}

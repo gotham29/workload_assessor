@@ -22,21 +22,24 @@ from source.pipeline.run_pipeline import get_scores
 from source.analyze.plot import plot_outputs_bars
 from source.analyze.tlx import make_boxplots
 
-
 # MAKE PLOTS
-make_boxplots_table23 = True
-make_table_3 = False
-make_table_2_foldsavg = False
-make_table_2_fold = False
-make_table_1 = False
 
 make_master_results = False
+make_table_1_fold = False
+make_table_2_fold = False
+make_table_2_foldsavg = False
+make_boxplots_table23 = False
+
+print_mean_scores = True
+
+convert_chrs = False
+convert_tlxs = False
+eval_tlxs = False
 make_tlx_overlaps = False
+make_table_3 = False
 make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
-convert_tlxs = False
-eval_tlxs = False
 
 # ALGS_DIRS_IN = {
 #     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
@@ -111,6 +114,7 @@ Test for statistically significant performance differences between Algs
 
 
 """ DEFINE FUNCTIONS """
+
 
 def run_stat_tests(algs_data):
     # T-Test
@@ -282,6 +286,46 @@ def make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, ti
     # Save
     plt.savefig(path_out)
     plt.close()
+
+
+def convert_chrfiles_toformat(dir_chrs, dir_out, runs_modes):
+    paths_chr = [os.path.join(dir_chrs, f) for f in os.listdir(dir_chrs) if 'CHR' in f]
+    rows_offset = []
+    rows_straightin = []
+
+    for path in paths_chr:
+        # get subj & load df
+        subj = path.split('CHR TS')[-1].replace('.xls', '')
+        df = pd.read_excel(path).dropna(how='all', axis=0)
+
+        # split df by mc-scenario
+        cols = list(df.iloc[0].values)
+        df.columns = cols
+        df = df.drop([2], axis=0)
+        rownumber_offset = list(df[cols[0]].values).index('OFFSET')
+        df_offset = df[rownumber_offset:]
+        df_offset = df_offset.dropna(how='any', axis=0)
+        df_straightin = df[:rownumber_offset]
+        df_straightin = df_straightin.dropna(how='any', axis=0)
+
+        for _, row_ in df_offset.iterrows():
+            row = {'Subject': f"subj{subj}", 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+                   'GSE': row_['GLIDESLOPE'], 'TDE': row_['TD POINT']}
+            rows_offset.append(row)
+
+        for _, row_ in df_straightin.iterrows():
+            row = {'Subject': f"subj{subj}", 'Run #': row_['RUN #'], 'Run Mode': runs_modes[str(row_['RUN #'])],
+                   'GSE': row_['GLIDESLOPE'], 'TDE': row_['TD POINT']}
+            rows_straightin.append(row)
+
+    df_offset = pd.DataFrame(rows_offset)
+    df_straight = pd.DataFrame(rows_straightin)
+
+    path_out_offset = os.path.join(dir_out, 'chr--offset.csv')
+    path_out_straight = os.path.join(dir_out, 'chr--straight-in.csv')
+
+    df_offset.to_csv(path_out_offset, index=False)
+    df_straight.to_csv(path_out_straight, index=False)
 
 
 def convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes):
@@ -652,6 +696,53 @@ if make_boxplots_groups:
                     print(f"    mean = {round(np.mean(data_comp[delay]), 4)}")
                     print(f"    median = {round(np.median(data_comp[delay]), 4)}")
 
+if convert_chrs:
+    runs_modes = {
+        '1': 'baseline',
+        '2': 'delay=0.048',
+        '3': 'baseline',
+        '4': 'delay=0.192',
+        '5': 'delay=0.096',
+        '6': 'delay=0.048',
+        '7': 'delay=0.096',
+        '8': 'delay=0.048',
+        '9': 'delay=0.048',
+        '10': 'baseline',
+        '11': 'delay=0.096',
+        '12': 'delay=0.192',
+        '13': 'delay=0.192',
+        '14': 'baseline',
+        '15': 'delay=0.192',
+        '16': 'delay=0.048',
+        '17': 'delay=0.096',
+        '18': 'delay=0.192',
+        '19': 'delay=0.096',
+        '20': 'baseline',
+        '21': 'delay=0.096',
+        '22': 'delay=0.048',
+        '23': 'delay=0.096',
+        '24': 'baseline',
+        '25': 'delay=0.096',
+        '26': 'delay=0.192',
+        '27': 'delay=0.192',
+        '28': 'delay=0.096',
+        '29': 'delay=0.048',
+        '30': 'baseline',
+        '31': 'baseline',
+        '32': 'delay=0.048',
+        '33': 'baseline',
+        '34': 'baseline',
+        '35': 'delay=0.192',
+        '36': 'delay=0.192',
+        '37': 'delay=0.048',
+        '38': 'delay=0.192',
+        '39': 'delay=0.048',
+        '40': 'delay=0.096'
+    }
+    dir_chrs = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/CHR"
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_chrfiles_toformat(dir_chrs, dir_out, runs_modes)
+
 if convert_tlxs:
     runs_modes = {
         '1': 'baseline',
@@ -896,9 +987,7 @@ if make_tlx_overlaps:
 if make_master_results:
     training = "training=40%"  # training=40%-1, training=40%-2, training=100%
     fold = '2'  # 1,2
-    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}"
-    os.makedirs(dir_results, exist_ok=True)
-    dir_results = os.path.join(dir_results, fold)
+    dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}/{fold}"
     os.makedirs(dir_results, exist_ok=True)
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     fns_delays = {
@@ -944,23 +1033,63 @@ if make_master_results:
         'run38_ss.csv': 'delay=0.192'
     }
     wlalgs_scenarios_featuresets = {
-        'HTM': {
-            'offset': ['roll_stick'],
-            'straight-in': ['pitch_stick', 'roll_stick'],
-        },
-        'SteeringEntropy': {
-            'offset': ['rudder_pedals'],
-            'straight-in': ['throttle'],
-        },
-        'PSD-1': {
+        'HTM-roll': {
             'offset': ['roll_stick'],
             'straight-in': ['roll_stick'],
         },
-        'PSD-2': {
+        'HTM-pitch': {
             'offset': ['pitch_stick'],
             'straight-in': ['pitch_stick'],
         },
-        'PSD-3': {
+        'HTM-rudder': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
+        'HTM-rollpitch': {
+            'offset': ['pitch_stick', 'roll_stick'],
+            'straight-in': ['pitch_stick', 'roll_stick'],
+        },
+        # 'HTM': {
+        #     'offset': ['roll_stick'],
+        #     'straight-in': ['pitch_stick', 'roll_stick'],
+        # },
+        'SteeringEntropy-roll': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'SteeringEntropy-pitch': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'SteeringEntropy-rudder': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
+        # 'SteeringEntropy': {
+        #     'offset': ['rudder_pedals'],
+        #     'straight-in': ['throttle'],
+        # },
+        'IPSD-roll': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'IPSD-pitch': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'IPSD-rudder': {
+            'offset': ['rudder_pedals'],
+            'straight-in': ['rudder_pedals'],
+        },
+        'FPSD-roll': {
+            'offset': ['roll_stick'],
+            'straight-in': ['roll_stick'],
+        },
+        'FPSD-pitch': {
+            'offset': ['pitch_stick'],
+            'straight-in': ['pitch_stick'],
+        },
+        'FPSD-rudder': {
             'offset': ['rudder_pedals'],
             'straight-in': ['rudder_pedals'],
         },
@@ -1033,7 +1162,7 @@ if make_master_results:
             for subj in subjs:
                 for _, row in subjs_fns_wls.iterrows():
                     row_ = {
-                        'wl alg': f"{wl_alg} - {features}",
+                        'wl alg': f"{wl_alg}",  # - {features}
                         'flight scenario': scenario,
                         'delay comp alg': row['comp alg'],
                         'delay condition': row['delay conditions'],
@@ -1042,27 +1171,48 @@ if make_master_results:
                     }
                     rows.append(row_)
     df_master = pd.DataFrame(rows)
-    # Get df_master for TLX & concat
+    # Get df_master for TLX
     rows = []
     for scenario in scenarios_featuresets:
         path_tlx = path_tlx = os.path.join(dir_in, f"tlx--{scenario}.csv")
         df_tlx = pd.read_csv(path_tlx)
+        tlx_cols = [c for c in df_tlx if c not in ['Subject', 'Run #', 'Run Mode']]
         for _, row in df_tlx.iterrows():
-            row_ = {
-                'wl alg': "TLX",
-                'flight scenario': scenario,
-                'delay comp alg': runs_comps[row['Run #']].replace('_', ''),
-                'delay condition': row['Run Mode'],
-                'subject': row['Subject'],
-                'wl perceived': row['Raw TLX']
-            }
-            rows.append(row_)
+            for c in tlx_cols:
+                row_ = {
+                    'wl alg': f"TLX-{c.split(' ')[0]}",
+                    'flight scenario': scenario,
+                    'delay comp alg': runs_comps[row['Run #']].replace('_', ''),
+                    'delay condition': row['Run Mode'],
+                    'subject': row['Subject'],
+                    'wl perceived': row[c]
+                }
+                rows.append(row_)
     df_master_tlx = pd.DataFrame(rows)
-    df_master_total = pd.concat([df_master, df_master_tlx], axis=0)
+    # Get df_master for CHR
+    rows = []
+    for scenario in scenarios_featuresets:
+        path_chr = os.path.join(dir_in, f"chr--{scenario}.csv")
+        df_chr = pd.read_csv(path_chr)
+        chr_cols = [c for c in df_chr if c not in ['Subject', 'Run #', 'Run Mode']]
+        for _, row in df_chr.iterrows():
+            for c in chr_cols:
+                row_ = {
+                    'wl alg': f"CHR-{c.split(' ')[0]}",
+                    'flight scenario': scenario,
+                    'delay comp alg': runs_comps[row['Run #']].replace('_', ''),
+                    'delay condition': row['Run Mode'],
+                    'subject': row['Subject'],
+                    'wl perceived': row[c]
+                }
+                rows.append(row_)
+    df_master_chr = pd.DataFrame(rows)
+    # Get df_master_total
+    df_master_total = pd.concat([df_master, df_master_tlx, df_master_chr], axis=0)
     path_out = os.path.join(dir_results, 'results-master.csv')
     df_master_total.to_csv(path_out)
 
-if make_table_1:
+if make_table_1_fold:
     """ How often does WL drop from comp. to no comp.? """
     training = "training=40%"  # training=40%-1, training=40%-2, training=100%
     fold = '2'  # 1,2
@@ -1076,8 +1226,12 @@ if make_table_1:
     compalgs = ['mc', 'mfr', 'ap', 'ss']
     scenarios = ['straight-in', 'offset']
     delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
-    wl_algs = ['HTM', 'SteeringEntropy', 'PSD-1 - roll_stick', 'PSD-2 - pitch_stick',
-               'PSD-3 - rudder_pedals']  # 'HTM','SteeringEntropy','PSD'
+    wl_algs = ['HTM-roll', 'HTM-pitch', 'HTM-rudder', 'HTM-rollpitch',
+               'SteeringEntropy-roll', 'SteeringEntropy-pitch', 'SteeringEntropy-rudder',
+               'CHR-GSE', 'CHR-TDE',
+               'TLX-Raw', 'TLX-Mental', 'TLX-Physical', 'TLX-Temporal', 'TLX-Performance', 'TLX-Effort',
+               'TLX-Frustration',
+               'IPSD-roll', 'IPSD-pitch', 'IPSD-rudder', 'FPSD-roll', 'FPSD-pitch', 'FPSD-rudder']
     rows = []
     for wl_alg in wl_algs:
         print(f"\n{wl_alg}")
@@ -1123,7 +1277,12 @@ if make_table_2_fold:
     compalgs = ['mc', 'mfr', 'ap', 'ss']
     scenarios = ['straight-in', 'offset']
     delays = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
-    wl_algs = ['HTM', 'SteeringEntropy', 'TLX', 'PSD-1 - roll_stick', 'PSD-2 - pitch_stick', 'PSD-3 - rudder_pedals']
+    wl_algs = ['HTM-roll', 'HTM-pitch', 'HTM-rudder', 'HTM-rollpitch',
+               'SteeringEntropy-roll', 'SteeringEntropy-pitch', 'SteeringEntropy-rudder',
+               'CHR-GSE', 'CHR-TDE',
+               'TLX-Raw', 'TLX-Mental', 'TLX-Physical', 'TLX-Temporal', 'TLX-Performance', 'TLX-Effort',
+               'TLX-Frustration',
+               'IPSD-roll', 'IPSD-pitch', 'IPSD-rudder', 'FPSD-roll', 'FPSD-pitch', 'FPSD-rudder']
     rows = []
     for wl_alg in wl_algs:
         print(f"\n{wl_alg}")
@@ -1191,7 +1350,7 @@ if make_table_2_foldsavg:
 if make_table_3:
     """ Are the same high perfoming subjects found by HTM """
     training = "training=40%"
-    fold = '2'  # 1,2
+    fold = '1'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}/{fold}"
     path_in = os.path.join(dir_results, 'results-master.csv')
     path_out = os.path.join(dir_results, 'table3-high-performing-subjects.csv')
@@ -1228,7 +1387,8 @@ if make_table_3:
             for delay in delays:
                 print(f"      {compalg}--{scenario}--{delay}")
                 filter_dict = {'delay comp alg': [compalg, 'nc'], 'flight scenario': [scenario],
-                               'delay condition': [delay], 'wl alg': [f"{wl_alg} - {v}" for v in wlalgs_scenarios_featuresets['HTM'][scenario]]}
+                               'delay condition': [delay],
+                               'wl alg': [f"{wl_alg} - {v}" for v in wlalgs_scenarios_featuresets['HTM'][scenario]]}
                 df_ = filter_df(df_master_total, filter_dict)
                 if len(df_['delay comp alg'].unique()) == 1:
                     print("          **EMPTY")
@@ -1251,20 +1411,53 @@ if make_boxplots_table23:
     path_t2 = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
     table2 = pd.read_csv(path_t2)
     algs_colors = {
-        'TLX': 'red',
-        'IPSD RS': 'grey',
-        'IPSD PS': 'grey',
-        'IPSD RP': 'grey',
-        'SE': 'yellow',
-        'HTM': 'lightblue'
+        'TLX-Raw': 'lightgrey',
+        'TLX-Mental': 'lightgrey',
+        'TLX-Physical': 'lightgrey',
+        'TLX-Performance': 'lightgrey',
+        'TLX-Frustration': 'lightgrey',
+        'TLX-Effort': 'lightgrey',
+        'TLX-Temporal': 'lightgrey',
+        'CHR GSE': 'lightgrey',
+        'CHR TDE': 'lightgrey',
+        'IPSD RS': 'lightgrey',
+        'IPSD PS': 'lightgrey',
+        'IPSD RP': 'lightgrey',
+        'FPSD RS': 'lightgrey',
+        'FPSD PS': 'lightgrey',
+        # 'FPSD RP': 'lightgrey',
+        'SE RS': 'yellow',
+        'SE PS': 'yellow',
+        'SE RP': 'yellow',
+        # 'HTM': 'lightblue',
+        'HTM RS': 'lightblue',
+        'HTM PS': 'lightblue',
+        'HTM RP': 'lightblue',
+        'HTM RS+RP': 'lightblue',
     }
     wls_convert = {
-        'HTM': 'HTM',
-        'TLX': 'TLX',
-        'SE': 'SteeringEntropy',
-        'IPSD RS': 'PSD-1 - roll_stick',
-        'IPSD PS': 'PSD-2 - pitch_stick',
-        'IPSD RP': 'PSD-3 - rudder_pedals'
+        'HTM RS': 'HTM-roll',
+        'HTM PS': 'HTM-pitch',
+        'HTM RP': 'HTM-rudder',
+        'HTM RS+RP': 'HTM-rollpitch',
+        'TLX-Raw': 'TLX-Raw',
+        'TLX-Temporal': 'TLX-Temporal',
+        'TLX-Physical': 'TLX-Physical',
+        'TLX-Mental': 'TLX-Mental',
+        'TLX-Effort': 'TLX-Effort',
+        'TLX-Frustration': 'TLX-Frustration',
+        'TLX-Performance': 'TLX-Performance',
+        'CHR GSE': 'CHR-GSE',
+        'CHR TDE': 'CHR-TDE',
+        'SE RS': 'SteeringEntropy-roll',
+        'SE PS': 'SteeringEntropy-pitch',
+        'SE RP': 'SteeringEntropy-rudder',
+        'IPSD RS': 'IPSD-roll',
+        'IPSD PS': 'IPSD-pitch',
+        'IPSD RP': 'IPSD-rudder',
+        'FPSD RS': 'FPSD-roll',
+        'FPSD PS': 'FPSD-pitch',
+        # 'FPSD RP': 'FPSD-rudder'
     }
 
     algs_percentdrops = {}
@@ -1275,13 +1468,14 @@ if make_boxplots_table23:
         algs_percentdrops[wl] = df_wl['%WL drop from no comp'].values
         algs_pvalues[wl] = df_wl['paired ttest p-value'].values
 
-    make_boxplots(data_dict={k: v for k, v in algs_percentdrops.items() if k != 'IPSD RP'},
-                  levels_colors={k: v for k, v in algs_colors.items() if k != 'IPSD RP'},
+    make_boxplots(data_dict={k: v for k, v in algs_percentdrops.items() if k != 'FPSD RP'},
+                  levels_colors={k: v for k, v in algs_colors.items() if k != 'FPSD RP'},
                   ylabel="% Drop in Workload",
                   title="from Compensated to Non-Compensated Behavior",
                   suptitle="% Drop in Workload",
+                  xtickrotation=90,
                   path_out=os.path.join(dir_out, "percentdrops--box.png"),
-                  ylim=None,
+                  ylim=(-125, 75),
                   showmeans=True)
 
     make_boxplots(data_dict=algs_pvalues,
@@ -1289,9 +1483,20 @@ if make_boxplots_table23:
                   ylabel="P-values of Paried T-Tests",
                   title="for Significant Difference between Compensated & Non-Compensated Behavior",
                   suptitle="P-values of Paried T-Tests",
+                  xtickrotation=90,
                   path_out=os.path.join(dir_out, "pvalues--box.png"),
                   ylim=None,
                   showmeans=True)
+
+if print_mean_scores:
+    table2 = pd.read_csv(
+        "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv")
+    cols_score = ['%WL drop from no comp', 'paired ttest p-value']
+    gpby = table2.groupby('wl alg')
+    for wl, df_wl in gpby:
+        print(f"\n{wl}")
+        for col in cols_score:
+            print(f"  {col} --> {round(df_wl[col].mean(), 3)}")
 
 # if __name__ == "__main__":
 #     main()

@@ -1,7 +1,7 @@
 mode: post-hoc
 #post-hoc, real-time
-alg: PSD
-#HTM, PSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
+alg: SteeringEntropy
+#HTM, IPSD, FPSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 preprocess:
@@ -2624,7 +2624,7 @@ wllevels_filenames:
     - run14_mfr.csv
 #    - run1_ss.csv
 #    - run3_mc.csv
-  baseline: # no 'ss' files in baseline
+  baseline: # no 'ss' files in baseline (fold=1)
     - run1_ss.csv
     - run3_mc.csv
     - run20_nc.csv

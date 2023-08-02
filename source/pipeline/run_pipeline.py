@@ -94,8 +94,15 @@ def get_filenames_outputs(cfg,
         elif config['alg'] == 'Naive':
             ascores = get_ascores_naive(data[modname].values)
 
-        elif config['alg'] == 'PSD':
-            ascores = list(plt.psd(x=data[modname].values, Fs=1/cfg['hzs']['convertto'])[0])
+        elif config['alg'] == 'IPSD':
+            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  #NFFT=1024
+            total_power = np.trapz(Pxx, freqs)
+            ascores = [total_power]
+
+        elif config['alg'] == 'FPSD':
+            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  #NFFT=1024
+            highest_peak_freq = freqs[np.argmax(Pxx)]
+            ascores = [highest_peak_freq]
 
         elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
             ascores = get_ascores_pyod(data[modname], modname_model[
