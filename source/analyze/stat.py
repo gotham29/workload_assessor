@@ -69,7 +69,6 @@ Test for statistically significant performance differences between Algs
 # print("TEST 1")
 # run_stat_tests(algs_data)
 
-
 """
 2) % Increase from Baseline to EACH other WL level
     --> 3 values per subject
@@ -92,7 +91,6 @@ Test for statistically significant performance differences between Algs
 # print(f"{title}")
 # plot_hists(algs_data, DIR_OUT, title)
 # run_stat_tests(algs_data)
-
 
 """
 3) Degree of overlap with TLX
@@ -1470,9 +1468,10 @@ if make_boxplots_table23:
 
     make_boxplots(data_dict={k: v for k, v in algs_percentdrops.items() if k != 'FPSD RP'},
                   levels_colors={k: v for k, v in algs_colors.items() if k != 'FPSD RP'},
+                  xlabel="Workload Metrics",
                   ylabel="% Drop in Workload",
-                  title="from Compensated to Non-Compensated Behavior",
-                  suptitle="% Drop in Workload",
+                  title="% Drop in Workload by Workload Metric",  #"from Compensated to Non-Compensated Behavior",
+                  # suptitle=#"% Drop in Workload",
                   xtickrotation=90,
                   path_out=os.path.join(dir_out, "percentdrops--box.png"),
                   ylim=(-125, 75),
@@ -1480,9 +1479,10 @@ if make_boxplots_table23:
 
     make_boxplots(data_dict=algs_pvalues,
                   levels_colors=algs_colors,
+                  xlabel="Workload Metrics",
                   ylabel="P-values of Paried T-Tests",
-                  title="for Significant Difference between Compensated & Non-Compensated Behavior",
-                  suptitle="P-values of Paried T-Tests",
+                  title="P-values of Paried T-Tests by Workload Metric",  #"for Significant Difference between Compensated & Non-Compensated Behavior",
+                  # suptitle="P-values of Paried T-Tests",
                   xtickrotation=90,
                   path_out=os.path.join(dir_out, "pvalues--box.png"),
                   ylim=None,
