@@ -29,8 +29,8 @@ make_table_1_fold = False
 make_table_2_fold = False
 make_table_2_foldsavg = False
 make_boxplots_table23 = False
-
-print_mean_scores = True
+print_mean_scores = False
+print_nullreject_scores = False
 
 convert_chrs = False
 convert_tlxs = False
@@ -1491,12 +1491,32 @@ if make_boxplots_table23:
 if print_mean_scores:
     table2 = pd.read_csv(
         "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv")
-    cols_score = ['%WL drop from no comp', 'paired ttest p-value']
+    cols_score = ['%WL drop from no comp', 'paired ttest p-value']  #'%WL drop from no comp', 'paired ttest p-value'
     gpby = table2.groupby('wl alg')
     for wl, df_wl in gpby:
         print(f"\n{wl}")
         for col in cols_score:
             print(f"  {col} --> {round(df_wl[col].mean(), 3)}")
+
+if print_nullreject_scores:
+    wls_alpha10counts = {}
+    wls_alpha05counts = {}
+    wls_alpha01counts = {}
+    gpby = table2.groupby('wl alg')
+    for wl, df_wl in gpby:
+        pvals = df_wl['paired ttest p-value'].values
+        wls_alpha10counts[wl] = len([v for v in pvals if v < 0.10])
+        wls_alpha05counts[wl] = len([v for v in pvals if v < 0.05])
+        wls_alpha01counts[wl] = len([v for v in pvals if v < 0.01])
+    wls_alpha10counts = {k: v for k, v in sorted(wls_alpha10counts.items(), key=lambda item: item[1], reverse=True)}
+    wls_alpha05counts = {k: v for k, v in sorted(wls_alpha05counts.items(), key=lambda item: item[1], reverse=True)}
+    wls_alpha01counts = {k: v for k, v in sorted(wls_alpha01counts.items(), key=lambda item: item[1], reverse=True)}
+    print("Alpha=0.10")
+    print(wls_alpha10counts)
+    print("\nAlpha=0.05")
+    print(wls_alpha05counts)
+    print("\nAlpha=0.01")
+    print(wls_alpha01counts)
 
 # if __name__ == "__main__":
 #     main()
