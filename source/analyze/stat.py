@@ -28,10 +28,12 @@ make_master_results = False
 make_table_1_fold = False
 make_table_2_fold = False
 make_table_2_foldsavg = False
-make_boxplots_table23 = False
-print_mean_scores = False
-print_nullreject_scores = False
 
+make_boxplots_table23 = True
+print_mean_scores = True
+print_nullreject_scores = True
+
+convert_gses = False
 convert_chrs = False
 convert_tlxs = False
 eval_tlxs = False
@@ -284,6 +286,40 @@ def make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, ti
     # Save
     plt.savefig(path_out)
     plt.close()
+
+
+def convert_gsefiles_toformat(dir_gses, dir_out, runs_modes, runs_approaches):
+    files_gse = [f for f in os.listdir(dir_gses) if '.csv' in f]
+    rows_offset = []
+    rows_straightin = []
+    for f in files_gse:
+        subj = f.split('_p')[1].split('.csv')[0]
+        run = f.split('rt_run')[1].split('_')[0]
+        p = os.path.join(dir_gses, f)
+        df = pd.read_csv(p)
+        df.columns = ['time', 'c1', 'c2', 'c3', 'c4', 'c5']
+        df_ = df[['c1', 'c2', 'c3', 'c4', 'c5']]
+        gse = df_.abs().sum().sum()
+        row = {
+            'Subject': f"subj{subj}",
+            'Run #': run,
+            'Run Mode': runs_modes[run],
+            'GSE': gse
+        }
+        if runs_approaches[run] == 'offset':
+            rows_offset.append(row)
+        else:
+            rows_straightin.append(row)
+    assert len(rows_offset) == len(rows_straightin), "rows_offset & rows_straight in NOT SAME LENGTH"
+
+    df_offset = pd.DataFrame(rows_offset)
+    df_straight = pd.DataFrame(rows_straightin)
+
+    path_out_offset = os.path.join(dir_out, 'gse--offset.csv')
+    path_out_straight = os.path.join(dir_out, 'gse--straight-in.csv')
+
+    df_offset.to_csv(path_out_offset, index=False)
+    df_straight.to_csv(path_out_straight, index=False)
 
 
 def convert_chrfiles_toformat(dir_chrs, dir_out, runs_modes):
@@ -693,6 +729,95 @@ if make_boxplots_groups:
                     print(f"  delay={delay}")
                     print(f"    mean = {round(np.mean(data_comp[delay]), 4)}")
                     print(f"    median = {round(np.median(data_comp[delay]), 4)}")
+
+if convert_gses:
+    runs_modes = {
+        '1': 'baseline',
+        '2': 'delay=0.048',
+        '3': 'baseline',
+        '4': 'delay=0.192',
+        '5': 'delay=0.096',
+        '6': 'delay=0.048',
+        '7': 'delay=0.096',
+        '8': 'delay=0.048',
+        '9': 'delay=0.048',
+        '10': 'baseline',
+        '11': 'delay=0.096',
+        '12': 'delay=0.192',
+        '13': 'delay=0.192',
+        '14': 'baseline',
+        '15': 'delay=0.192',
+        '16': 'delay=0.048',
+        '17': 'delay=0.096',
+        '18': 'delay=0.192',
+        '19': 'delay=0.096',
+        '20': 'baseline',
+        '21': 'delay=0.096',
+        '22': 'delay=0.048',
+        '23': 'delay=0.096',
+        '24': 'baseline',
+        '25': 'delay=0.096',
+        '26': 'delay=0.192',
+        '27': 'delay=0.192',
+        '28': 'delay=0.096',
+        '29': 'delay=0.048',
+        '30': 'baseline',
+        '31': 'baseline',
+        '32': 'delay=0.048',
+        '33': 'baseline',
+        '34': 'baseline',
+        '35': 'delay=0.192',
+        '36': 'delay=0.192',
+        '37': 'delay=0.048',
+        '38': 'delay=0.192',
+        '39': 'delay=0.048',
+        '40': 'delay=0.096'
+    }
+    runs_approaches = {
+        '1': 'straight-in',
+        '2': 'straight-in',
+        '3': 'straight-in',
+        '4': 'straight-in',
+        '5': 'straight-in',
+        '6': 'straight-in',
+        '7': 'straight-in',
+        '8': 'straight-in',
+        '9': 'straight-in',
+        '10': 'straight-in',
+        '11': 'straight-in',
+        '12': 'straight-in',
+        '13': 'straight-in',
+        '14': 'straight-in',
+        '15': 'straight-in',
+        '16': 'straight-in',
+        '17': 'straight-in',
+        '18': 'straight-in',
+        '19': 'straight-in',
+        '20': 'straight-in',
+        '21': 'offset',
+        '22': 'offset',
+        '23': 'offset',
+        '24': 'offset',
+        '25': 'offset',
+        '26': 'offset',
+        '27': 'offset',
+        '28': 'offset',
+        '29': 'offset',
+        '30': 'offset',
+        '31': 'offset',
+        '32': 'offset',
+        '33': 'offset',
+        '34': 'offset',
+        '35': 'offset',
+        '36': 'offset',
+        '37': 'offset',
+        '38': 'offset',
+        '39': 'offset',
+        '40': 'offset'
+    }
+    dir_gses = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/GSE"
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_gsefiles_toformat(dir_gses, dir_out, runs_modes, runs_approaches)
 
 if convert_chrs:
     runs_modes = {
@@ -1205,8 +1330,27 @@ if make_master_results:
                 }
                 rows.append(row_)
     df_master_chr = pd.DataFrame(rows)
+    # Get df_master for GSE
+    rows = []
+    for scenario in scenarios_featuresets:
+        path_gse = os.path.join(dir_in, f"gse--{scenario}.csv")
+        df_gse = pd.read_csv(path_gse)
+        # gse_cols = [c for c in df_gse if c not in ['Subject', 'Run #', 'Run Mode']]
+        for _, row in df_gse.iterrows():
+            # for c in gse_cols: # only 'GSE'
+            c = 'GSE'
+            row_ = {
+                'wl alg': f"GSE",
+                'flight scenario': scenario,
+                'delay comp alg': runs_comps[row['Run #']].replace('_', ''),
+                'delay condition': row['Run Mode'],
+                'subject': row['Subject'],
+                'wl perceived': row[c]
+            }
+            rows.append(row_)
+    df_master_gse = pd.DataFrame(rows)
     # Get df_master_total
-    df_master_total = pd.concat([df_master, df_master_tlx, df_master_chr], axis=0)
+    df_master_total = pd.concat([df_master, df_master_tlx, df_master_chr, df_master_gse], axis=0)
     path_out = os.path.join(dir_results, 'results-master.csv')
     df_master_total.to_csv(path_out)
 
@@ -1227,6 +1371,7 @@ if make_table_1_fold:
     wl_algs = ['HTM-roll', 'HTM-pitch', 'HTM-rudder', 'HTM-rollpitch',
                'SteeringEntropy-roll', 'SteeringEntropy-pitch', 'SteeringEntropy-rudder',
                'CHR-GSE', 'CHR-TDE',
+               'GSE',
                'TLX-Raw', 'TLX-Mental', 'TLX-Physical', 'TLX-Temporal', 'TLX-Performance', 'TLX-Effort',
                'TLX-Frustration',
                'IPSD-roll', 'IPSD-pitch', 'IPSD-rudder', 'FPSD-roll', 'FPSD-pitch', 'FPSD-rudder']
@@ -1278,6 +1423,7 @@ if make_table_2_fold:
     wl_algs = ['HTM-roll', 'HTM-pitch', 'HTM-rudder', 'HTM-rollpitch',
                'SteeringEntropy-roll', 'SteeringEntropy-pitch', 'SteeringEntropy-rudder',
                'CHR-GSE', 'CHR-TDE',
+               'GSE',
                'TLX-Raw', 'TLX-Mental', 'TLX-Physical', 'TLX-Temporal', 'TLX-Performance', 'TLX-Effort',
                'TLX-Frustration',
                'IPSD-roll', 'IPSD-pitch', 'IPSD-rudder', 'FPSD-roll', 'FPSD-pitch', 'FPSD-rudder']
@@ -1416,6 +1562,7 @@ if make_boxplots_table23:
         'TLX-Frustration': 'lightgrey',
         'TLX-Effort': 'lightgrey',
         'TLX-Temporal': 'lightgrey',
+        'GSE': 'lightgrey',
         'CHR GSE': 'lightgrey',
         'CHR TDE': 'lightgrey',
         'IPSD RS': 'lightgrey',
@@ -1445,6 +1592,7 @@ if make_boxplots_table23:
         'TLX-Effort': 'TLX-Effort',
         'TLX-Frustration': 'TLX-Frustration',
         'TLX-Performance': 'TLX-Performance',
+        'GSE': 'GSE',
         'CHR GSE': 'CHR-GSE',
         'CHR TDE': 'CHR-TDE',
         'SE RS': 'SteeringEntropy-roll',
@@ -1470,7 +1618,7 @@ if make_boxplots_table23:
                   levels_colors={k: v for k, v in algs_colors.items() if k != 'FPSD RP'},
                   xlabel="Workload Metrics",
                   ylabel="% Drop in Workload",
-                  title="% Drop in Workload by Workload Metric",  #"from Compensated to Non-Compensated Behavior",
+                  title="% Drop in Workload by Workload Metric",  # "from Compensated to Non-Compensated Behavior",
                   # suptitle=#"% Drop in Workload",
                   xtickrotation=90,
                   path_out=os.path.join(dir_out, "percentdrops--box.png"),
@@ -1481,7 +1629,8 @@ if make_boxplots_table23:
                   levels_colors=algs_colors,
                   xlabel="Workload Metrics",
                   ylabel="P-values of Paried T-Tests",
-                  title="P-values of Paried T-Tests by Workload Metric",  #"for Significant Difference between Compensated & Non-Compensated Behavior",
+                  title="P-values of Paried T-Tests by Workload Metric",
+                  # "for Significant Difference between Compensated & Non-Compensated Behavior",
                   # suptitle="P-values of Paried T-Tests",
                   xtickrotation=90,
                   path_out=os.path.join(dir_out, "pvalues--box.png"),
@@ -1491,7 +1640,7 @@ if make_boxplots_table23:
 if print_mean_scores:
     table2 = pd.read_csv(
         "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv")
-    cols_score = ['%WL drop from no comp', 'paired ttest p-value']  #'%WL drop from no comp', 'paired ttest p-value'
+    cols_score = ['%WL drop from no comp', 'paired ttest p-value']  # '%WL drop from no comp', 'paired ttest p-value'
     gpby = table2.groupby('wl alg')
     for wl, df_wl in gpby:
         print(f"\n{wl}")
