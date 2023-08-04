@@ -28,10 +28,9 @@ make_master_results = False
 make_table_1_fold = False
 make_table_2_fold = False
 make_table_2_foldsavg = False
-
-make_boxplots_table23 = True
-print_mean_scores = True
-print_nullreject_scores = True
+make_boxplots_table23 = False
+print_mean_scores = False
+print_nullreject_scores = False
 
 convert_gses = False
 convert_chrs = False
@@ -297,9 +296,8 @@ def convert_gsefiles_toformat(dir_gses, dir_out, runs_modes, runs_approaches):
         run = f.split('rt_run')[1].split('_')[0]
         p = os.path.join(dir_gses, f)
         df = pd.read_csv(p)
-        df.columns = ['time', 'c1', 'c2', 'c3', 'c4', 'c5']
-        df_ = df[['c1', 'c2', 'c3', 'c4', 'c5']]
-        gse = df_.abs().sum().sum()
+        df.columns = ['time', 'c1', 'c2', 'c3', 'c4', 'GSE']
+        gse = df['GSE'].abs().sum()
         row = {
             'Subject': f"subj{subj}",
             'Run #': run,
@@ -1108,8 +1106,8 @@ if make_tlx_overlaps:
         df_overlaps.to_csv(path_out)
 
 if make_master_results:
-    training = "training=40%"  # training=40%-1, training=40%-2, training=100%
-    fold = '2'  # 1,2
+    training = "training=40%"
+    fold = '1'  # 1,2
     dir_results = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/{training}/{fold}"
     os.makedirs(dir_results, exist_ok=True)
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
