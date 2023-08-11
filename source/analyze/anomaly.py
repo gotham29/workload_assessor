@@ -89,8 +89,10 @@ def get_ascores_pyod(data, model):
     return aScores
 
 
-def get_f1score(tp, fp, fn):
+def get_clscores(scores):
     # get precision
+    tp, fp, tn, fn = scores['true_pos'], scores['false_pos'], scores['true_neg'], scores['false_neg']
+    cl_accuracy = (tp + tn) / (tp+fp+tn+fn)
     denom_precision = (tp + fp)
     if denom_precision == 0:
         precision = 0
@@ -108,7 +110,7 @@ def get_f1score(tp, fp, fn):
         f1 = 0
     else:
         f1 = (2 * precision * recall) / denom_f1
-    return round(f1, 3)
+    return round(f1, 3), round(precision, 3), round(recall, 3), round(cl_accuracy, 3)
 
 
 def get_normdiff(wl_t0, wl_t1):

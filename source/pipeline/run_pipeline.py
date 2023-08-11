@@ -23,7 +23,7 @@ from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import make_data_plots, plot_outputs_boxes, plot_outputs_lines, plot_outputs_bars, get_accum, \
     plot_write_data
 from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
-    get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_f1score, get_ascore_entropy, get_entropy_ts
+    get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_clscores, get_ascore_entropy, get_entropy_ts
 from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
 
 from ts_source.model.model import get_model_lag, LAG_MIN, get_modname, get_preds_rolling
@@ -343,7 +343,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                                                                       wl_changepoints,
                                                                       wl_changepoints_detected,
                                                                       config['windows_ascore']['change_detection'])
-                f1 = get_f1score(scores['true_pos'], scores['false_pos'], scores['false_neg'])
+                f1_score, precision, recall, cl_accuracy = get_clscores(scores)
                 path_out = os.path.join(dir_out_subj,
                                         f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  # feat
                 pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
@@ -360,9 +360,11 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                                     dir_out_subj,
                                     wl_changepoints_windows,
                                     wl_changepoints_detected)
-                rows.append({'subj': subj, 'modname': modname, 'testfile': testfile, 'f1': f1})  # 'feat': feat,
+                rows.append(
+                    {'subj': subj, 'modname': modname, 'testfile': testfile, 'precision': precision, 'recall': recall,
+                     'cl_accuracy': cl_accuracy, 'f1_score': f1_score})
         df_f1 = pd.DataFrame(rows)
-        path_out = os.path.join(dir_out_modname, "f1_scores.csv")
+        path_out = os.path.join(dir_out_modname, "classification_scores.csv")
         df_f1.to_csv(path_out, index=False)
         modnames_df1s[modname] = df_f1
 
@@ -749,7 +751,7 @@ def run_wl(config, subjects_filenames_data, subjects_dfs_train, subjects_feature
         score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
     else:
         print('\nMODE = real-time')
-        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data)['f1'])
+        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data)['f1_score'])
 
     # return score
 
