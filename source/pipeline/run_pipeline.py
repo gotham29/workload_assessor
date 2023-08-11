@@ -616,10 +616,12 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
         wl_changepoints_windows[cp] = cp_window
         if len(cp_detected_in_window):
             cp_detected = True
-        if cp_detected:
-            scores['true_pos'] += 1
-        else:
+        if not cp_detected:
             scores['false_neg'] += 1
+        # if cp_detected:
+        #     scores['true_pos'] += 1
+        # else:
+        #     scores['false_neg'] += 1
     # check for false pos
     for cp in wl_changepoints_detected:
         cp_in_detection_window = False
@@ -628,6 +630,8 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
                 cp_in_detection_window = True
         if not cp_in_detection_window:
             scores['false_pos'] += 1
+        else:  # cp does fall in a detection window
+            scores['true_pos'] += 1
     # check for true neg
     rows_neg = [_ for _ in range(data_size)]
     for wl, cp_window in wl_changepoints_windows.items():
