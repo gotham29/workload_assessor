@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: HTM
+alg: Naive
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 

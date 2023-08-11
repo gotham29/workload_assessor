@@ -23,6 +23,7 @@ from source.analyze.plot import plot_outputs_bars
 from source.analyze.tlx import make_boxplots
 
 # MAKE PLOTS
+make_boxplots_realtime = True
 
 make_master_results = False
 make_table_1_fold = False
@@ -252,7 +253,7 @@ def make_boxplot_groups(groups_datasets, colours, groups_legendnames, ylabel, ti
     for i, data in enumerate(datasets):
         bp = plt.boxplot(
             np.array(data), sym='', whis=[0, 100], widths=0.6 / len(datasets),
-            labels=list(datasets[0]), patch_artist=True,
+            labels=list(datasets[0].columns), patch_artist=True,
             positions=[x_pos[i] + j * 1 for j in range(len(data.T))]
         )
         # Fill the boxes with colours (requires patch_artist=True)
@@ -1664,6 +1665,24 @@ if print_nullreject_scores:
     print(wls_alpha05counts)
     print("\nAlpha=0.01")
     print(wls_alpha01counts)
+
+if make_boxplots_realtime:
+    cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
+    algs_paths = {
+        'HTM': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/HTM/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv',
+        'SE': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/SteeringEntropy/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv',
+        # 'Naive': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/Naive/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv'
+    }
+    algs_colors = {'HTM': 'blue', 'SE': 'red', 'Naive': 'grey'}
+    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
+    xlabel = 'WL Alg'
+    algs_scoredfs = {alg: pd.read_csv(path)[cl_scorecols] for alg, path in algs_paths.items()}
+    for cl_score in cl_scorecols:
+        path_out = os.path.join(dir_out, f"{cl_score}.png")
+        algs_scores = {alg: scoredf[cl_score].dropna() for alg, scoredf in algs_scoredfs.items()}
+        title = f'{cl_score} by {xlabel}'
+        make_boxplots(algs_scores, algs_colors, xlabel, cl_score, title, path_out, xtickrotation=0, suptitle=None,
+                      ylim=None, showmeans=True)
 
 # if __name__ == "__main__":
 #     main()
