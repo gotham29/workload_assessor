@@ -97,6 +97,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         features_models = {feat: SteeringEntropy() for feat in features_model if feat != config['time_col']}
     elif alg in PYOD_MODNAMES_MODELS:
         model = PYOD_MODNAMES_MODELS[alg]
+        features_model = [f for f in features_model if f != config['time_col']]
         features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if
                            feat != config['time_col']}
     # else:

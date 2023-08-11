@@ -95,13 +95,13 @@ def get_clscores(scores):
     cl_accuracy = (tp + tn) / (tp+fp+tn+fn)
     denom_precision = (tp + fp)
     if denom_precision == 0:
-        precision = 0
+        precision = np.nan
     else:
         precision = tp / denom_precision
     # get recall
     denom_recall = (tp + fn)
-    if denom_recall == 0:
-        recall = 0
+    if denom_recall == 0:  # not gonna happen since there's always 2 true positives (in driving sim data/paper 1)
+        recall = np.nan
     else:
         recall = tp / denom_recall
     # get f1
