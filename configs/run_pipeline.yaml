@@ -1,7 +1,7 @@
-mode: post-hoc
+mode: real-time
 #post-hoc, real-time
-alg: SteeringEntropy
-#HTM, IPSD, FPSD, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
+alg: HTM
+#HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 preprocess:
@@ -9,12 +9,12 @@ preprocess:
   standardize: false
   movingaverage: false  #23
   subtract_median: false
-  autocorr: false
+  autocorr: true
   autocorr_thresh: 5
-  autocorr_column: pitch_stick
+  autocorr_column: steering angle
 
 tlx:
-  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx--straight-in.csv  ## straight-in,offset
+  path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx.csv
   modes_convert:
     baseline: baseline
     delay=0.048: delay=0.048
@@ -2592,143 +2592,58 @@ features:
   pred:
     - steering angle
 
-clip_percents:
-  start: 0
-  end: 0
-
 dirs:
   input: /Users/samheiserman/Desktop/repos/workload_assessor/data
   output: /Users/samheiserman/Desktop/repos/workload_assessor/results
 
 colnames:
   - timestamp
-  - pitch_stick
-  - roll_stick
-  - rudder_pedals
-  - throttle
+  - steering angle
+#  - steering angle 2
+  - brake pressure
 
 columns_model:
-#  - pitch_stick
-  - roll_stick
-#  - rudder_pedals
-#  - throttle
+  - steering angle
+#  - steering angle 2
 
 hzs:
-  baseline: 16.67
-  convertto: 16.67
+  baseline: 100
+  convertto: 5  #6.67
 
-# STRAIGHT-IN
+clip_percents:
+  start: 0
+  end: 0
+
 wllevels_filenames:
   training:
-    - run10_ap.csv
-    - run14_mfr.csv
-#    - run1_ss.csv
-#    - run3_mc.csv
-  baseline: # no 'ss' files in baseline (fold=1)
-    - run1_ss.csv
-    - run3_mc.csv
-    - run20_nc.csv
-#    - run10_ap.csv
-#    - run14_mfr.csv
-#    - run20_nc.csv
-  delay=0.048:
-    - run2_ss.csv
-    - run6_mc.csv
-    - run8_nc.csv
-    - run9_mfr.csv
-    - run16_ap.csv
-  delay=0.096:
-    - run5_ap.csv
-    - run7_nc.csv
-    - run11_mfr.csv
-    - run17_mc.csv
-    - run19_ss.csv
-  delay=0.192:
-    - run4_ss.csv
-    - run12_mc.csv
-    - run13_nc.csv
-    - run15_mfr.csv
-    - run18_ap.csv
-
-# OFFSET
-#wllevels_filenames:
-#  training:
-##    - run24_mfr.csv
-##    - run30_mc.csv
-#    - run31_ap.csv
-#    - run34_ss.csv
-#  baseline:
-#    - run24_mfr.csv
-#    - run30_mc.csv
-#    - run33_nc.csv
-##    - run31_ap.csv
-##    - run33_nc.csv
-##    - run34_ss.csv
-#  delay=0.048:
-#    - run22_mc.csv
-#    - run29_ap.csv
-#    - run32_mfr.csv
-#    - run37_nc.csv
-#    - run39_ss.csv
-#  delay=0.096:
-#    - run21_ss.csv
-#    - run23_nc.csv
-#    - run25_mfr.csv
-#    - run28_ap.csv
-#    - run40_mc.csv
-#  delay=0.192:
-#    - run26_mfr.csv
-#    - run27_nc.csv
-#    - run35_ap.csv
-#    - run36_mc.csv
-#    - run38_ss.csv
+    - training1.xls
+    - training2.xls
+    - training3.xls
+    - training4.xls
+    - training5.xls
+    - training6.xls
+    - training7.xls
+    - training8.xls
+    - training9.xls
+    - training10.xls
+  baseline:
+    - static4.xls
+    - static9.xls
+    - static12.xls
+  rain:
+    - static1.xls
+    - static6.xls
+    - static11.xls
+  fog:
+    - static2.xls
+    - static5.xls
+    - static8.xls
+  distraction:
+    - static3.xls
+    - static7.xls
+    - static10.xls
 
 groups_filenames: {}
-#  _ss:
-#    - run1_ss.csv
-#    - run34_ss.csv
-#    - run2_ss.csv
-#    - run39_ss.csv
-#    - run19_ss.csv
-#    - run21_ss.csv
-#    - run4_ss.csv
-#    - run38_ss.csv
-#  _ap:
-#    - run10_ap.csv
-#    - run31_ap.csv
-#    - run16_ap.csv
-#    - run29_ap.csv
-#    - run5_ap.csv
-#    - run28_ap.csv
-#    - run18_ap.csv
-#    - run35_ap.csv
-#  _nc:
-#    - run20_nc.csv
-#    - run33_nc.csv
-#    - run8_nc.csv
-#    - run37_nc.csv
-#    - run7_nc.csv
-#    - run23_nc.csv
-#    - run13_nc.csv
-#    - run27_nc.csv
-#  _mc:
-#    - run3_mc.csv
-#    - run30_mc.csv
-#    - run6_mc.csv
-#    - run22_mc.csv
-#    - run17_mc.csv
-#    - run40_mc.csv
-#    - run12_mc.csv
-#    - run36_mc.csv
-#  _mfr:
-#    - run24_mfr.csv
-#    - run14_mfr.csv
-#    - run9_mfr.csv
-#    - run32_mfr.csv
-#    - run11_mfr.csv
-#    - run25_mfr.csv
-#    - run15_mfr.csv
-#    - run26_mfr.csv
 
 modnames_grids:
   ARIMA:
@@ -2902,6 +2817,16 @@ htm_config_model:
 
 htm_config_user:
   features:
+    steering angle:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+#    steering angle 2:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     timestamp:
       custom: 0
       dayOfWeek: 0
@@ -2914,26 +2839,6 @@ htm_config_user:
       type: timestamp
       weekend: 0
       weight: 0
-#    pitch_stick:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
-    roll_stick:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
-#    rudder_pedals:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
-#    throttle:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
   models_state:
     model_for_each_feature: true  #false
     return_pred_count: true
@@ -2949,7 +2854,7 @@ eval_metric: rmse
 forecast_horizon: 1
 test_prop: 0.3
 time_col: timestamp
-file_type: csv  #xls
+file_type: xls
 scale: false
 do_gridsearch: false
 learn_in_testing: false

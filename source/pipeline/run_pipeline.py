@@ -95,12 +95,12 @@ def get_filenames_outputs(cfg,
             ascores = get_ascores_naive(data[modname].values)
 
         elif config['alg'] == 'IPSD':
-            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  #NFFT=1024
+            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  # NFFT=1024
             total_power = np.trapz(Pxx, freqs)
             ascores = [total_power]
 
         elif config['alg'] == 'FPSD':
-            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  #NFFT=1024
+            Pxx, freqs = plt.psd(x=data[modname].values, Fs=cfg['hzs']['convertto'])  # NFFT=1024
             highest_peak_freq = freqs[np.argmax(Pxx)]
             ascores = [highest_peak_freq]
 
@@ -380,6 +380,7 @@ def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_d
     for subj, filenames_data in subjects_filenames_data.items():
         dir_out_subj = os.path.join(dir_out, subj)
         modname_model = {modname: subjects_features_models[subj][modname]}
+        filenames_data = {fn: data for fn, data in filenames_data.items() if 'realtime' not in fn}
         filenames_ascores, wllevels_ascores, wllevels_totalascores, levels_colors = run_subject(cfg=cfg,
                                                                                                 dir_out=dir_out_subj,
                                                                                                 df_train=
@@ -813,6 +814,9 @@ def main(config):
     os.makedirs(dir_out_total, exist_ok=True)
     ## get inputs
     filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))
+    subj1 = list(config['subjects_testfiles_wltogglepoints'].keys())[0]
+    filenames_realtime = list(config['subjects_testfiles_wltogglepoints'][subj1].keys())
+    filenames += filenames_realtime
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, filenames, subjects, subjects_spacesadd)
     ## train models
     config, subjects_features_models = get_subjects_models(config, dir_out_total, subjects_dfs_train)
