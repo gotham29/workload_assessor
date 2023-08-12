@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: Naive
+alg: RNNModel
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -22,10 +22,10 @@ tlx:
     delay=0.192: delay=0.192
 
 windows_ascore:
-  recent: 5
-  previous: 15
-  change_detection: 15
-  change_thresh_percent: 20
+  recent: 15
+  previous: 25
+  change_detection_window: 15
+  change_thresh_percent: 25
 
 subjects_testfiles_wltogglepoints:
   aranoff:
@@ -2643,20 +2643,19 @@ wllevels_filenames:
     - static7.xls
     - static10.xls
 
-groups_filenames: {}
-
 modnames_grids:
   ARIMA:
     p:
-      - 1
-      - 3
+      - 12
+#      - 1
+#      - 3
     d:
-      - 0
+#      - 0
       - 1
     q:
       - 0
-      - 1
-      - 3
+#      - 1
+#      - 3
     # trend: 'c' ['', '', '']
   VARIMA:
     p:
@@ -2730,9 +2729,9 @@ modnames_grids:
     input_chunk_length:
       - 5
     training_length:
-      - 5
+      - 24
     model: ## ["RNN", "LSTM", "GRU"]
-      - LSTM
+      - LSTM  #RNN
     hidden_dim:
       - 25
     n_rnn_layers:
@@ -2741,9 +2740,10 @@ modnames_grids:
       - 0.0
   LightGBMModel:
     lags:
-      - 1
-      - 5
-      - 10
+      - None
+#      - 1
+#      - 5
+#      - 10
     # lags_past_covariates: Union[int, List[int]] = None,
     # lags_future_covariates: Union[Tuple[int, int], List[int]] = None,
     # output_chunk_length: int = 1,
@@ -2856,5 +2856,5 @@ test_prop: 0.3
 time_col: timestamp
 file_type: xls
 scale: false
-do_gridsearch: false
+do_gridsearch: false  #true
 learn_in_testing: false

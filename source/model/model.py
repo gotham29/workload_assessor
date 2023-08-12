@@ -100,20 +100,23 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         features_model = [f for f in features_model if f != config['time_col']]
         features_models = {feat: model.fit(df_train[features_model]) for feat in features_model if
                            feat != config['time_col']}
-    # else:
-    #     # ts_source
-    #     config_ts = {k: v for k, v in config.items()}
-    #     config_ts['train_models'] = True
-    #     config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
-    #     output_dirs = {'data': os.path.join(dir_output, 'data_files'),
-    #                    'results': os.path.join(dir_output, 'anomaly'),
-    #                    'models': dir_output}
-    #     modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
-    #                                                                  data=df_train,
-    #                                                                  data_path=False,
-    #                                                                  output_dir=False,
-    #                                                                  output_dirs=output_dirs)
-    #     features_models = {modname_best: modnames_models[modname_best]}
+    else:
+        # ts_source
+        config_ts = {k: v for k, v in config.items()}
+        config_ts['train_models'] = True
+        config_ts['modnames_grids'] = {k: v for k, v in config_ts['modnames_grids'].items() if k == alg}
+        output_dirs = {'data': os.path.join(dir_output, 'data_files'),
+                       'results': os.path.join(dir_output, 'anomaly'),
+                       'models': dir_output}
+        features_model = [f for f in features_model if f != config['time_col']]
+        features_models = {}
+        for feat in features_model:
+            modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
+                                                                         data=df_train[[feat, config['time_col']]],
+                                                                         data_path=False,
+                                                                         output_dir=False,
+                                                                         output_dirs=output_dirs)
+            features_models[feat] = modnames_models[alg]
 
     # save_models(features_models, dir_output)
 

@@ -1667,18 +1667,24 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
-    algs_paths = {
-        'HTM': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/HTM/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv',
-        'SE': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/SteeringEntropy/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv',
-        # 'Naive': '/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/Naive/hz=5; features=steering angle/total/modname=steering angle/classification_scores.csv'
-    }
-    algs_colors = {'HTM': 'blue', 'SE': 'red', 'Naive': 'grey'}
+    windows_ascores_str = 'recent=15; previous=25; change_detection_window=15; change_thresh_percent=25; '
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
+    dir_out_ = os.path.join(dir_out, 'scores')
+    dir_out__ = os.path.join(dir_out_, windows_ascores_str)
+    os.makedirs(dir_out_, exist_ok=True)
+    os.makedirs(dir_out__, exist_ok=True)
+    algs_colors = {'HTM': 'blue', 'SE': 'red', 'ARIMA': 'green', 'LSTM': 'purple'}  #, 'Naive': 'grey'
+    algs_paths = {
+        'HTM': os.path.join(dir_out, 'HTM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'SE': os.path.join(dir_out, 'SteeringEntropy', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'ARIMA': os.path.join(dir_out, 'ARIMA', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'LSTM': os.path.join(dir_out, 'RNNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+    }
     xlabel = 'WL Alg'
+    cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
     algs_scoredfs = {alg: pd.read_csv(path)[cl_scorecols] for alg, path in algs_paths.items()}
     for cl_score in cl_scorecols:
-        path_out = os.path.join(dir_out, f"{cl_score}.png")
+        path_out = os.path.join(dir_out__, f"{cl_score}.png")
         algs_scores = {alg: scoredf[cl_score].dropna() for alg, scoredf in algs_scoredfs.items()}
         title = f'{cl_score} by {xlabel}'
         make_boxplots(algs_scores, algs_colors, xlabel, cl_score, title, path_out, xtickrotation=0, suptitle=None,

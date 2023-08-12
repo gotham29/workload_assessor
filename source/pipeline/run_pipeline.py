@@ -289,10 +289,16 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
     modnames = list(subjects_features_models[subj].keys())
     modnames_df1s = {}
     print(f'\nrun_realtime; modnames = {modnames}')
+    # make dir - windows_ascore
+    windows_ascore_str = ''
+    for k,v in config['windows_ascore'].items():
+        windows_ascore_str += f"{k}={v}; "
+    dir_out_ = os.path.join(dir_out, windows_ascore_str)
+    os.makedirs(dir_out_, exist_ok=True)
 
     # loop over modnames
     for modname in modnames:
-        dir_out_modname = os.path.join(dir_out, f"modname={modname}")
+        dir_out_modname = os.path.join(dir_out_, f"modname={modname}")
         os.makedirs(dir_out_modname, exist_ok=True)
         print(f"  --> {dir_out_modname}")
 
@@ -342,7 +348,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
                                                                       wl_changepoints,
                                                                       wl_changepoints_detected,
-                                                                      config['windows_ascore']['change_detection'])
+                                                                      config['windows_ascore']['change_detection_window'])
                 f1_score, precision, recall, cl_accuracy = get_clscores(scores)
                 path_out = os.path.join(dir_out_subj,
                                         f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  # feat
@@ -816,8 +822,8 @@ def main(config):
 
     # run wl - total data
     ## make dir
-    dir_out_total = os.path.join(dir_out, 'total')
-    os.makedirs(dir_out_total, exist_ok=True)
+    # dir_out_total = os.path.join(dir_out, 'total')
+    # os.makedirs(dir_out_total, exist_ok=True)
     ## get inputs
     filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))
     subj1 = list(config['subjects_testfiles_wltogglepoints'].keys())[0]
@@ -825,38 +831,38 @@ def main(config):
     filenames += filenames_realtime
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, filenames, subjects, subjects_spacesadd)
     ## train models
-    config, subjects_features_models = get_subjects_models(config, dir_out_total, subjects_dfs_train)
+    config, subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)  #dir_out_total
     ## run
     run_wl(config=config,
            subjects_filenames_data=subjects_filenames_data,
            subjects_dfs_train=subjects_dfs_train,
            subjects_features_models=subjects_features_models,
-           dir_out=dir_out_total)
+           dir_out=dir_out)  #dir_out_total
 
     # run wl - groups
-    for group in config['groups_filenames']:
-        print(f'\n{group}...')
-        ## make dir
-        dir_out_group = os.path.join(dir_out, group)
-        os.makedirs(dir_out_group, exist_ok=True)
-
-        # update config --> make sure no 'group' files in config['wllevels_filenames']['training'] and only 'group' file in all other wllevels
-        config_group, filenames_group = filter_config_group(group, config)
-
-        # get inputs - group
-        subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group,
-                                                                                    subjects, subjects_spacesadd)
-
-        # train models - group
-        config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group,
-                                                                           subjects_dfs_train_group)
-
-        # run - group
-        run_wl(config=config_group,
-               subjects_filenames_data=subjects_filenames_data_group,
-               subjects_dfs_train=subjects_dfs_train_group,
-               subjects_features_models=subjects_features_models_group,
-               dir_out=dir_out_group)
+    # for group in config['groups_filenames']:
+    #     print(f'\n{group}...')
+    #     ## make dir
+    #     dir_out_group = os.path.join(dir_out, group)
+    #     os.makedirs(dir_out_group, exist_ok=True)
+    #
+    #     # update config --> make sure no 'group' files in config['wllevels_filenames']['training'] and only 'group' file in all other wllevels
+    #     config_group, filenames_group = filter_config_group(group, config)
+    #
+    #     # get inputs - group
+    #     subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group,
+    #                                                                                 subjects, subjects_spacesadd)
+    #
+    #     # train models - group
+    #     config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group,
+    #                                                                        subjects_dfs_train_group)
+    #
+    #     # run - group
+    #     run_wl(config=config_group,
+    #            subjects_filenames_data=subjects_filenames_data_group,
+    #            subjects_dfs_train=subjects_dfs_train_group,
+    #            subjects_features_models=subjects_features_models_group,
+    #            dir_out=dir_out_group)
 
     # if config['alg'] == 'HTM' and config['do_gridsearch']:
     #     modtypes_scores = gridsearch_htm(config=config,
