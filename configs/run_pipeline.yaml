@@ -1,8 +1,14 @@
 mode: real-time
 #post-hoc, real-time
-alg: RNNModel
+alg: OCSVM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
+
+windows_ascore:
+  recent: 5 #10
+  previous: 25
+  change_detection_window: 15 #20
+  change_thresh_percent: 25
 
 preprocess:
   difference: false  #1
@@ -21,12 +27,6 @@ tlx:
     delay=0.096: delay=0.096
     delay=0.192: delay=0.192
 
-windows_ascore:
-  recent: 15
-  previous: 25
-  change_detection_window: 15
-  change_thresh_percent: 25
-
 subjects_testfiles_wltogglepoints:
   aranoff:
     realtime1.xls:
@@ -43,7 +43,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 107
       times_wltoggle:
         - 8
-        - 78
+        - 82 #78
     realtime4.xls:
       time_total: 82
       times_wltoggle:
@@ -53,7 +53,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 113
       times_wltoggle:
         - 22
-        - 85
+        - 95 #85
     realtime6.xls:
       time_total: 81
       times_wltoggle:
@@ -62,25 +62,25 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 87
       times_wltoggle:
-        - 25
+        - 40  #25
         - 60
     realtime8.xls:
       time_total: 105
       times_wltoggle:
         - 23
-        - 63
+        - 85 #63
     realtime9.xls:
       time_total: 99
       times_wltoggle:
-        - 38
-        - 85
+        - 30 #38
+        - 55 #85
 
   ashraf:
     realtime1.xls:
       time_total: 110
       times_wltoggle:
         - 39
-        - 78
+        - 95 #78
     realtime2.xls:
       time_total: 94
       times_wltoggle:
@@ -89,7 +89,7 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 127
       times_wltoggle:
-        - 30
+        - 60 #30
         - 83
     realtime4.xls:
       time_total: 84
@@ -99,8 +99,8 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 89
       times_wltoggle:
-        - 9
-        - 58
+        - 25 #9
+        - 65 #58
     realtime6.xls:
       time_total: 84
       times_wltoggle:
@@ -114,12 +114,12 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 86
       times_wltoggle:
-        - 47
+        - 40 #47
         - 58
     realtime9.xls:
       time_total: 88
       times_wltoggle:
-        - 27
+        - 35 #27
         - 83
 
   bagchi:
@@ -131,18 +131,18 @@ subjects_testfiles_wltogglepoints:
     realtime2.xls:
       time_total: 88
       times_wltoggle:
-        - 30
+        - 60 #30
         - 40
     realtime3.xls:
       time_total: 100
       times_wltoggle:
         - 9
-        - 53
+        - 88 #80 #53
     realtime4.xls:
       time_total: 93
       times_wltoggle:
         - 28
-        - 62
+        - 81 #62
     realtime5.xls:
       time_total: 85
       times_wltoggle:
@@ -161,24 +161,24 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 85
       times_wltoggle:
-        - 37
+        - 65 #37
         - 48
     realtime9.xls:
       time_total: 85
       times_wltoggle:
-        - 25
+        - 75 #25
         - 56
 
   balaji:
     realtime1.xls:
       time_total: 111
       times_wltoggle:
-        - 66
+        - 56 #66
         - 82
     realtime2.xls:
       time_total: 93
       times_wltoggle:
-        - 26
+        - 59 #65 #26
         - 85
     realtime3.xls:
       time_total: 122
@@ -193,45 +193,45 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 93
       times_wltoggle:
-        - 42
-        - 64
+        - 47 #42
+        - 85 #64
     realtime6.xls:
       time_total: 115
       times_wltoggle:
-        - 53
+        - 45 #53
         - 106
     realtime7.xls:
       time_total: 111
       times_wltoggle:
-        - 10
+        - 80 #10
         - 60
     realtime8.xls:
       time_total: 95
       times_wltoggle:
-        - 38
+        - 28 #38
         - 85
     realtime9.xls:
       time_total: 110
       times_wltoggle:
         - 30
-        - 98
+        - 49 #98
 
   budithi:
     realtime1.xls:
       time_total: 152
       times_wltoggle:
-        - 41
-        - 88
+        - 75 #41
+        - 130 #88
     realtime2.xls:
       time_total: 114
       times_wltoggle:
         - 12
-        - 45
+        - 67 #45
     realtime3.xls:
       time_total: 129
       times_wltoggle:
-        - 90
-        - 115
+        - 65 #90
+        - 122 #115
     realtime4.xls:
       time_total: 90
       times_wltoggle:
@@ -241,7 +241,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 123
       times_wltoggle:
         - 20
-        - 72
+        - 85 #72
     realtime6.xls:
       time_total: 118
       times_wltoggle:
@@ -256,7 +256,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 124
       times_wltoggle:
         - 75
-        - 97
+        - 88 #97
     realtime9.xls:
       time_total: 189
       times_wltoggle:
@@ -267,18 +267,18 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 130
       times_wltoggle:
-        - 58
-        - 78
+        - 52 #58
+        - 94 #78
     realtime2.xls:
       time_total: 97
       times_wltoggle:
-        - 45
-        - 64
+        - 38 #45
+        - 77 #64
     realtime3.xls:
       time_total: 118
       times_wltoggle:
-        - 45
-        - 105
+        - 35 #45
+        - 110 #105
     realtime4.xls:
       time_total: 90
       times_wltoggle:
@@ -287,7 +287,7 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 89
       times_wltoggle:
-        - 62
+        - 58 #62
         - 80
     realtime6.xls:
       time_total: 96
@@ -297,7 +297,7 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 107
       times_wltoggle:
-        - 29
+        - 60 #29
         - 92
     realtime8.xls:
       time_total: 101
@@ -377,16 +377,16 @@ subjects_testfiles_wltogglepoints:
       time_total: 85
       times_wltoggle:
         - 34
-        - 57
+        - 75 #57
     realtime5.xls:
       time_total: 115
       times_wltoggle:
         - 27
-        - 90
+        - 60 #90
     realtime6.xls:
       time_total: 118
       times_wltoggle:
-        - 35
+        - 50 #35
         - 110
     realtime7.xls:
       time_total: 114
@@ -396,29 +396,29 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 80
       times_wltoggle:
-        - 17
-        - 53
+        - 42 #17
+        - 70 #53
     realtime9.xls:
       time_total: 117
       times_wltoggle:
         - 22
-        - 64
+        - 108 #64
 
   derevensky:
     realtime1.xls:
       time_total: 87
       times_wltoggle:
-        - 50
+        - 22 #50
         - 62
     realtime2.xls:
       time_total: 86
       times_wltoggle:
         - 39
-        - 59
+        - 80 #59
     realtime3.xls:
       time_total: 88
       times_wltoggle:
-        - 42
+        - 80 #42
         - 65
     realtime4.xls:
       time_total: 90
@@ -433,7 +433,7 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 83
       times_wltoggle:
-        - 45
+        - 25 #45
         - 76
     realtime7.xls:
       time_total: 93
@@ -455,18 +455,18 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 106
       times_wltoggle:
-        - 58
+        - 35 #58
         - 73
     realtime2.xls:
       time_total: 100
       times_wltoggle:
-        - 34
+        - 41 #34
         - 71
     realtime3.xls:
       time_total: 118
       times_wltoggle:
         - 34
-        - 103
+        - 112 #103
     realtime4.xls:
       time_total: 95
       times_wltoggle:
@@ -475,22 +475,22 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 210
       times_wltoggle:
-        - 45
-        - 200
+        - 36 #45
+        - 140 #200
     realtime6.xls:
       time_total: 99
       times_wltoggle:
-        - 45
+        - 30 #45
         - 70
     realtime7.xls:
       time_total: 136
       times_wltoggle:
-        - 33
+        - 66 #33
         - 102
     realtime8.xls:
       time_total: 93
       times_wltoggle:
-        - 65
+        - 40 #65
         - 85
     realtime9.xls:
       time_total: 113
@@ -507,7 +507,7 @@ subjects_testfiles_wltogglepoints:
     realtime2.xls:
       time_total: 91
       times_wltoggle:
-        - 27
+        - 81 #27
         - 37
     realtime3.xls:
       time_total: 104
@@ -523,7 +523,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 107
       times_wltoggle:
         - 27
-        - 81
+        - 97 #81
     realtime6.xls:
       time_total: 96
       times_wltoggle:
@@ -537,13 +537,13 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 111
       times_wltoggle:
-        - 29
-        - 88
+        - 65 #29
+        - 80 #88
     realtime9.xls:
       time_total: 117
       times_wltoggle:
         - 42
-        - 105
+        - 95 #105
 
   dongare:
     realtime1.xls:
@@ -611,7 +611,7 @@ subjects_testfiles_wltogglepoints:
     realtime4.xls:
       time_total: 77
       times_wltoggle:
-        - 26
+        - 23 #26
         - 59
     realtime5.xls:
       time_total: 87
@@ -627,17 +627,17 @@ subjects_testfiles_wltogglepoints:
       time_total: 110
       times_wltoggle:
         - 33
-        - 98
+        - 95 #98
     realtime8.xls:
       time_total: 84
       times_wltoggle:
         - 27
-        - 60
+        - 62 #60
     realtime9.xls:
       time_total: 85
       times_wltoggle:
-        - 8
-        - 47
+        - 44 #8
+        - 60 #47
 
   gao:
     realtime1.xls:
@@ -649,11 +649,11 @@ subjects_testfiles_wltogglepoints:
       time_total: 104
       times_wltoggle:
         - 33
-        - 50
+        - 95 #90 #50
     realtime3.xls:
       time_total: 104
       times_wltoggle:
-        - 42
+        - 21 #42
         - 90
     realtime4.xls:
       time_total: 111
@@ -663,12 +663,12 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 118
       times_wltoggle:
-        - 46
-        - 107
+        - 40 #46
+        - 100 #107
     realtime6.xls:
       time_total: 101
       times_wltoggle:
-        - 45
+        - 29 #23 #45
         - 68
     realtime7.xls:
       time_total: 106
@@ -678,7 +678,7 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 92
       times_wltoggle:
-        - 40
+        - 30 #40
         - 84
     realtime9.xls:
       time_total: 100
@@ -700,7 +700,7 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 98
       times_wltoggle:
-        - 11
+        - 22 #11
         - 75
     realtime4.xls:
       time_total: 88
@@ -720,7 +720,7 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 142
       times_wltoggle:
-        - 27
+        - 60 #27
         - 125
     realtime8.xls:
       time_total: 85
@@ -730,25 +730,25 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 124
       times_wltoggle:
-        - 9
+        - 115
         - 60
 
   harsh:
     realtime1.xls:
       time_total: 88
       times_wltoggle:
-        - 38
-        - 77
+        - 44 #22 #38
+        - 79 #77
     realtime2.xls:
       time_total: 89
       times_wltoggle:
         - 27
-        - 50
+        - 40 #50
     realtime3.xls:
       time_total: 98
       times_wltoggle:
-        - 26
-        - 65
+        - 72 #65 #26
+        - 86 #95 #65
     realtime4.xls:
       time_total: 85
       times_wltoggle:
@@ -757,13 +757,13 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 87
       times_wltoggle:
-        - 37
-        - 49
+        - 32 #37
+        - 75 #49
     realtime6.xls:
       time_total: 83
       times_wltoggle:
         - 28
-        - 57
+        - 64 #57
     realtime7.xls:
       time_total: 89
       times_wltoggle:
@@ -772,8 +772,8 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 92
       times_wltoggle:
-        - 9
-        - 52
+        - 20 #9
+        - 40 #52
     realtime9.xls:
       time_total: 85
       times_wltoggle:
@@ -831,22 +831,22 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 105
       times_wltoggle:
-        - 10
-        - 95
+        - 35 #10
+        - 83 #95
     realtime2.xls:
       time_total: 101
       times_wltoggle:
-        - 32
-        - 56
+        - 64 #32
+        - 62 #56
     realtime3.xls:
       time_total: 102
       times_wltoggle:
-        - 15
+        - 45 #15
         - 88
     realtime4.xls:
       time_total: 96
       times_wltoggle:
-        - 43
+        - 60 #43
         - 69
     realtime5.xls:
       time_total: 88
@@ -856,30 +856,30 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 93
       times_wltoggle:
-        - 28
+        - 50 #28
         - 84
     realtime7.xls:
       time_total: 103
       times_wltoggle:
-        - 51
+        - 40 #51
         - 93
     realtime8.xls:
       time_total: 90
       times_wltoggle:
         - 28
-        - 62
+        - 41 #62
     realtime9.xls:
       time_total: 102
       times_wltoggle:
-        - 9
-        - 58
+        - 54 #9
+        - 64 #58
 
   iyengar:
     realtime1.xls:
       time_total: 112
       times_wltoggle:
         - 41
-        - 73
+        - 85 #73
     realtime2.xls:
       time_total: 132
       times_wltoggle:
@@ -909,7 +909,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 145
       times_wltoggle:
         - 49
-        - 70
+        - 140 #70
     realtime8.xls:
       time_total: 111
       times_wltoggle:
@@ -930,17 +930,17 @@ subjects_testfiles_wltogglepoints:
     realtime2.xls:
       time_total: 86
       times_wltoggle:
-        - 38
+        - 30 #38
         - 78
     realtime3.xls:
       time_total: 104
       times_wltoggle:
         - 25
-        - 66
+        - 90 #66
     realtime4.xls:
       time_total: 87
       times_wltoggle:
-        - 48
+        - 24 #48
         - 60
     realtime5.xls:
       time_total: 91
@@ -978,7 +978,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 91
       times_wltoggle:
         - 28
-        - 38
+        - 84 #38
     realtime3.xls:
       time_total: 92
       times_wltoggle:
@@ -987,8 +987,8 @@ subjects_testfiles_wltogglepoints:
     realtime4.xls:
       time_total: 91
       times_wltoggle:
-        - 38
-        - 48
+        - 29 #38
+        - 43 #48
     realtime5.xls:
       time_total: 92
       times_wltoggle:
@@ -997,7 +997,7 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 91
       times_wltoggle:
-        - 62
+        - 41 #62
         - 82
     realtime7.xls:
       time_total: 95
@@ -1008,7 +1008,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 111
       times_wltoggle:
         - 26
-        - 60
+        - 66 #60
     realtime9.xls:
       time_total: 82
       times_wltoggle:
@@ -1029,7 +1029,7 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 121
       times_wltoggle:
-        - 30
+        - 66 #30
         - 85
     realtime4.xls:
       time_total: 83
@@ -1045,7 +1045,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 93
       times_wltoggle:
         - 40
-        - 65
+        - 75 #84 #65
     realtime7.xls:
       time_total: 115
       times_wltoggle:
@@ -1060,13 +1060,13 @@ subjects_testfiles_wltogglepoints:
       time_total: 112
       times_wltoggle:
         - 31
-        - 93
+        - 78 #93
 
   khillan:
     realtime1.xls:
       time_total: 110
       times_wltoggle:
-        - 47
+        - 40 #47
         - 58
     realtime2.xls:
       time_total: 91
@@ -1076,13 +1076,13 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 90
       times_wltoggle:
-        - 25
+        - 75 #25
         - 59
     realtime4.xls:
       time_total: 85
       times_wltoggle:
         - 25
-        - 45
+        - 50 #45
     realtime5.xls:
       time_total: 108
       times_wltoggle:
@@ -1096,13 +1096,13 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 87
       times_wltoggle:
-        - 33
+        - 37 #33
         - 76
     realtime8.xls:
       time_total: 84
       times_wltoggle:
-        - 45
-        - 58
+        - 20 #45
+        - 40 #58
     realtime9.xls:
       time_total: 87
       times_wltoggle:
@@ -1113,38 +1113,38 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 96
       times_wltoggle:
-        - 45
+        - 20 #45
         - 69
     realtime2.xls:
       time_total: 95
       times_wltoggle:
-        - 12
-        - 84
+        - 24 #12
+        - 75 #84
     realtime3.xls:
       time_total: 126
       times_wltoggle:
-        - 28
-        - 105
+        - 70 #28
+        - 110 #105
     realtime4.xls:
       time_total: 87
       times_wltoggle:
         - 9
-        - 28
+        - 70 #28
     realtime5.xls:
       time_total: 68
       times_wltoggle:
-        - 28
-        - 40
+        - 22 #28
+        - 32 #40
     realtime6.xls:
       time_total: 86
       times_wltoggle:
-        - 50
-        - 58
+        - 25 #50
+        - 64 #58
     realtime7.xls:
       time_total: 155
       times_wltoggle:
-        - 40
-        - 102
+        - 30 #40
+        - 82 #102
     realtime8.xls:
       time_total: 81
       times_wltoggle:
@@ -1153,14 +1153,14 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 110
       times_wltoggle:
-        - 48
-        - 94
+        - 24 #48
+        - 76 #94
 
   kothari:
     realtime1.xls:
       time_total: 118
       times_wltoggle:
-        - 69
+        - 33 #69
         - 85
     realtime2.xls:
       time_total: 116
@@ -1170,13 +1170,13 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 155
       times_wltoggle:
-        - 80
-        - 135
+        - 88 #80
+        - 120 #135
     realtime4.xls:
       time_total: 108
       times_wltoggle:
         - 37
-        - 69
+        - 78 #69
     realtime5.xls:
       time_total: 135
       times_wltoggle:
@@ -1207,33 +1207,33 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 112
       times_wltoggle:
-        - 27
-        - 65
+        - 105 #27
+        - 72 #65
     realtime2.xls:
       time_total: 113
       times_wltoggle:
         - 32
-        - 62
+        - 70 #62
     realtime3.xls:
       time_total: 125
       times_wltoggle:
-        - 8
+        - 25 #8
         - 64
     realtime4.xls:
       time_total: 98
       times_wltoggle:
-        - 31
+        - 27 #31
         - 46
     realtime5.xls:
       time_total: 105
       times_wltoggle:
-        - 9
-        - 44
+        - 20 #9
+        - 66 #44
     realtime6.xls:
       time_total: 106
       times_wltoggle:
-        - 31
-        - 43
+        - 75 #31
+        - 86 #43
     realtime7.xls:
       time_total: 150
       times_wltoggle:
@@ -1247,15 +1247,15 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 106
       times_wltoggle:
-        - 29
-        - 73
+        - 26 #29
+        - 67 #73
 
   krishtipati:
     realtime1.xls:
       time_total: 180
       times_wltoggle:
-        - 35
-        - 62
+        - 85 #35
+        - 124 #62
     realtime2.xls:
       time_total: 88
       times_wltoggle:
@@ -1265,16 +1265,16 @@ subjects_testfiles_wltogglepoints:
       time_total: 92
       times_wltoggle:
         - 27
-        - 48
+        - 62 #48
     realtime4.xls:
       time_total: 88
       times_wltoggle:
         - 40
-        - 58
+        - 85 #77 #58
     realtime5.xls:
       time_total: 90
       times_wltoggle:
-        - 26
+        - 78 #26
         - 64
     realtime6.xls:
       time_total: 88
@@ -1290,7 +1290,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 92
       times_wltoggle:
         - 9
-        - 64
+        - 84 #64
     realtime9.xls:
       time_total: 96
       times_wltoggle:
@@ -1301,7 +1301,7 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 97
       times_wltoggle:
-        - 31
+        - 27 #31
         - 71
     realtime2.xls:
       time_total: 96
@@ -1368,7 +1368,7 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 109
       times_wltoggle:
-        - 31
+        - 25 #31
         - 62
     realtime6.xls:
       time_total: 82
@@ -1405,7 +1405,7 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 112
       times_wltoggle:
-        - 27
+        - 25 #27
         - 97
     realtime4.xls:
       time_total: 80
@@ -1415,7 +1415,7 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 85
       times_wltoggle:
-        - 9
+        - 20 #9
         - 40
     realtime6.xls:
       time_total: 80
@@ -1431,7 +1431,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 126
       times_wltoggle:
         - 25
-        - 80
+        - 120 #80
     realtime9.xls:
       time_total: 103
       times_wltoggle:
@@ -1453,7 +1453,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 151
       times_wltoggle:
         - 35
-        - 120
+        - 138 #120
     realtime4.xls:
       time_total: 97
       times_wltoggle:
@@ -1478,7 +1478,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 158
       times_wltoggle:
         - 40
-        - 120
+        - 138 #120
     realtime9.xls:
       time_total: 121
       times_wltoggle:
@@ -1490,7 +1490,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 103
       times_wltoggle:
         - 40
-        - 94
+        - 89 #94
     realtime2.xls:
       time_total: 94
       times_wltoggle:
@@ -1499,7 +1499,7 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 120
       times_wltoggle:
-        - 29
+        - 38 #29
         - 86
     realtime4.xls:
       time_total: 101
@@ -1509,8 +1509,8 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 95
       times_wltoggle:
-        - 29
-        - 66
+        - 15 #29
+        - 54 #66
     realtime6.xls:
       time_total: 98
       times_wltoggle:
@@ -1520,7 +1520,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 129
       times_wltoggle:
         - 50
-        - 110
+        - 115 #110
     realtime8.xls:
       time_total: 117
       times_wltoggle:
@@ -1536,55 +1536,55 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 92
       times_wltoggle:
-        - 40
-        - 52
+        - 20 #40
+        - 62 #52
     realtime2.xls:
       time_total: 85
       times_wltoggle:
-        - 50
+        - 25 #50
         - 60
     realtime3.xls:
       time_total: 95
       times_wltoggle:
-        - 10
-        - 55
+        - 40 #10
+        - 73 #55
     realtime4.xls:
       time_total: 83
       times_wltoggle:
-        - 10
+        - 22 #10
         - 60
     realtime5.xls:
       time_total: 86
       times_wltoggle:
-        - 10
+        - 23 #10
         - 53
     realtime6.xls:
       time_total: 83
       times_wltoggle:
-        - 38
+        - 27 #38
         - 58
     realtime7.xls:
       time_total: 95
       times_wltoggle:
-        - 40
+        - 20 #40
         - 65
     realtime8.xls:
       time_total: 90
       times_wltoggle:
-        - 38
+        - 27 #38
         - 85
     realtime9.xls:
       time_total: 100
       times_wltoggle:
         - 30
-        - 60
+        - 66 #60
 
   olson:
     realtime1.xls:
       time_total: 84
       times_wltoggle:
         - 27
-        - 72
+        - 55 #72
     realtime2.xls:
       time_total: 83
       times_wltoggle:
@@ -1599,22 +1599,22 @@ subjects_testfiles_wltogglepoints:
       time_total: 80
       times_wltoggle:
         - 24
-        - 55
+        - 57 #55
     realtime5.xls:
       time_total: 87
       times_wltoggle:
-        - 35
+        - 32 #35
         - 75
     realtime6.xls:
       time_total: 82
       times_wltoggle:
-        - 45
+        - 27 #45
         - 56
     realtime7.xls:
       time_total: 81
       times_wltoggle:
-        - 7
-        - 34
+        - 79 #50 #7
+        - 60 #28 #34
     realtime8.xls:
       time_total: 79
       times_wltoggle:
@@ -1624,13 +1624,13 @@ subjects_testfiles_wltogglepoints:
       time_total: 81
       times_wltoggle:
         - 25
-        - 56
+        - 62 #56
 
   pachpande:
     realtime1.xls:
       time_total: 82
       times_wltoggle:
-        - 37
+        - 31 #37
         - 57
     realtime2.xls:
       time_total: 98
@@ -1640,18 +1640,18 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 93
       times_wltoggle:
-        - 50
-        - 80
+        - 60 #50
+        - 90 #80
     realtime4.xls:
       time_total: 103
       times_wltoggle:
-        - 9
-        - 56
+        - 27 #9
+        - 84 #56
     realtime5.xls:
       time_total: 109
       times_wltoggle:
         - 27
-        - 75
+        - 90 #75
     realtime6.xls:
       time_total: 86
       times_wltoggle:
@@ -1660,17 +1660,17 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 119
       times_wltoggle:
-        - 10
-        - 110
+        - 35 #10
+        - 105 #110
     realtime8.xls:
       time_total: 121
       times_wltoggle:
-        - 10
-        - 88
+        - 25 #10
+        - 66 #88
     realtime9.xls:
       time_total: 121
       times_wltoggle:
-        - 37
+        - 111 #37
         - 50
 
   padmanaban:
@@ -1683,7 +1683,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 100
       times_wltoggle:
         - 27
-        - 54
+        - 59 #54
     realtime3.xls:
       time_total: 101
       times_wltoggle:
@@ -1692,7 +1692,7 @@ subjects_testfiles_wltogglepoints:
     realtime4.xls:
       time_total: 91
       times_wltoggle:
-        - 53
+        - 26 #53
         - 65
     realtime5.xls:
       time_total: 98
@@ -1702,7 +1702,7 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 97
       times_wltoggle:
-        - 28
+        - 31 #28
         - 56
     realtime7.xls:
       time_total: 100
@@ -1712,8 +1712,8 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 122
       times_wltoggle:
-        - 10
-        - 65
+        - 22 #10
+        - 100 #65
     realtime9.xls:
       time_total: 106
       times_wltoggle:
@@ -1744,23 +1744,23 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 103
       times_wltoggle:
-        - 42
-        - 56
+        - 30 #42
+        - 70 #56
     realtime6.xls:
       time_total: 88
       times_wltoggle:
-        - 10
-        - 48
+        - 30 #10
+        - 66 #48
     realtime7.xls:
       time_total: 115
       times_wltoggle:
-        - 12
-        - 63
+        - 31 #28 #12
+        - 89 #63
     realtime8.xls:
       time_total: 146
       times_wltoggle:
         - 44
-        - 115
+        - 103 #115
     realtime9.xls:
       time_total: 104
       times_wltoggle:
@@ -1771,8 +1771,8 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 112
       times_wltoggle:
-        - 70
-        - 100
+        - 21 #70
+        - 80 #100
     realtime2.xls:
       time_total: 94
       times_wltoggle:
@@ -1781,8 +1781,8 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 96
       times_wltoggle:
-        - 24
-        - 84
+        - 50 #24
+        - 75 #84
     realtime4.xls:
       time_total: 84
       times_wltoggle:
@@ -1797,7 +1797,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 87
       times_wltoggle:
         - 9
-        - 60
+        - 54 #60
     realtime7.xls:
       time_total: 91
       times_wltoggle:
@@ -1806,30 +1806,30 @@ subjects_testfiles_wltogglepoints:
     realtime8.xls:
       time_total: 93
       times_wltoggle:
-        - 27
-        - 85
+        - 85 #27
+        - 66 #60 #85
     realtime9.xls:
       time_total: 114
       times_wltoggle:
-        - 25
-        - 85
+        - 55 #25
+        - 97 #85
 
   perrotta:
     realtime1.xls:
       time_total: 99
       times_wltoggle:
-        - 27
-        - 93
+        - 54 #27
+        - 84 #93
     realtime2.xls:
       time_total: 89
       times_wltoggle:
         - 31
-        - 60
+        - 72 #60
     realtime3.xls:
       time_total: 97
       times_wltoggle:
-        - 28
-        - 68
+        - 12 #28
+        - 86 #102 #68
     realtime4.xls:
       time_total: 94
       times_wltoggle:
@@ -1838,39 +1838,39 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 87
       times_wltoggle:
-        - 29
+        - 28 #33 #29
         - 80
     realtime6.xls:
       time_total: 88
       times_wltoggle:
         - 28
-        - 50
+        - 62 #50
     realtime7.xls:
       time_total: 94
       times_wltoggle:
-        - 39
-        - 82
+        - 30 #39
+        - 56 #82
     realtime8.xls:
       time_total: 90
       times_wltoggle:
         - 28
-        - 60
+        - 67 #60
     realtime9.xls:
       time_total: 90
       times_wltoggle:
-        - 9
-        - 51
+        - 20 #9
+        - 81 #51
 
   pragallapati:
     realtime1.xls:
       time_total: 91
       times_wltoggle:
         - 10
-        - 54
+        - 48 #54
     realtime2.xls:
       time_total: 88
       times_wltoggle:
-        - 40
+        - 30 #40
         - 62
     realtime3.xls:
       time_total: 92
@@ -1885,23 +1885,23 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 109
       times_wltoggle:
-        - 12
-        - 45
+        - 86 #96 #12
+        - 36 #45
     realtime6.xls:
       time_total: 136
       times_wltoggle:
-        - 41
-        - 105
+        - 60 #41
+        - 100 #110 #105
     realtime7.xls:
       time_total: 106
       times_wltoggle:
-        - 10
-        - 90
+        - 30 #10
+        - 95 #90
     realtime8.xls:
       time_total: 160
       times_wltoggle:
-        - 32
-        - 152
+        - 66 #32
+        - 123 #152
     realtime9.xls:
       time_total: 100
       times_wltoggle:
@@ -1912,7 +1912,7 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 101
       times_wltoggle:
-        - 34
+        - 17 #34
         - 74
     realtime2.xls:
       time_total: 105
@@ -1922,28 +1922,28 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 132
       times_wltoggle:
-        - 12
+        - 30 #12
         - 88
     realtime4.xls:
       time_total: 101
       times_wltoggle:
-        - 9
+        - 22 #9
         - 91
     realtime5.xls:
       time_total: 113
       times_wltoggle:
-        - 36
+        - 72 #36
         - 102
     realtime6.xls:
       time_total: 104
       times_wltoggle:
-        - 62
+        - 69 #62
         - 96
     realtime7.xls:
       time_total: 127
       times_wltoggle:
-        - 48
-        - 104
+        - 63 #48
+        - 94 #104
     realtime8.xls:
       time_total: 108
       times_wltoggle:
@@ -1952,25 +1952,25 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 122
       times_wltoggle:
-        - 17
-        - 78
+        - 25 #17
+        - 86 #78
 
   raghwani:
     realtime1.xls:
       time_total: 98
       times_wltoggle:
         - 12
-        - 56
+        - 68 #56
     realtime2.xls:
       time_total: 91
       times_wltoggle:
-        - 30
-        - 83
+        - 32 #30
+        - 70 #83
     realtime3.xls:
       time_total: 164
       times_wltoggle:
-        - 33
-        - 122
+        - 60 #33
+        - 102 #122
     realtime4.xls:
       time_total: 87
       times_wltoggle:
@@ -2006,28 +2006,28 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 126
       times_wltoggle:
-        - 65
-        - 115
+        - 44 #65
+        - 104 #115
     realtime2.xls:
       time_total: 96
       times_wltoggle:
         - 30
-        - 54
+        - 42 #54
     realtime3.xls:
       time_total: 102
       times_wltoggle:
-        - 39
+        - 75 #39
         - 90
     realtime4.xls:
       time_total: 80
       times_wltoggle:
-        - 25
+        - 13 #25
         - 45
     realtime5.xls:
       time_total: 136
       times_wltoggle:
-        - 35
-        - 60
+        - 95 #87 #35
+        - 120 #60
     realtime6.xls:
       time_total: 86
       times_wltoggle:
@@ -2036,13 +2036,13 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 91
       times_wltoggle:
-        - 8
-        - 50
+        - 33 #8
+        - 70 #50
     realtime8.xls:
       time_total: 123
       times_wltoggle:
-        - 38
-        - 60
+        - 33 #38
+        - 100 #60
     realtime9.xls:
       time_total: 74
       times_wltoggle:
@@ -2054,17 +2054,17 @@ subjects_testfiles_wltogglepoints:
       time_total: 100
       times_wltoggle:
         - 30
-        - 55
+        - 66 #55
     realtime2.xls:
       time_total: 92
       times_wltoggle:
-        - 40
+        - 35 #40
         - 68
     realtime3.xls:
       time_total: 112
       times_wltoggle:
         - 27
-        - 89
+        - 80 #89
     realtime4.xls:
       time_total: 89
       times_wltoggle:
@@ -2073,35 +2073,35 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 93
       times_wltoggle:
-        - 42
-        - 67
+        - 30 #42
+        - 65 #67
     realtime6.xls:
       time_total: 97
       times_wltoggle:
-        - 42
-        - 88
+        - 26 #42
+        - 62 #88
     realtime7.xls:
       time_total: 123
       times_wltoggle:
-        - 80
-        - 102
+        - 32 #80
+        - 63 #102
     realtime8.xls:
       time_total: 100
       times_wltoggle:
-        - 12
+        - 25 #12
         - 72
     realtime9.xls:
       time_total: 104
       times_wltoggle:
         - 10
-        - 63
+        - 47 #63
 
   roach:
     realtime1.xls:
       time_total: 100
       times_wltoggle:
-        - 65
-        - 90
+        - 33 #65
+        - 68 #90
     realtime2.xls:
       time_total: 94
       times_wltoggle:
@@ -2120,28 +2120,28 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 92
       times_wltoggle:
-        - 42
+        - 47 #42
         - 64
     realtime6.xls:
       time_total: 92
       times_wltoggle:
         - 52
-        - 62
+        - 68 #62
     realtime7.xls:
       time_total: 101
       times_wltoggle:
-        - 39
+        - 19 #39
         - 89
     realtime8.xls:
       time_total: 95
       times_wltoggle:
-        - 42
+        - 18 #37 #42
         - 66
     realtime9.xls:
       time_total: 101
       times_wltoggle:
-        - 31
-        - 70
+        - 38 #34 #31
+        - 85 #77 #70
 
   sankhe:
     realtime1.xls:
@@ -2157,8 +2157,8 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 108
       times_wltoggle:
-        - 25
-        - 60
+        - 37 #25
+        - 85 #60
     realtime4.xls:
       time_total: 83
       times_wltoggle:
@@ -2173,7 +2173,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 93
       times_wltoggle:
         - 28
-        - 80
+        - 60 #80
     realtime7.xls:
       time_total: 113
       times_wltoggle:
@@ -2187,8 +2187,8 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 110
       times_wltoggle:
-        - 12
-        - 52
+        - 35 #12
+        - 55 #52
 
   sesham:
     realtime1.xls:
@@ -2214,7 +2214,7 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 88
       times_wltoggle:
-        - 9
+        - 27 #9
         - 62
     realtime6.xls:
       time_total: 81
@@ -2241,23 +2241,23 @@ subjects_testfiles_wltogglepoints:
     realtime1.xls:
       time_total: 114
       times_wltoggle:
-        - 36
-        - 95
+        - 39 #36
+        - 86 #95
     realtime2.xls:
       time_total: 88
       times_wltoggle:
-        - 57
-        - 78
+        - 25 #57
+        - 85 #78
     realtime3.xls:
       time_total: 147
       times_wltoggle:
-        - 25
-        - 110
+        - 20 #25
+        - 105 #110
     realtime4.xls:
       time_total: 90
       times_wltoggle:
         - 38
-        - 50
+        - 70 #50
     realtime5.xls:
       time_total: 93
       times_wltoggle:
@@ -2266,50 +2266,50 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 91
       times_wltoggle:
-        - 60
+        - 67 #60
         - 82
     realtime7.xls:
       time_total: 112
       times_wltoggle:
         - 11
-        - 61
+        - 49 #61
     realtime8.xls:
       time_total: 88
       times_wltoggle:
-        - 37
+        - 30 #37
         - 58
     realtime9.xls:
       time_total: 104
       times_wltoggle:
         - 27
-        - 71
+        - 64 #71
 
   shah-b:
     realtime1.xls:
       time_total: 109
       times_wltoggle:
-        - 48
+        - 43 #48
         - 77
     realtime2.xls:
       time_total: 108
       times_wltoggle:
-        - 54
+        - 40 #54
         - 80
     realtime3.xls:
       time_total: 110
       times_wltoggle:
-        - 10
+        - 25 #10
         - 50
     realtime4.xls:
       time_total: 118
       times_wltoggle:
-        - 44
-        - 70
+        - 36 #44
+        - 90 #70
     realtime5.xls:
       time_total: 106
       times_wltoggle:
         - 35
-        - 60
+        - 78 #60
     realtime6.xls:
       time_total: 101
       times_wltoggle:
@@ -2319,23 +2319,23 @@ subjects_testfiles_wltogglepoints:
       time_total: 102
       times_wltoggle:
         - 27
-        - 66
+        - 68 #66
     realtime8.xls:
       time_total: 116
       times_wltoggle:
-        - 38
+        - 110 #38
         - 48
     realtime9.xls:
       time_total: 136
       times_wltoggle:
-        - 50
-        - 85
+        - 35 #50
+        - 100 #85
 
   thakur:
     realtime1.xls:
       time_total: 102
       times_wltoggle:
-        - 74
+        - 80 #74
         - 93
     realtime2.xls:
       time_total: 87
@@ -2345,17 +2345,17 @@ subjects_testfiles_wltogglepoints:
     realtime3.xls:
       time_total: 154
       times_wltoggle:
-        - 10
-        - 112
+        - 18 #40 #10
+        - 137 #125 #112
     realtime4.xls:
       time_total: 85
       times_wltoggle:
-        - 53
-        - 62
+        - 37 #53
+        - 74 #62
     realtime5.xls:
       time_total: 84
       times_wltoggle:
-        - 39
+        - 31 #39
         - 61
     realtime6.xls:
       time_total: 101
@@ -2365,24 +2365,24 @@ subjects_testfiles_wltogglepoints:
     realtime7.xls:
       time_total: 112
       times_wltoggle:
-        - 47
+        - 37 #70 #47
         - 98
     realtime8.xls:
       time_total: 106
       times_wltoggle:
-        - 62
-        - 75
+        - 31 #62
+        - 85 #75
     realtime9.xls:
       time_total: 109
       times_wltoggle:
         - 33
-        - 73
+        - 87 #73
 
   tosuner:
     realtime1.xls:
       time_total: 84
       times_wltoggle:
-        - 45
+        - 23 #45
         - 75
     realtime2.xls:
       time_total: 89
@@ -2402,8 +2402,8 @@ subjects_testfiles_wltogglepoints:
     realtime5.xls:
       time_total: 98
       times_wltoggle:
-        - 9
-        - 65
+        - 31 #9
+        - 50 #65
     realtime6.xls:
       time_total: 85
       times_wltoggle:
@@ -2413,7 +2413,7 @@ subjects_testfiles_wltogglepoints:
       time_total: 123
       times_wltoggle:
         - 27
-        - 92
+        - 60 #92
     realtime8.xls:
       time_total: 90
       times_wltoggle:
@@ -2422,14 +2422,14 @@ subjects_testfiles_wltogglepoints:
     realtime9.xls:
       time_total: 96
       times_wltoggle:
-        - 25
-        - 63
+        - 29 #25
+        - 83 #63
 
   upadhyayula:
     realtime1.xls:
       time_total: 131
       times_wltoggle:
-        - 93
+        - 36 #93
         - 122
     realtime2.xls:
       time_total: 132
@@ -2440,31 +2440,31 @@ subjects_testfiles_wltogglepoints:
       time_total: 128
       times_wltoggle:
         - 52
-        - 100
+        - 110 #100
     realtime4.xls:
       time_total: 168
       times_wltoggle:
-        - 18
+        - 40 #18
         - 132
     realtime5.xls:
       time_total: 121
       times_wltoggle:
-        - 13
-        - 112
+        - 54 #45 #13
+        - 93 #112
     realtime6.xls:
       time_total: 123
       times_wltoggle:
         - 87
-        - 115
+        - 45 #115
     realtime7.xls:
       time_total: 179
       times_wltoggle:
-        - 15
+        - 35 #15
         - 131
     realtime8.xls:
       time_total: 107
       times_wltoggle:
-        - 62
+        - 37 #62
         - 75
     realtime9.xls:
       time_total: 123
@@ -2477,22 +2477,22 @@ subjects_testfiles_wltogglepoints:
       time_total: 133
       times_wltoggle:
         - 29
-        - 100
+        - 110 #100
     realtime2.xls:
       time_total: 96
       times_wltoggle:
         - 30
-        - 65
+        - 70 #65
     realtime3.xls:
       time_total: 129
       times_wltoggle:
-        - 42
-        - 90
+        - 30 #42
+        - 112 #90
     realtime4.xls:
       time_total: 107
       times_wltoggle:
         - 42
-        - 72
+        - 76 #72
     realtime5.xls:
       time_total: 99
       times_wltoggle:
@@ -2501,23 +2501,23 @@ subjects_testfiles_wltogglepoints:
     realtime6.xls:
       time_total: 100
       times_wltoggle:
-        - 9
-        - 70
+        - 36 #9
+        - 80 #70
     realtime7.xls:
       time_total: 113
       times_wltoggle:
-        - 28
-        - 100
+        - 33 #28
+        - 72 #100
     realtime8.xls:
       time_total: 94
       times_wltoggle:
         - 30
-        - 51
+        - 61 #51
     realtime9.xls:
       time_total: 104
       times_wltoggle:
-        - 8
-        - 58
+        - 20 #8
+        - 70 #58
 
   zaychik:
     realtime1.xls:

@@ -1667,18 +1667,22 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    windows_ascores_str = 'recent=15; previous=25; change_detection_window=15; change_thresh_percent=25; '
+    windows_ascores_str = 'recent=5; previous=25; change_detection_window=15; change_thresh_percent=25; '
+    # windows_ascores_str = 'recent=10; previous=25; change_detection_window=20; change_thresh_percent=25; '
+    # windows_ascores_str = 'recent=10; previous=25; change_detection_window=15; change_thresh_percent=25; '
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
-    algs_colors = {'HTM': 'blue', 'SE': 'red', 'ARIMA': 'green', 'LSTM': 'purple'}  #, 'Naive': 'grey'
+    algs_colors = {'HTM': 'blue', 'SE': 'gray', 'ARIMA': 'red', 'LSTM': 'green', 'IFOREST': 'purple', 'OCSVM': 'yellow'}
     algs_paths = {
         'HTM': os.path.join(dir_out, 'HTM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'SE': os.path.join(dir_out, 'SteeringEntropy', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'ARIMA': os.path.join(dir_out, 'ARIMA', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'LSTM': os.path.join(dir_out, 'RNNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'IFOREST': os.path.join(dir_out, 'IFOREST', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'OCSVM': os.path.join(dir_out, 'OCSVM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
     }
     xlabel = 'WL Alg'
     cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
