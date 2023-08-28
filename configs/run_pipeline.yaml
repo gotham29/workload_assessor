@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: OCSVM
+alg: TransformerModel
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -2604,7 +2604,6 @@ colnames:
 
 columns_model:
   - steering angle
-#  - steering angle 2
 
 hzs:
   baseline: 100
@@ -2740,9 +2739,8 @@ modnames_grids:
       - 0.0
   LightGBMModel:
     lags:
-      - None
 #      - 1
-#      - 5
+      - 5
 #      - 10
     # lags_past_covariates: Union[int, List[int]] = None,
     # lags_future_covariates: Union[Tuple[int, int], List[int]] = None,
@@ -2858,3 +2856,153 @@ file_type: xls
 scale: false
 do_gridsearch: false  #true
 learn_in_testing: false
+
+
+#refs_order = [
+#1, 2, 3, 407, 408, 4, 6, 404, 7, 405,
+#406, 8, 9, 5, 10, 11, 12, 13, 14, 15,
+#16, 17, 18, 19, 20, 21, 22, 23, 25, 26,
+#27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+#39, 37, 38, 40, 41, 42, 43, 44, 45, 46,
+#47, 48, 49, 50, 51, 52, 53, 54, 426, 55, 56, 57, 58, 59,
+#60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+#71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+#81, 82, 83, 84, 85, 86, 87, 88, 89,
+#90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+#100, 101, 102, 103, 104, 105, 106,
+#107, 108, 109, 110, 111, 112,
+#113, 114, 115, 116, 117, 118, 119, 129, 121, 122, 123,
+#124, 125, 126, 127, 227, 228, 229, 230, 231,
+#232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
+#242, 243, 244, 245, 247, 248, 249, 250, 458, 251, 252,
+#253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266,
+#268, 269, 291, 292, 293, 392, 294, 397, 203,
+#270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281,
+#427, 436, 438, 440, 441, 442, 443, 444, 445, 446, 447,
+#460, 461, 462, 463, 464, 465, 466, 467, 468, 469,
+#470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480,
+#282, 283, 284, 285, 452, 287, 246, 286, 288, 289, 290, 295, 296, 297, 298, 299,
+#386, 267, 300, 301, 303, 304, 305, 306, 165,
+#307, 308, 309, 389, '389a', 310, 311, 391, 312, 313,
+#314, 315, 316, 317, 318, 322, 394, 324, 325, 323, 351, 319, 320,
+#321, '321a', 326, 327, 328, 329, 330, 331, 332, 333, 334, 337,
+#152, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350,
+#352, 353, 354, 355, 356, 357, 358, 359, 360,
+#361, 362, 363, 364, 365, 366, 367, 368, 369,
+#370, 371, 372, 374, 393, 375, 376, 377, 378, 379,
+#380, 381, 382, 383, 384, 385, 387, 204, 189, 134,
+#182, 395, 396, 409, 398, 154, 153, 174, 172, 175, 176,
+#167, 177, 155, 156, 157, 143, 199, 197, 196, 481,
+#158, 159, 410, 160, 201, 200, 162, 163, 164, 202, 198,
+#139, 192, 193, 141, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420,
+#135, 133, 421, 422, 138, 137, 423, 132, 130, 131,
+#166, 424, 173, 169, 170, 171, 168, 179, 178,
+#188, 184, 185, 186, 180, 183, 181, 190, 191,
+#425, 428, 429, 430, 433, 434, 435, 437, 439,
+#401, 453, 454, 455, 456, 457, 482, 399, 400, 402, 403, 459,
+#]
+#
+#refs_conversions = {}
+#refs_conversions2 = {}
+#for _,ref in enumerate(refs_order):
+#  conv = _+1
+#  refs_conversions[ref] = conv
+#  refs_conversions2[conv] = ref
+#
+#vals = []
+#for v in vals:
+#  print(refs_conversions[v])
+
+
+
+#data_size = 50
+#
+#def get_accum(vals):
+#  out = []
+#  total = 0
+#  for v in vals:
+#    total += v
+#    out.append(total)
+#  return out
+
+#ascores_1 = [ rd.randrange(0,10)/10 for _ in range(data_size)]
+#ascores_2 = [ rd.randrange(4,10)/10 for _ in range(data_size)]
+#ascores_3 = [ rd.randrange(6,10)/10 for _ in range(data_size)]
+#ascores_1_1 = [rd.uniform(0.0,0.25) for _ in range(data_size)]
+#ascores_1_2 = [rd.uniform(0.25,0.5) for _ in range(data_size)]
+#ascores_1_3 = [rd.uniform(0.5,0.75) for _ in range(data_size)]
+#ascores_1_4 = [rd.uniform(0.75,1.0) for _ in range(data_size)]
+#
+#ascores_1 = ascores_1_1 + ascores_1_2 + ascores_1_3 + ascores_1_4
+#ascores_2 = ascores_1_3 + ascores_1_4 + ascores_1_1 + ascores_1_2
+#ascores_3 = ascores_1_4 + ascores_1_1 + ascores_1_3 + ascores_1_2
+#
+#accum_1 = get_accum(ascores_1)
+#accum_2 = get_accum(ascores_2)
+#accum_3 = get_accum(ascores_3)
+#
+#dir_out = '/Users/samheiserman/Desktop/PhD/defense'
+#
+#plt.cla()
+#plt.plot(accum_1, color='cyan')
+#plt.xlabel('time')
+#plt.ylabel('Accumulated Anomaly Score')
+#path_out = os.path.join(dir_out, 'ascores_1')
+#plt.savefig(path_out)
+#
+#plt.cla()
+#plt.plot(accum_2, color='orange')
+#plt.xlabel('time')
+#plt.ylabel('Accumulated Anomaly Score')
+#path_out = os.path.join(dir_out, 'ascores_2')
+#plt.savefig(path_out)
+#
+#plt.cla()
+#plt.plot(accum_3, color='red')
+#plt.xlabel('time')
+#plt.ylabel('Accumulated Anomaly Score')
+#path_out = os.path.join(dir_out, 'ascores_3')
+#plt.savefig(path_out)
+
+#path_out = os.path.join(dir_out,'ascores_1,2,3.png')
+#plt.cla()
+#plt.plot(accum_1, color='cyan', label='Model - Subj1')
+#plt.plot(accum_2, color='orange', label='Model - Subj2')
+#plt.plot(accum_3, color='red', label='Model - Subj3')
+#plt.xlabel('time')
+#plt.ylabel('Accumulated Anomaly Score')
+#plt.legend()
+#plt.savefig(path_out)
+
+
+
+#path_master = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/results/post-hoc/training=40%/1/results-master.csv"
+#df_master = pd.read_csv(path_master).drop(columns=['Unnamed: 0'])
+#df = df_master[df_master['wl alg']=='HTM-roll']
+#df = df[df['flight scenario']=='offset']
+#df = df[df['delay condition']=='delay=0.192']
+#
+#df_ = df.groupby('delay comp alg').sum('wl perceived')
+#compalgs_wls = {}
+#for compalg, wl in df_.iterrows():
+#  compalgs_wls[compalg] = wl['wl perceived']
+#compalgs_wls['mc'] = compalgs_wls.pop('mf')
+#compalgs_wls['mf'] = compalgs_wls.pop('mc')
+#compalgs_colors = {
+#  'N/A': 'grey',
+#  'mfr': 'red',
+#  'mf': 'orange',
+#  'ap': 'green',
+#  'ss': 'blue',
+#}
+#compalgs_wls_ = {}
+#for compalg in compalgs_colors:
+#  compalgs_wls_[compalg] = compalgs_wls[compalg]
+#dir_out = "/Users/samheiserman/Desktop/PhD/defense"
+#plot_outputs_bars(mydict=compalgs_wls_,
+#                  levels_colors=compalgs_colors,
+#                  title="WL Perceived by Comp Alg",
+#                  xlabel='Compensation Algorithm',
+#                  ylabel="WL Perceived",
+#                  path_out=os.path.join(dir_out, "paper2--WL Perceived by Comp Alg.png"),
+#                  print_barheights=False)

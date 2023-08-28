@@ -17,7 +17,7 @@ from ts_source.pipeline.pipeline import run_pipeline
 from pyod.models.iforest import IForest
 from pyod.models.ocsvm import OCSVM
 from pyod.models.knn import KNN
-# from pyod.models.lof import LOF
+from pyod.models.lof import LOF
 # from pyod.models.auto_encoder import AutoEncoder
 # from pyod.models.vae import VAE
 from pyod.models.kde import KDE
@@ -26,7 +26,7 @@ PYOD_MODNAMES_MODELS = {
     'IForest': IForest(),
     'OCSVM': OCSVM(),
     'KNN': KNN(),
-    # 'LOF': LOF(),
+    'LOF': LOF(),
     # 'AE': AutoEncoder(),
     # 'VAE': VAE(),
     'KDE': KDE()

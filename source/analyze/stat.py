@@ -1616,8 +1616,8 @@ if make_boxplots_table23:
     make_boxplots(data_dict={k: v for k, v in algs_percentdrops.items() if k != 'FPSD RP'},
                   levels_colors={k: v for k, v in algs_colors.items() if k != 'FPSD RP'},
                   xlabel="Workload Metrics",
-                  ylabel="% Drop in Workload",
-                  title="% Drop in Workload by Workload Metric",  # "from Compensated to Non-Compensated Behavior",
+                  ylabel="% Change in Workload",
+                  title="% Change in Workload from Compensated to Non-Compensated Runs",
                   # suptitle=#"% Drop in Workload",
                   xtickrotation=90,
                   path_out=os.path.join(dir_out, "percentdrops--box.png"),
@@ -1675,14 +1675,20 @@ if make_boxplots_realtime:
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
-    algs_colors = {'HTM': 'blue', 'SE': 'gray', 'ARIMA': 'red', 'LSTM': 'green', 'IFOREST': 'purple', 'OCSVM': 'yellow'}
+    algs_colors = {'HTM': 'blue', 'SE': 'red',
+                   'ARIMA': 'orange', 'LSTM': 'orange', 'TCNModel': 'orange', 'LightGBMModel': 'orange',
+                   'IFOREST': 'green', 'OCSVM': 'green', 'LOF': 'green', 'KNN': 'green'}
     algs_paths = {
         'HTM': os.path.join(dir_out, 'HTM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'SE': os.path.join(dir_out, 'SteeringEntropy', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'ARIMA': os.path.join(dir_out, 'ARIMA', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'LSTM': os.path.join(dir_out, 'RNNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'LightGBM': os.path.join(dir_out, 'LightGBMModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'TCN': os.path.join(dir_out, 'TCNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'IFOREST': os.path.join(dir_out, 'IFOREST', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'OCSVM': os.path.join(dir_out, 'OCSVM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'LOF': os.path.join(dir_out, 'LOF', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'KNN': os.path.join(dir_out, 'KNN', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
     }
     xlabel = 'WL Alg'
     cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
