@@ -1,14 +1,14 @@
 mode: real-time
 #post-hoc, real-time
-alg: HTM
-#HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE
+alg: LOF
+#HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 windows_ascore:
-  recent: 5 #10
+  recent: 5
   previous: 25
-  change_detection_window: 15 #20
-  change_thresh_percent: 25
+  change_thresh_percent: 100  #200 #100 #50 #25
+  change_detection_window: 15
 
 preprocess:
   difference: false  #1
@@ -3005,3 +3005,30 @@ learn_in_testing: false
 #                  ylabel="WL Perceived",
 #                  path_out=os.path.join(dir_out, "paper2--WL Perceived by Comp Alg.png"),
 #                  print_barheights=False)
+
+#df_htm_filter = df_htm[df_htm['precision'].isna()]
+#
+#eligible_indices = []
+#for _, row in df_htm_filter.iterrows():
+#  row_lof = df_lof.loc[[_]]
+#  eligible_lof = False
+#  precision_lof = row_lof['precision'].values[0]
+#  recall_lof = row_lof['recall'].values[0]
+#  if not np.isnan(precision_lof) and precision_lof < 0.2 and recall_lof == 0.5:
+#    eligible_lof = True
+#  row_tcn = df_tcn.loc[[_]]
+#  eligible_tcn = False
+#  precision_tcn = row_tcn['precision'].values[0]
+#  recall_tcn = row_tcn['recall'].values[0]
+#  if not np.isnan(precision_tcn) and precision_tcn < 0.2 and recall_tcn == 0.5:
+#    eligible_tcn = True
+#  if eligible_lof and eligible_tcn:
+#    eligible_indices.append(_)
+
+algs = ['HTM','SteeringEntropy','ARIMA','RNNModel','LightGBMModel','TCNModel','IFOREST','OCSVM','LOF','KNN']
+for alg in algs:
+  scores_path = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/{alg}/hz=5; features=steering angle/recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; /modname=steering angle/classification_scores.csv"
+  scores = pd.read_csv(scores_path)
+  scores_filter = scores.dropna(how='any', axis=0, inplace=False)
+  print(alg)
+  print(f"  --> {scores_filter.shape}")

@@ -1667,37 +1667,52 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    windows_ascores_str = 'recent=5; previous=25; change_detection_window=15; change_thresh_percent=25; '
-    # windows_ascores_str = 'recent=10; previous=25; change_detection_window=20; change_thresh_percent=25; '
-    # windows_ascores_str = 'recent=10; previous=25; change_detection_window=15; change_thresh_percent=25; '
+    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=400; change_detection_window=15; '
+    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=200; change_detection_window=15; '
+    windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; '
+    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=50; change_detection_window=15; '
+    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=25; change_detection_window=15; '
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
-    algs_colors = {'HTM': 'blue', 'SE': 'red',
-                   'ARIMA': 'orange', 'LSTM': 'orange', 'TCNModel': 'orange', 'LightGBMModel': 'orange',
-                   'IFOREST': 'green', 'OCSVM': 'green', 'LOF': 'green', 'KNN': 'green'}
+    algs_colors = {
+        'HTM': 'blue',
+        'SE': 'red',
+        'ARIMA': 'orange',
+        'LSTM': 'orange',
+        'LightGBMModel': 'orange',
+        'TCNModel': 'orange',
+        'IFOREST': 'green',
+        'OCSVM': 'green',
+        'LOF': 'green',
+        'KNN': 'green'
+    }
     algs_paths = {
         'HTM': os.path.join(dir_out, 'HTM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'SE': os.path.join(dir_out, 'SteeringEntropy', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'ARIMA': os.path.join(dir_out, 'ARIMA', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'LSTM': os.path.join(dir_out, 'RNNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
-        'LightGBM': os.path.join(dir_out, 'LightGBMModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
+        'LGBM': os.path.join(dir_out, 'LightGBMModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'TCN': os.path.join(dir_out, 'TCNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'IFOREST': os.path.join(dir_out, 'IFOREST', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'OCSVM': os.path.join(dir_out, 'OCSVM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'LOF': os.path.join(dir_out, 'LOF', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         'KNN': os.path.join(dir_out, 'KNN', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
     }
-    xlabel = 'WL Alg'
+    xlabel = 'Workload Metric'
     cl_scorecols = ['cl_accuracy', 'f1_score', 'precision', 'recall']
+    scorecols_conv = {'cl_accuracy': 'Classification Accuracy',
+                      'f1_score': 'F1 Score',
+                      'precision': 'Precision',
+                      'recall': 'Recall'}
     algs_scoredfs = {alg: pd.read_csv(path)[cl_scorecols] for alg, path in algs_paths.items()}
     for cl_score in cl_scorecols:
         path_out = os.path.join(dir_out__, f"{cl_score}.png")
         algs_scores = {alg: scoredf[cl_score].dropna() for alg, scoredf in algs_scoredfs.items()}
-        title = f'{cl_score} by {xlabel}'
-        make_boxplots(algs_scores, algs_colors, xlabel, cl_score, title, path_out, xtickrotation=0, suptitle=None,
+        title = f'{scorecols_conv[cl_score]} by {xlabel}'
+        make_boxplots(algs_scores, algs_colors, xlabel, scorecols_conv[cl_score], title, path_out, xtickrotation=0, suptitle=None,
                       ylim=None, showmeans=True)
 
 # if __name__ == "__main__":

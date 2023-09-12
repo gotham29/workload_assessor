@@ -671,7 +671,7 @@ def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
         color = 'blue'
-        ax2.set_ylabel('WL Perceived', color=color)  # we already handled the x-label with ax1
+        ax2.set_ylabel('Behavioral Entropy', color=color)  # we already handled the x-label with ax1
         ax2.plot(t, aScores_accum, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
 
