@@ -185,6 +185,7 @@ def run_subject(cfg, modname, df_train, dir_out, filenames_data, filenames_wllev
     print("    Boxplots...")
     make_boxplots(data_dict=wllevels_ascores,
                   levels_colors=levels_colors,
+                  xlabel='WL Levels',
                   ylabel=f"{cfg['alg']} WL",
                   title=f"{cfg['alg']} WL Scores by Run Mode",
                   suptitle=None,
@@ -462,14 +463,14 @@ def make_save_plots(dir_out,
                     percent_change_from_baseline,
                     subjects_wllevelsascores):
     # subjects WLdiffs
-    plot_outputs_bars(mydict=subjects_wldiffs,
-                      levels_colors=None,
-                      title=f'Total WL Difference = {round(percent_change_from_baseline, 3)}',
-                      xlabel='Subjects',
-                      ylabel='WL Difference from Level 0 to 1-3',
-                      path_out=os.path.join(dir_out, f'WL_Diffs.png'),
-                      xtickrotation=90,
-                      print_barheights=False)
+    # plot_outputs_bars(mydict=subjects_wldiffs,
+    #                   levels_colors=None,
+    #                   title=f'Total WL Difference = {round(percent_change_from_baseline, 3)}',
+    #                   xlabel='Subjects',
+    #                   ylabel='WL Difference from Level 0 to 1-3',
+    #                   path_out=os.path.join(dir_out, f'WL_Diffs.png'),
+    #                   xtickrotation=90,
+    #                   print_barheights=False)
     # WL across Task WL (agg. all subjects)
     fname = 'TaskWL_aScores'
     title = "Perceived WL vs Task WL"
@@ -812,7 +813,7 @@ def filter_config_group(group, config):
 
 
 def main(config):
-    # Set output dir
+    # set output dir
     dir_out = os.path.join(config['dirs']['output'], config['mode'], config['alg'],
                            f"hz={config['hzs']['convertto']}; features={'.'.join(config['columns_model'])}")
     os.makedirs(dir_out, exist_ok=True)
@@ -820,57 +821,22 @@ def main(config):
     # get subjects
     subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
 
-    # run wl - total data
-    ## make dir
-    # dir_out_total = os.path.join(dir_out, 'total')
-    # os.makedirs(dir_out_total, exist_ok=True)
     ## get inputs
     filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))
     subj1 = list(config['subjects_testfiles_wltogglepoints'].keys())[0]
     filenames_realtime = list(config['subjects_testfiles_wltogglepoints'][subj1].keys())
     filenames += filenames_realtime
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, filenames, subjects, subjects_spacesadd)
+
     ## train models
     config, subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)  #dir_out_total
+
     ## run
     run_wl(config=config,
            subjects_filenames_data=subjects_filenames_data,
            subjects_dfs_train=subjects_dfs_train,
            subjects_features_models=subjects_features_models,
-           dir_out=dir_out)  #dir_out_total
-
-    # run wl - groups
-    # for group in config['groups_filenames']:
-    #     print(f'\n{group}...')
-    #     ## make dir
-    #     dir_out_group = os.path.join(dir_out, group)
-    #     os.makedirs(dir_out_group, exist_ok=True)
-    #
-    #     # update config --> make sure no 'group' files in config['wllevels_filenames']['training'] and only 'group' file in all other wllevels
-    #     config_group, filenames_group = filter_config_group(group, config)
-    #
-    #     # get inputs - group
-    #     subjects_dfs_train_group, subjects_filenames_data_group = get_subjects_data(config_group, filenames_group,
-    #                                                                                 subjects, subjects_spacesadd)
-    #
-    #     # train models - group
-    #     config_group, subjects_features_models_group = get_subjects_models(config_group, dir_out_group,
-    #                                                                        subjects_dfs_train_group)
-    #
-    #     # run - group
-    #     run_wl(config=config_group,
-    #            subjects_filenames_data=subjects_filenames_data_group,
-    #            subjects_dfs_train=subjects_dfs_train_group,
-    #            subjects_features_models=subjects_features_models_group,
-    #            dir_out=dir_out_group)
-
-    # if config['alg'] == 'HTM' and config['do_gridsearch']:
-    #     modtypes_scores = gridsearch_htm(config=config,
-    #                                      dir_out=dir_out,
-    #                                      SPS=config['htm_gridsearch']['SP='],
-    #                                      HZS=config['htm_gridsearch']['HZ='],
-    #                                      PERMDECS=config['htm_gridsearch']['PERMDEC='],
-    #                                      PADDINGS=config['htm_gridsearch']['PADDING%='])
+           dir_out=dir_out)
 
 
 if __name__ == '__main__':

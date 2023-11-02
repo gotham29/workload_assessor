@@ -43,11 +43,11 @@ make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
 
-# ALGS_DIRS_IN = {
-#     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
-#     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
-#     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
-# }
+ALGS_DIRS_IN = {
+    'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/hz=5; features=steering angle/modname=steering angle",  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
+    'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/hz=5; features=steering angle/modname=steering angle",  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
+    'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
+}
 
 
 """
@@ -81,6 +81,7 @@ Test for statistically significant performance differences between Algs
 #     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_levels_wldiffs.csv"),
 #     'TLX': os.path.join(ALGS_DIRS_IN['TLX'], "subjects_levels_wldiffs.csv")
 # }
+#
 # algs_data = {}
 # for alg, alg_path in algs_paths.items():
 #     data = pd.read_csv(alg_path)
@@ -91,7 +92,7 @@ Test for statistically significant performance differences between Algs
 #     algs_data[alg] = values
 #     print(alg)
 # print(f"{title}")
-# plot_hists(algs_data, DIR_OUT, title)
+# # plot_hists(algs_data, DIR_OUT, title)
 # run_stat_tests(algs_data)
 
 """
@@ -101,16 +102,30 @@ Test for statistically significant performance differences between Algs
 
 # title = "Correlation with NASA TLX"
 # algs_paths = {
-#     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_overlaps.csv"),
-#     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_overlaps.csv"),
+#     'HTM': os.path.join(ALGS_DIRS_IN['HTM'], "subjects_tlxoverlaps.csv"),
+#     'SE': os.path.join(ALGS_DIRS_IN['SE'], "subjects_tlxoverlaps.csv"),
 # }
-# algs_data = {}
+# rankalgs = ['kendalltau', 'spearmanrank', 'euclidean']
+# for rankalg in rankalgs:
+#     print(f"\n\n{rankalg}")
+#     algs_data = {}
+#     for alg, alg_path in algs_paths.items():
+#         data = pd.read_csv(alg_path)
+#         cols_overlaps = [c for c in data if 'Unnamed' not in c and rankalg in c]
+#         algs_data[alg] = data[cols_overlaps].values.flatten()
+#     # plot_hists(algs_data, DIR_OUT, title)
+#     print(f"\n\n{title}")
+#     run_stat_tests(algs_data)
+#
 # for alg, alg_path in algs_paths.items():
+#     print(f"\n\n{alg}")
 #     data = pd.read_csv(alg_path)
-#     algs_data[alg] = data['overlaps'].values
-# plot_hists(algs_data, DIR_OUT, title)
-# print(f"\n\n{title}")
-# run_stat_tests(algs_data)
+#     for rankalg in rankalgs:
+#         overlaps_rank_cols = [c for c in data if rankalg in c]
+#         overlaps_rank = data[overlaps_rank_cols]
+#         print(f"\n{rankalg}")
+#         for c in overlaps_rank:
+#             print(f"  {c} --> {np.mean(overlaps_rank[c])}")
 
 
 """ DEFINE FUNCTIONS """
@@ -1551,7 +1566,7 @@ if make_table_3:
 
 if make_boxplots_table23:
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%"
-    path_t2 = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
+    path_t2 = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
     table2 = pd.read_csv(path_t2)
     algs_colors = {
         'TLX-Raw': 'lightgrey',
@@ -1667,11 +1682,8 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=400; change_detection_window=15; '
-    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=200; change_detection_window=15; '
-    windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; '
-    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=50; change_detection_window=15; '
-    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=25; change_detection_window=15; '
+    windows_ascores_str = 'recent=5; previous=15; change_thresh_percent=200; change_detection_window=15; '
+    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; '
     dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)

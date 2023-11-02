@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -13,6 +14,13 @@ sys.path.append(_SOURCE_DIR)
 sys.path.append(_TS_SOURCE_DIR)
 
 from ts_source.utils.utils import add_timecol
+from source.utils.utils import load_files
+
+
+FILETYPES_READFUNCS = {
+    'xls': pd.read_excel,
+    'csv': pd.read_csv
+}
 
 
 def preprocess_data(subj, cfg, filenames_data, subjects_spacesadd):
@@ -77,6 +85,45 @@ def get_autocorrs(steering_angles):
         diff = get_autocorr(v, steering_angles[_ - 1])
         diff_pcts.append(diff)
     return diff_pcts
+
+
+def get_psd_peak(data_1d, sample_rate):
+    # Compute the power spectral density (PSD) using the FFT
+    psd = np.abs(np.fft.fft(data_1d)) ** 2
+    # Create a frequency array that corresponds to the PSD values
+    # The sampling frequency (Fs) is assumed to be 1. If your signal has a different Fs, adjust accordingly.
+    freqs = np.fft.fftfreq(n=len(data_1d), d=1/sample_rate)
+    # Find the index of the highest peak in the PSD
+    highest_peak_index = np.argmax(psd)
+    # Calculate the corresponding frequency of the highest peak
+    highest_peak_frequency = np.abs(freqs[highest_peak_index])
+    return highest_peak_frequency, freqs, psd
+
+def get_pds_peaks(dir_input, dir_output, file_type, file_substr, column_names, column_behavior, sample_rate, autocorr_thresh=5):
+    subjs_psdpeaks = {}
+    subjs = [f for f in os.listdir(dir_input) if '.' not in f and '--drop' not in f]
+    for subj in subjs:
+        dir_input_subj = os.path.join(dir_input, subj)
+        filenames = [f for f in os.listdir(dir_input_subj) if file_substr in f]
+        filenames_data = load_files(dir_input=dir_input_subj, file_type=file_type, read_func=FILETYPES_READFUNCS[file_type],
+                                    filenames=filenames)
+        filenames_data = update_colnames(filenames_data=filenames_data, colnames=column_names)
+        subj_data = pd.concat(filenames_data.values(), axis=0)
+        diff_pcts = get_autocorrs(subj_data[column_behavior].values)
+        subj_data_ = select_by_autocorr(subj_data, diff_pcts, diff_thresh=autocorr_thresh)
+        percent_data_dropped = 1 - (len(subj_data_) / float(len(subj_data)))
+        print(f"{subj}\n  % dropped --> {percent_data_dropped}")
+        psd_peak, freqs, psd = get_psd_peak(subj_data_[column_behavior].values, sample_rate)
+        subjs_psdpeaks[subj] = psd_peak
+        path_out = os.path.join(dir_output, f"PSD freqs by psd--{subj}.png")
+        plt.figure(figsize=(10, 6))
+        plt.plot(freqs, psd)
+        plt.xlim(0, 20)
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Power Spectral Density')
+        plt.title(f'Highest Peak Frequency: {round(psd_peak, 3)} Hz')
+        plt.savefig(path_out)
+    return subjs_psdpeaks
 
 
 def select_by_autocorr(data, diff_pcts, diff_thresh):

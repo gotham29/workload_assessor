@@ -1,14 +1,14 @@
-mode: real-time
+mode: post-hoc
 #post-hoc, real-time
-alg: LOF
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 windows_ascore:
-  recent: 5
-  previous: 25
-  change_thresh_percent: 100  #200 #100 #50 #25
-  change_detection_window: 15
+  recent: 15  #5, 10, 15
+  previous: 35  #15, 25, 35
+  change_thresh_percent: 200  #50, 100, 200
+  change_detection_window: 20  #10, 15, 20
 
 preprocess:
   difference: false  #1
@@ -22,10 +22,14 @@ preprocess:
 tlx:
   path: /Users/samheiserman/Desktop/repos/workload_assessor/data/tlx.csv
   modes_convert:
-    baseline: baseline
-    delay=0.048: delay=0.048
-    delay=0.096: delay=0.096
-    delay=0.192: delay=0.192
+    B: baseline
+    D: distraction
+    D.C.: rain
+    O.P.: fog
+    # baseline: baseline
+    # delay=0.048: delay=0.048
+    # delay=0.096: delay=0.096
+    # delay=0.192: delay=0.192
 
 subjects_testfiles_wltogglepoints:
   aranoff:
@@ -3025,10 +3029,185 @@ learn_in_testing: false
 #  if eligible_lof and eligible_tcn:
 #    eligible_indices.append(_)
 
-algs = ['HTM','SteeringEntropy','ARIMA','RNNModel','LightGBMModel','TCNModel','IFOREST','OCSVM','LOF','KNN']
-for alg in algs:
-  scores_path = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/{alg}/hz=5; features=steering angle/recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; /modname=steering angle/classification_scores.csv"
-  scores = pd.read_csv(scores_path)
-  scores_filter = scores.dropna(how='any', axis=0, inplace=False)
-  print(alg)
-  print(f"  --> {scores_filter.shape}")
+#algs = ['HTM','SteeringEntropy','ARIMA','RNNModel','LightGBMModel','TCNModel','IFOREST','OCSVM','LOF','KNN']
+#for alg in algs:
+#  scores_path = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/{alg}/hz=5; features=steering angle/recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; /modname=steering angle/classification_scores.csv"
+#  scores = pd.read_csv(scores_path)
+#  scores_filter = scores.dropna(how='any', axis=0, inplace=False)
+#  print(alg)
+#  print(f"  --> {scores_filter.shape}")
+
+
+
+#alg = 'LOF'  #'HTM', 'IForest', 'LOF'
+#change_detection_window = 15
+#
+#dir_base = f"/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/{alg}/hz=5; features=steering angle"
+#path_out_csv = os.path.join(dir_base, 'scores.csv')
+#path_out_png = os.path.join(dir_base, 'scores.png')
+#
+#growth_threshs = [50, 100, 200]
+#windows_recent = [5, 10, 15]
+#windows_prior = [15, 25, 35]
+#
+#df_dict = {
+#  'growth thresh': [],
+#  'recent window': [],
+#  'prior window': [],
+#  'cl accuracy': [],
+#  'f1 score': [],
+#  'precision': [],
+#  'recall': []
+#}
+#
+#for growth in growth_threshs:
+#  print(f"\nGrowth = {growth}")
+#  for rec in windows_recent:
+#    for pri in windows_prior:
+#      dir_name = f"recent={rec}; previous={pri}; change_thresh_percent={growth}; change_detection_window={change_detection_window}; "
+#      path_scores = os.path.join(dir_base, dir_name, 'modname=steering angle', 'classification_scores.csv')
+#      df_scores = pd.read_csv(path_scores)
+#      df_dict['growth thresh'].append(growth)
+#      df_dict['recent window'].append(rec)
+#      df_dict['prior window'].append(pri)
+#      ca = df_scores['cl_accuracy'].mean()
+#      f1 = df_scores['f1_score'].mean()
+#      precision = df_scores['precision'].mean()
+#      recall = df_scores['recall'].mean()
+#      if not np.isnan(ca):
+#        ca = ca.round(3)
+#      if not np.isnan(f1):
+#        f1 = f1.round(3)
+#      if not np.isnan(precision):
+#        precision = precision.round(3)
+#      if not np.isnan(recall):
+#        recall = recall.round(3)
+#      df_dict['cl accuracy'].append(ca)
+#      df_dict['f1 score'].append(f1)
+#      df_dict['precision'].append(precision)
+#      df_dict['recall'].append(recall)
+#      print(f"  {dir_name}")
+#
+#df_out = pd.DataFrame(df_dict)
+#df_out.to_csv(path_out_csv)
+
+# each plot returns a dictionary, use plt.setp()
+# function to assign the color code
+# for all properties of the box plot of particular group
+# use the below function to set color for particular group,
+# by iterating over all properties of the box plot
+#def define_box_properties(plot_name, color_code, label):
+#  for k, v in plot_name.items():
+#    plt.setp(plot_name.get(k), color=color_code)
+#  # use plot function to draw a small line to name the legend.
+#  plt.plot([], c=color_code, label=label)
+#  plt.legend()
+#
+#fs_groupby = ['growth thresh', 'recent window', 'prior window']
+#f_score1 = 'precision'
+#f_score2 = 'recall'
+#f_score3 = 'f1 score'
+#for f_groupby in fs_groupby:
+#  path_out_png_f = path_out_png.replace('scores.png', f'scores--{f_groupby}.png')
+#  plt.cla()
+#  data1 = []
+#  data2 = []
+#  data3 = []
+#  ticks = []
+#  gpby = df_out.groupby(f_groupby)
+#  for gr, df_gr in gpby:
+#    ticks.append(str(gr))
+#    d1 = [v for v in df_gr[f_score1].values if not np.isnan(v)]
+#    d2 = [v for v in df_gr[f_score2].values if not np.isnan(v)]
+#    d3 = [v for v in df_gr[f_score3].values if not np.isnan(v)]
+#    data1.append(d1)
+#    data2.append(d2)
+#    data3.append(d3)
+#  plot1 = plt.boxplot(data1, positions=np.array(np.arange(len(data1)))*2.0-0.5, widths=0.4)
+#  plot2 = plt.boxplot(data2, positions=np.array(np.arange(len(data2)))*2.0+0.5, widths=0.4)
+#  plot3 = plt.boxplot(data3, positions=np.array(np.arange(len(data3)))*2.0, widths=0.4)
+#  define_box_properties(plot1, '#D7191C', f_score1)
+#  define_box_properties(plot2, '#2C7BB6', f_score2)
+#  define_box_properties(plot3, 'purple', f_score3)
+#  # set the x label values
+#  plt.xticks(np.arange(0, len(ticks) * 2, 2), ticks)
+#  # set the limit for x axis
+#  plt.xlim(-2, len(ticks)*2)
+#  # set the limit for y axis
+#  plt.ylim(0, 1.0)  #(0, 50)
+#  # set the title
+#  plt.title(f'{f_score1} & {f_score2} & {f_score3} by {f_groupby}')
+#  plt.savefig(path_out_png_f)
+
+
+# wlmetrics_table1scores = {
+#  'GSE': 21,
+#  'TDE': 17,
+#  'CHR (GS)': 22,
+#  'CHR (TD)': 24,
+#  'TLX': 21,
+#  'IPSD (RS)': 22,
+#  'IPSD (PS)': 20,
+#  'IPSD (RP)': 25,
+#  'FPSD (RS)': 21,
+#  'FPSD (PS)': 25,
+#  'SE (RP)': 23,
+#  'HTM (RS)': 30,
+# }
+# wlmetrics_table1scores = {k: v for k, v in sorted(wlmetrics_table1scores.items(), key=lambda item: item[1])}
+# wlmetrics_colors = {
+#  'GSE': 'grey',
+#  'TDE': 'grey',
+#  'CHR (GS)': 'grey',
+#  'CHR (TD)': 'grey',
+#  'TLX': 'grey',
+#  'IPSD (RS)': 'grey',
+#  'IPSD (PS)': 'grey',
+#  'IPSD (RP)': 'grey',
+#  'FPSD (RS)': 'grey',
+#  'FPSD (PS)': 'grey',
+#  'SE (RP)': 'yellow',
+#  'HTM (RS)': 'blue',
+# }
+# title = 'Number of Task Settings with Workload Lowered by Compensation'
+# xlabel = 'Workload Metrics'
+# ylabel = 'Number out of 32 Task Settings'
+# path_out = '/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/figures/table1--NEW.png'
+# plot_outputs_bars(wlmetrics_table1scores, wlmetrics_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=90, print_barheights=True)
+#
+# title = '% Change in Workload from Compensated to Non-Compensated Runs'
+# xlabel = 'Workload Metrics'
+# ylabel = '% Change in Workload'
+# path_out = '/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/figures/percentdrops--NEW.png'
+# wlmetrics_percentdrops = {}
+# wlmetrics_pvalues = {}
+# wlmetrics_colors = {}
+# for wl, pctdr in algs_percentdrops.items():
+#  wlmetrics_percentdrops[wl] = np.mean(pctdr)
+#  wlmetrics_pvalues[wl] = np.mean(algs_pvalues[wl])
+# wlmetrics_percentdrops = {k: v for k, v in sorted(wlmetrics_percentdrops.items(), key=lambda item: item[1])}
+# for wl in wlmetrics_percentdrops:
+#  if 'SE ' in wl:
+#    color = 'yellow'
+#  elif 'HTM' in wl:
+#    color = 'blue'
+#  else:
+#    color = 'grey'
+#  wlmetrics_colors[wl] = color
+# plot_outputs_bars(wlmetrics_percentdrops, wlmetrics_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=90, print_barheights=False)
+
+# title = "P-values of Paried T-Tests by Workload Metric"
+# xlabel = "Workload Metrics"
+# ylabel = "P-values of Paried T-Tests"
+# path_out = '/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/figures/pvalues--NEW.png'
+# wlmetrics_pvalues = {k: v for k, v in sorted(wlmetrics_pvalues.items(), key=lambda item: item[1], reverse=True)}
+# for wl in wlmetrics_pvalues:
+#  if 'SE ' in wl:
+#    color = 'yellow'
+#  elif 'HTM' in wl:
+#    color = 'blue'
+#  else:
+#    color = 'grey'
+#  wlmetrics_colors[wl] = color
+# plot_outputs_bars(wlmetrics_pvalues, wlmetrics_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=90, print_barheights=False)
+

@@ -312,9 +312,12 @@ def plot_hists(algs_data, dir_out, title, density=False):
     plt.close()
 
 
-def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, xtickrotation=0, print_barheights=True):
-    colors = list(levels_colors.values()) if levels_colors else None
-    mydict = {k: round(v, 3) for k, v in mydict.items()}
+def plot_outputs_bars(mydict, levels_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=0, print_barheights=True):
+    levels_colors_ = {}
+    for level in mydict:
+        levels_colors_[level] = levels_colors[level]
+    colors = list(levels_colors_.values()) if levels_colors else None
+    mydict = {k: round(v, rounddigits) for k, v in mydict.items()}
     plt.cla()
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     plt.bar(range(len(mydict)), list(mydict.values()), align='center', color=colors, alpha=0.5)

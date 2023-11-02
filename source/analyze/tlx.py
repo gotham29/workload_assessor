@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from matplotlib import pyplot as plt
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -46,7 +47,7 @@ def make_boxplots(data_dict, levels_colors, xlabel, ylabel, title, path_out, xti
     plt.close()
 
 
-def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_already_set=False):
+def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, alg, order_already_set=False):
     subjects_orders_1 = {}
     for subj, wllevels_totalascores in subjects_wllevels_totalascores.items():
         wllevels_totalascores = dict(sorted(wllevels_totalascores.items(), key=operator.itemgetter(1)))
@@ -58,16 +59,32 @@ def get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_alrea
         for subj, wllevels_ascores in subjects_tlxorders.items():
             wllevels_ascoresums = {wllevel: np.sum(ascores) for wllevel, ascores in wllevels_ascores.items()}
             wllevels_ascoresums = dict(sorted(wllevels_ascoresums.items(), key=operator.itemgetter(1)))
-            subjects_orders_2[subj] = list(wllevels_ascoresums.keys())
+            subjects_orders_2[subj.lower().strip()] = list(wllevels_ascoresums.keys())
     # get overlaps
     subjects_overlaps = {}
     for subj, order_1 in subjects_orders_1.items():
         order_2 = subjects_orders_2[subj]
-        overlaps = 0
-        for _, wllevel in enumerate(order_1):
-            if wllevel == order_2[_]:
-                overlaps += 1
-        overlap = overlaps / (len(order_1) - 1)
+        groups_ints = {}
+        for _,word in enumerate(order_1):
+            groups_ints[word] = _
+        order_1_ints = []
+        order_2_ints = []
+        for cat in order_1:
+            order_1_ints.append(groups_ints[cat])
+        for cat in order_2:
+            order_2_ints.append(groups_ints[cat])
+        # Kendall Tau
+        if alg == 'kendalltau':
+            tau, p_value = stats.kendalltau(order_1_ints, order_2_ints)
+            overlap = tau
+        # Spearman Rank Correlation
+        elif alg == 'spearmanrank':
+            spearman_coeff, _ = stats.spearmanr(order_1_ints, order_2_ints)
+            overlap = spearman_coeff
+        # Euclidean Distance
+        else: # alg == 'euclidean'
+            euclidean_distance = np.linalg.norm(np.array(order_1_ints) - np.array(order_2_ints))
+            overlap = euclidean_distance
         subjects_overlaps[subj] = min(round(overlap, 3), 1.0)
     subjects_overlaps = dict(collections.OrderedDict(sorted(subjects_overlaps.items())))
     df_overlaps = pd.DataFrame(subjects_overlaps, ['overlaps']).T
@@ -81,22 +98,24 @@ def get_tlx_overlaps(subjects_wllevels_totalascores, modes_convert, path_tlx):
                  'Performance', 'Effort', 'Frustration', 'Raw TLX']
     subscales_meanoverlaps = {}
     subscales_dfsoverlaps = {}
-    gpby_subj = df_tlx.groupby('Subject')
-    for subscale in subscales:
-        subjects_tlxorders = {}
-        for subj, df_subj in gpby_subj:
-            modes_scores = {}
-            gpby_mode = df_subj.groupby('Run Mode')
-            for mode, df_mode in gpby_mode:
-                modes_scores[modes_convert[mode]] = np.sum(df_mode[subscale].values)  # MODES_CONVERT
-            modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
-            subjects_tlxorders[subj] = list(modes_scores.keys())
-        ## get df_overlaps
-        df_overlaps = get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, order_already_set=True)
-        df_overlaps.columns = [subscale]
-        mean_percent_overlap = 100 * round(np.mean(df_overlaps[subscale]), 3)
-        subscales_meanoverlaps[subscale] = mean_percent_overlap
-        subscales_dfsoverlaps[subscale] = df_overlaps
+    for alg in ['kendalltau', 'spearmanrank', 'euclidean']:
+        gpby_subj = df_tlx.groupby('Subject')
+        for subscale in subscales:
+            alg_subscales = f"{alg}--{subscale}"
+            subjects_tlxorders = {}
+            for subj, df_subj in gpby_subj:
+                modes_scores = {}
+                gpby_mode = df_subj.groupby('Run Mode')
+                for mode, df_mode in gpby_mode:
+                    modes_scores[modes_convert[mode]] = np.sum(df_mode[subscale].values)  # MODES_CONVERT
+                modes_scores = dict(sorted(modes_scores.items(), key=operator.itemgetter(1)))
+                subjects_tlxorders[subj.lower().strip()] = list(modes_scores.keys())
+            ## get df_overlaps
+            df_overlaps = get_overlaps(subjects_wllevels_totalascores, subjects_tlxorders, alg, order_already_set=True)
+            df_overlaps.columns = [alg_subscales]
+            mean_percent_overlap = 100 * round(np.mean(df_overlaps[alg_subscales]), 3)
+            subscales_meanoverlaps[alg_subscales] = mean_percent_overlap
+            subscales_dfsoverlaps[alg_subscales] = df_overlaps
     df_overlaps_total = pd.concat(list(subscales_dfsoverlaps.values()), axis=1)
     return subscales_meanoverlaps, df_overlaps_total
 
