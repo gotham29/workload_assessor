@@ -1,6 +1,6 @@
-mode: post-hoc
+mode: real-time
 #post-hoc, real-time
-alg: HTM
+alg: Fessonia
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -2580,10 +2580,7 @@ htm_gridsearch:
     - 0.0
     - 0.025
     - 0.05
-#    - 0.075
-#    - 0.1
   PADDING%=:
-#    - -30
     - -20
     - -10
     - 0
@@ -2823,11 +2820,6 @@ htm_config_user:
       min: null
       max: null
       weight: 1.0
-#    steering angle 2:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
     timestamp:
       custom: 0
       dayOfWeek: 0

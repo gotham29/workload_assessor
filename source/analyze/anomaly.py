@@ -10,15 +10,16 @@ from ts_source.preprocess.preprocess import reshape_datats
 from ts_source.model.model import get_model_lag, LAG_MIN
 
 
-def get_ascore_entropy(_, row, feat, model, data_test, pred_prev, LAG=3):
+def get_ascore_entropy(ind, row, feat, model, df, pred_prev, LAG=3):
     aScore, do_pred = 0, True
-    if _ < LAG:
+    if ind < LAG:
         pred_prev, do_pred = None, False
     if pred_prev:
         aScore = abs(pred_prev - row[feat])
     if do_pred:
-        lag1, lag2, lag3 = data_test[feat][_ - 3], data_test[feat][_ - 2], data_test[feat][_ - 1]
+        lag1, lag2, lag3 = df[feat].values[ind - 3], df[feat].values[ind - 2], df[feat].values[ind - 1]
         pred_prev = model.predict(lag1, lag2, lag3)
+        aScore = abs(pred_prev - row[feat])
     return aScore, pred_prev
 
 

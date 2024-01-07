@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 
 _SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 _TS_SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'ts_forecaster')
@@ -13,6 +14,7 @@ sys.path.append(_HTM_SOURCE_DIR)
 from htm_source.utils.fs import save_models
 from htm_source.pipeline.htm_batch_runner import run_batch
 from ts_source.pipeline.pipeline import run_pipeline
+from source.analyze.anomaly import get_ascore_entropy
 
 from pyod.models.iforest import IForest
 from pyod.models.ocsvm import OCSVM
@@ -72,8 +74,11 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
             type: dict
             meaning: keys are pred features (or 'megamodel_features={featurecount}'), values are models
     """
-    # dir_output_models = os.path.join(dir_output, 'models')
+
+    df_train.reset_index(drop=True, inplace=True)
+
     features_model = list(htm_config_user['features'].keys())
+    features_alphas = {}
     if alg == 'HTM':
         # drop timestamp feature if megamodel
         if not htm_config_user['models_state']['model_for_each_feature']:
@@ -93,8 +98,21 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         features_models = {feat: None for feat in features_model if feat != config['time_col']}
     elif alg == 'Naive':
         features_models = {feat: NaiveModel() for feat in features_model if feat != config['time_col']}
-    elif alg == 'SteeringEntropy':
+    elif alg in ['SteeringEntropy', 'Fessonia']:
         features_models = {feat: SteeringEntropy() for feat in features_model if feat != config['time_col']}
+        features_errors = {f:[] for f in features_models}
+        for feat, model in features_models.items():
+            pred_prev = None
+            errors = []
+            print(f"  df_train = {df_train.shape}")
+            for _,row in df_train.iterrows():
+                print(f"    ind = {_}")
+                aScore, pred_prev = get_ascore_entropy(_, row, feat, model, df_train, pred_prev, LAG=3)
+                errors.append(aScore)
+            features_errors[feat] = errors
+        features_alphas = {f: np.percentile(errors, 90) for f,errors in features_errors.items()}
+        print(f"\nfeatures_alphas = {features_alphas}")
+
     elif alg in PYOD_MODNAMES_MODELS:
         model = PYOD_MODNAMES_MODELS[alg]
         features_model = [f for f in features_model if f != config['time_col']]
@@ -118,6 +136,6 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                                                                          output_dirs=output_dirs)
             features_models[feat] = modnames_models[alg]
 
+    # dir_output_models = os.path.join(dir_output, 'models')
     # save_models(features_models, dir_output)
-
-    return config, features_models
+    return config, features_models, features_alphas

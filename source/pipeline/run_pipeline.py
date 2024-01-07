@@ -2,6 +2,7 @@ import copy
 import itertools
 import os
 import sys
+import math
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -285,7 +286,47 @@ def run_posthoc(cfg, dir_out, subjects_filenames_data, subjects_dfs_train, subje
     return mean_percentchangefrombaseline
 
 
-def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data):
+def get_entropy(errors_in_window, alpha):
+    inds_bins = {
+        1: [-np.inf, -5*alpha],
+        2: [-5*alpha, -2.5*alpha],
+        3: [-2.5*alpha, -1*alpha],
+        4: [-1*alpha, -0.5*alpha],
+        5: [-0.5*alpha, 0.5*alpha],
+        6: [0.5*alpha, 1*alpha],
+        7: [1*alpha, 2.5*alpha],
+        8: [2.5*alpha, 5*alpha],
+        9: [5*alpha, np.inf],
+    }
+    inds_errors = {}
+    for i, bin in inds_bins.items():
+        inds_errors[i] = [v for v in errors_in_window if v>bin[0] and v<bin[1]]
+    inds_props = {}
+    for i, errors in inds_errors.items():
+        inds_props[i] = len(errors) / len(errors_in_window)
+    entropy = 0
+    for i, prop in inds_props.items():
+        if prop == 0:
+            continue
+        i_entropy = -prop * math.log(prop,9)  ##−pi × Log9(pi)
+        entropy += i_entropy
+    return entropy
+
+
+def get_ascore_fessonia(pred_errors, alpha, ind, window_errors, window_alpha):
+    if ind < window_errors:
+        aScore = 0
+    else:
+        start_i = ind-window_errors
+        end_i = ind
+        errors_in_window = pred_errors[start_i:end_i]
+        if ind%window_alpha == 0:
+            alpha = np.percentile(pred_errors, 90)
+        aScore = get_entropy(errors_in_window, alpha)
+    return aScore, alpha
+
+
+def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas):
     subj = list(subjects_features_models.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
     modnames_df1s = {}
@@ -310,11 +351,15 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
             dir_out_subj = os.path.join(dir_out_modname, subj)
             os.makedirs(dir_out_subj, exist_ok=True)
 
+            # initial alpha
+            alpha = subjects_features_alphas[subj][modname]
+
             # loop over testfiles
-            model = subjects_features_models[subj][modname]
+            model = features_models[modname]  #subjects_features_models[subj][modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
                 data_test = subjects_filenames_data[subj][testfile]
+                data_test.reset_index(drop=True, inplace=True)
 
                 # get wl_changepoints
                 wl_changepoints = [int(t / times['time_total'] * data_test.shape[0]) for t in
@@ -322,18 +367,26 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 print(f"        wl_changepoints = {wl_changepoints}")
 
                 # run data thru model
-                aScores, wl_changepoints_detected = list(), list()
+                aScores, pred_errors, wl_changepoints_detected = list(), list(), list()
                 pred_prev = None
                 for _, row in data_test.iterrows():
                     if config['alg'] == 'HTM':
                         aScore, aLikl, pCount, sPreds = model.run(features_data=dict(row), timestep=_ + 1,
                                                                   learn=config['learn_in_testing'])
+                    elif config['alg'] == 'Fessonia':
+                        pred_error, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)
+                        pred_errors.append(pred_error)
+                        aScore, alpha = get_ascore_fessonia(pred_errors, alpha, ind=_, window_errors=20, window_alpha=100)
+                    else:
+                        aScore = 0  #get_ascore_dndeb()
+                    """
                     elif config['alg'] == 'SteeringEntropy':
-                        aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)  # feat
+                        aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)
                     elif config['alg'] in ['IForest', 'OCSVM', 'KNN', 'LOF', 'AE', 'VAE', 'KDE']:
                         aScore = get_ascore_pyod(_, data_test[config['columns_model']], model)
                     else:
                         aScore, pred_prev = get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN)
+                    """
                     aScores.append(aScore)
                     if _ < config['windows_ascore']['previous'] + config['windows_ascore']['recent']:
                         continue
@@ -724,16 +777,17 @@ def get_subjects_data(cfg, filenames, subjects, subjects_spacesadd):
 def get_subjects_models(config, dir_out, subjects_dfs_train):
     print('Training subjects models...')
     subjects_features_models = dict()
+    subjects_features_alphas = dict()
     for subj, df_train in subjects_dfs_train.items():
         print(f"  --> {subj}")
         # Train model(s)
         if config['train_models']:
-            config, features_models = train_save_models(df_train=df_train,
-                                                        alg=config['alg'],
-                                                        dir_output=dir_out,  # dir_out_subj_models,
-                                                        config=config,
-                                                        htm_config_user=config['htm_config_user'],
-                                                        htm_config_model=config['htm_config_model'])
+            config, features_models, features_alphas = train_save_models(df_train=df_train,
+                                                                         alg=config['alg'],
+                                                                         dir_output=dir_out,  # dir_out_subj_models,
+                                                                         config=config,
+                                                                         htm_config_user=config['htm_config_user'],
+                                                                         htm_config_model=config['htm_config_model'])
         # Load model(s)
         else:
             if config['alg'] == 'HTM':
@@ -742,8 +796,9 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
                 features_models = load_models_darts(dir_out, alg=config['alg'])  # dir_out_subj_models
         # Store models
         subjects_features_models[subj] = features_models
+        subjects_features_alphas[subj] = features_alphas
 
-    return config, subjects_features_models
+    return config, subjects_features_models, subjects_features_alphas
 
 
 def has_expected_files(dir_in, files_exp):
@@ -755,14 +810,14 @@ def has_expected_files(dir_in, files_exp):
         return False
 
 
-def run_wl(config, subjects_filenames_data, subjects_dfs_train, subjects_features_models, dir_out):
+def run_wl(config, subjects_filenames_data, subjects_dfs_train, subjects_features_models, subjects_features_alphas, dir_out):
     # Run
     if config['mode'] == 'post-hoc':
         print('\nMODE = post-hoc')
         score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
     else:
         print('\nMODE = real-time')
-        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data)['f1_score'])
+        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas)['f1_score'])
 
     # return score
 
@@ -819,7 +874,7 @@ def main(config):
     os.makedirs(dir_out, exist_ok=True)
 
     # get subjects
-    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
+    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)  #100
 
     ## get inputs
     filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))
@@ -829,13 +884,14 @@ def main(config):
     subjects_dfs_train, subjects_filenames_data = get_subjects_data(config, filenames, subjects, subjects_spacesadd)
 
     ## train models
-    config, subjects_features_models = get_subjects_models(config, dir_out, subjects_dfs_train)  #dir_out_total
+    config, subjects_features_models, subjects_features_alphas = get_subjects_models(config, dir_out, subjects_dfs_train)  #dir_out_total
 
     ## run
     run_wl(config=config,
            subjects_filenames_data=subjects_filenames_data,
            subjects_dfs_train=subjects_dfs_train,
            subjects_features_models=subjects_features_models,
+           subjects_features_alphas=subjects_features_alphas,
            dir_out=dir_out)
 
 
