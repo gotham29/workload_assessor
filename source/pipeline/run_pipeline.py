@@ -352,7 +352,8 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
             os.makedirs(dir_out_subj, exist_ok=True)
 
             # initial alpha
-            alpha = subjects_features_alphas[subj][modname]
+            if config['alg'] == 'Fessonia':
+                alpha = subjects_features_alphas[subj][modname]
 
             # loop over testfiles
             model = features_models[modname]  #subjects_features_models[subj][modname]

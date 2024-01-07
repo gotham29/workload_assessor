@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: Fessonia
+alg: HTM
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
