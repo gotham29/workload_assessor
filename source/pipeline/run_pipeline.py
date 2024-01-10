@@ -387,7 +387,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                     elif config['alg'] == 'Naive':
                         aScore, pred_prev = get_ascore_naive(_, row, modname, model, data_test, pred_prev)
                     else:
-                        aScore = 0  #get_ascore_dndeb()
+                        aScore = get_ascore_dndeb()
                     """
                     elif config['alg'] == 'SteeringEntropy':
                         aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)

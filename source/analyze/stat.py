@@ -44,7 +44,21 @@ make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
 
-modname = 'ROLL_STICK' #'PITCH_STIC'
+
+features = 'ROLL_STICK'  #'PITCH_STIC'
+features_htm = ['ROLL_STICK','PITCH_STIC']
+
+modname_htm = f'megamodel_features={len(features_htm)}'
+features_htm = '.'.join(features_htm)  # 'ROLL_STICK.PITCH_STIC'
+
+# if len(features_htm) > 1:
+#     modname_htm = f'megamodel_features={len(features_htm)}'
+#     features_htm = '.'.join(features_htm)  # 'ROLL_STICK.PITCH_STIC'
+# else:
+#     modname_htm = modname
+#     features_htm = modname
+
+
 Hz = '6.67'
 change_thresh_percent = '200'
 window_recent = '15'
@@ -52,9 +66,9 @@ window_previous = '30'
 change_detection_window = '27'
 
 ALGS_DIRS_IN = {
-    'HTM': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz={Hz}; features=ROLL_STICK.PITCH_STIC/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname=megamodel_features=2",
-    'Fessonia': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz={Hz}; features={modname}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname}",
-    'Naive': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz={Hz}; features={modname}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname}",
+    'HTM': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz={Hz}; features={features_htm}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname_htm}",
+    'Fessonia': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz={Hz}; features={features}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={features}",
+    'Naive': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz={Hz}; features={features}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={features}",
 }
 dir_out = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time"
 
@@ -1698,7 +1712,7 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    windows_ascores_str = f'recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
+    windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     os.makedirs(dir_out_, exist_ok=True)
@@ -1750,7 +1764,7 @@ if make_boxplots_realtime:
 
 if do_hypothesistests_realtime:
     test_functions = [ttest_ind, mannwhitneyu]  #kstest
-    windows_ascores_str = f'recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
+    windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     path_out = os.path.join(dir_out__, 'hypothesis_tests.csv')

@@ -276,12 +276,15 @@ def get_run_number(f):
     return int(f.split('run_')[1].replace('.csv', '').replace('0', ''))
 
 
-def prep_nasa(df):
+def prep_nasa(df, feature_filter_flatline):
     df.drop(index=df.index[0], axis=0, inplace=True)
     df = df.apply(pd.to_numeric, errors='ignore')
     altitude_base = float(df['ALTITUDE'].values[0])
     altitudes_normed = [v - altitude_base for v in df['ALTITUDE'].values]
     df['ALTITUDE'] = pd.Series(altitudes_normed)
+    feat_filter = df[feature_filter_flatline].values
+    first_nonzero_index = feat_filter.nonzero()[0][0]
+    df = df[first_nonzero_index:]
     return df
 
 
@@ -351,13 +354,13 @@ def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_conve
         # make 1 train.csv using all runs combined
         dfs_train = [pd.read_csv(p) for p in paths_train]
         df_train = pd.concat(dfs_train, axis=0)[features]
-        df_train = prep_nasa(df_train)
+        df_train = prep_nasa(df_train, feature_filter_flatline='ROLL_STICK')
         path_train = os.path.join(dir_subj, 'train.csv')
         df_train.to_csv(path_train, index=False)
         # make test_x.csv files for all runs
         for p in paths_test:
             df_test = pd.read_csv(p)[features]
-            df_test = prep_nasa(df_test)
+            df_test = prep_nasa(df_test, feature_filter_flatline='ROLL_STICK')
             # agg data to 6.67 Hz
             agg = int(hz_baseline / hz_convertto)
             df_test = df_test.groupby(df_test.index // agg).mean()

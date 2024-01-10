@@ -1,6 +1,6 @@
 mode: real-time
 #post-hoc, real-time
-alg: HTM  #Fessonia, HTM, Naive
+alg: Naive  #Fessonia, HTM, Naive
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
@@ -2824,7 +2824,7 @@ colnames:
 
 columns_model:
   - ROLL_STICK
-  - PITCH_STIC
+#  - PITCH_STIC
 #  - steering angle
 
 hzs:
@@ -3088,11 +3088,11 @@ htm_config_model:
 
 htm_config_user:
   features:
-    PITCH_STIC:  #steering angle:
-      type: float
-      min: null
-      max: null
-      weight: 1.0
+#    PITCH_STIC:  #steering angle:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     ROLL_STICK:
       type: float
       min: null
