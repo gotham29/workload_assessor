@@ -104,9 +104,7 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
         for feat, model in features_models.items():
             pred_prev = None
             errors = []
-            print(f"  df_train = {df_train.shape}")
             for _,row in df_train.iterrows():
-                print(f"    ind = {_}")
                 aScore, pred_prev = get_ascore_entropy(_, row, feat, model, df_train, pred_prev, LAG=3)
                 errors.append(aScore)
             features_errors[feat] = errors

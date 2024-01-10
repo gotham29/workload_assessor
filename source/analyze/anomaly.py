@@ -17,8 +17,21 @@ def get_ascore_entropy(ind, row, feat, model, df, pred_prev, LAG=3):
     if pred_prev:
         aScore = abs(pred_prev - row[feat])
     if do_pred:
-        lag1, lag2, lag3 = df[feat].values[ind - 3], df[feat].values[ind - 2], df[feat].values[ind - 1]
+        lag1, lag2, lag3 = df[feat].values[ind - 1], df[feat].values[ind - 2], df[feat].values[ind - 3]
         pred_prev = model.predict(lag1, lag2, lag3)
+        aScore = abs(pred_prev - row[feat])
+    return aScore, pred_prev
+
+
+def get_ascore_naive(ind, row, feat, model, df, pred_prev, LAG=1):
+    aScore, do_pred = 0, True
+    if ind < LAG:
+        pred_prev, do_pred = None, False
+    if pred_prev:
+        aScore = abs(pred_prev - row[feat])
+    if do_pred:
+        lag1 = df[feat].values[ind - 1]
+        pred_prev = model.predict(lag1)
         aScore = abs(pred_prev - row[feat])
     return aScore, pred_prev
 

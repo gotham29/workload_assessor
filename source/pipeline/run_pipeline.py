@@ -24,7 +24,7 @@ from source.analyze.tlx import make_boxplots, get_tlx_overlaps
 from source.analyze.plot import make_data_plots, plot_outputs_boxes, plot_outputs_lines, plot_outputs_bars, get_accum, \
     plot_write_data
 from source.analyze.anomaly import get_ascores_entropy, get_ascores_naive, \
-    get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_clscores, get_ascore_entropy, get_entropy_ts
+    get_ascores_pyod, get_ascore_pyod, get_subjects_wldiffs, get_clscores, get_ascore_entropy, get_entropy_ts, get_ascore_naive
 from ts_source.utils.utils import add_timecol, load_config, load_models as load_models_darts
 
 from ts_source.model.model import get_model_lag, LAG_MIN, get_modname, get_preds_rolling
@@ -356,7 +356,13 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 alpha = subjects_features_alphas[subj][modname]
 
             # loop over testfiles
-            model = features_models[modname]  #subjects_features_models[subj][modname]
+            print(f"  \n\nsubjects_filenames_data --> {subjects_filenames_data}")
+            for subj, filenames_data in subjects_filenames_data.items():
+                print(f"    subj = {subj}")
+                for fn, data in filenames_data.items():
+                    print(f"      {fn} --> {data.shape}")
+
+            model = features_models[modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
                 data_test = subjects_filenames_data[subj][testfile]
@@ -378,6 +384,8 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                         pred_error, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)
                         pred_errors.append(pred_error)
                         aScore, alpha = get_ascore_fessonia(pred_errors, alpha, ind=_, window_errors=20, window_alpha=100)
+                    elif config['alg'] == 'Naive':
+                        aScore, pred_prev = get_ascore_naive(_, row, modname, model, data_test, pred_prev)
                     else:
                         aScore = 0  #get_ascore_dndeb()
                     """
@@ -802,10 +810,11 @@ def get_subjects_models(config, dir_out, subjects_dfs_train):
     return config, subjects_features_models, subjects_features_alphas
 
 
-def has_expected_files(dir_in, files_exp):
+def has_expected_files(dir_in, files_exp, any_all):
     files_found = [f for f in os.listdir(dir_in)]
     files_missing = [f for f in files_exp if f not in files_found]
-    if len(files_missing) == 0:
+    missing_max = 0 if any_all == 'all' else len(files_exp)-1
+    if len(files_missing) <= missing_max:
         return True
     else:
         return False
@@ -829,7 +838,9 @@ def get_subjects(dir_in, subjs_lim=100):
     subjects_all = subjects_all[:subjs_lim]  # HACK - limit number of subjects
     files_exp = list(config['wllevels_filenames'].values())
     files_exp = list(itertools.chain.from_iterable(files_exp))
-    subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp)]
+    print(f"subjects_all = {subjects_all}")
+    subjects = [s for s in subjects_all if has_expected_files(os.path.join(dir_in, s), files_exp, 'any')]
+    print(f"subjects = {len(subjects)}")
     subjects_invalid = [s for s in subjects_all if s not in subjects]
     print(f"Subjects Found (valid) = {len(subjects)}")
     for s in sorted(subjects):
@@ -838,7 +849,9 @@ def get_subjects(dir_in, subjs_lim=100):
     for s in sorted(subjects_invalid):
         print(f"  --> {s}")
     subjects_spacesadd = {}
-    subj_maxlen = max([len(subj) for subj in subjects])
+    subj_lens = [len(subj) for subj in subjects]
+    print(f"subj_lens = {subj_lens}")
+    subj_maxlen = max(subj_lens)
     for subj in subjects:
         diff_maxlen = subj_maxlen - len(subj)
         subjects_spacesadd[subj] = ' ' * diff_maxlen

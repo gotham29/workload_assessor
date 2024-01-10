@@ -24,6 +24,7 @@ from source.analyze.tlx import make_boxplots
 
 # MAKE PLOTS
 make_boxplots_realtime = True
+do_hypothesistests_realtime = True
 
 make_master_results = False
 make_table_1_fold = False
@@ -43,12 +44,27 @@ make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
 
-ALGS_DIRS_IN = {
-    'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/hz=5; features=steering angle/modname=steering angle",  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/HTM/preproc--autocorr_thresh=5; hz=5",
-    'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/hz=5; features=steering angle/modname=steering angle",  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/preproc--autocorr_thresh=5; hz=5",
-    'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
-}
+modname = 'ROLL_STICK' #'PITCH_STIC'
+Hz = '6.67'
+change_thresh_percent = '200'
+window_recent = '15'
+window_previous = '30'
+change_detection_window = '27'
 
+ALGS_DIRS_IN = {
+    'HTM': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz={Hz}; features=ROLL_STICK.PITCH_STIC/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname=megamodel_features=2",
+    'Fessonia': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz={Hz}; features={modname}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname}",
+    'Naive': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz={Hz}; features={modname}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname}",
+}
+dir_out = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time"
+
+# ALGS_DIRS_IN = {
+#     'HTM': "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/HTM/hz=5; features=steering angle/recent=15; previous=35; change_thresh_percent=200; change_detection_window=20; /modname=steering angle",
+#     'Fessonia': "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time/Fessonia/hz=5; features=steering angle/recent=15; previous=35; change_thresh_percent=200; change_detection_window=20; /modname=steering angle",
+#     'SE': "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/SteeringEntropy/hz=5; features=steering angle/modname=steering angle",
+#     'TLX': "/Users/samheiserman/Desktop/repos/workload_assessor/results/tlx"
+# }
+# dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
 
 """
 Test for statistically significant performance differences between Algs
@@ -636,9 +652,9 @@ if make_plots_violin:
     ]
     for pltdata in pltdatas:
         df_ = filter_df(df_summary, pltdata['filter'])
-        dir_out = os.path.join(dir_results, pltdata['dir_out'])
+        dir_out_ = os.path.join(dir_results, pltdata['dir_out'])
         os.makedirs(dir_out, exist_ok=True)
-        plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out)
+        plot_violins(df_, pltdata['feat_gpby'], pltdata['feat_score'], pltdata['y_lim'], pltdata['filter'], dir_out_)
 
 if make_boxplots_groups:
     wl_algs = ['HTM', 'PSD', 'SteeringEntropy', 'TLX']
@@ -653,7 +669,7 @@ if make_boxplots_groups:
     feat_groupby = 'comp-alg'
     ylabel = "Perceived WL"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     groups_legendnames = {'nc': 'No Compensation',
                           'mc': 'McFarland Predictor',
                           'mfr': 'McFarland Predictor, Spike Reduced',
@@ -703,7 +719,7 @@ if make_boxplots_groups:
     }
     colours = ['white', 'yellow', 'cyan', 'tab:purple', 'magenta']
     compalgs_order = list(groups_legendnames.keys())
-    dir_out_boxes = os.path.join(dir_out, 'wl_by_delay&comp')
+    dir_out_boxes = os.path.join(dir_out_, 'wl_by_delay&comp')
     os.makedirs(dir_out_boxes, exist_ok=True)
     for mc_scenario in mc_scenarios:
         dir_out_mc = os.path.join(dir_out_boxes, mc_scenario)
@@ -830,8 +846,8 @@ if convert_gses:
         '40': 'offset'
     }
     dir_gses = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/GSE"
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    convert_gsefiles_toformat(dir_gses, dir_out, runs_modes, runs_approaches)
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_gsefiles_toformat(dir_gses, dir_out_, runs_modes, runs_approaches)
 
 if convert_chrs:
     runs_modes = {
@@ -877,8 +893,8 @@ if convert_chrs:
         '40': 'delay=0.096'
     }
     dir_chrs = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/CHR"
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    convert_chrfiles_toformat(dir_chrs, dir_out, runs_modes)
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_chrfiles_toformat(dir_chrs, dir_out_, runs_modes)
 
 if convert_tlxs:
     runs_modes = {
@@ -924,17 +940,17 @@ if convert_tlxs:
         '40': 'delay=0.096'
     }
     dir_tlxs = "/Users/samheiserman/Desktop/PhD/paper2 - lewin /TLX"
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    convert_txlfiles_toformat(dir_tlxs, dir_out, runs_modes)
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
+    convert_txlfiles_toformat(dir_tlxs, dir_out_, runs_modes)
 
 if eval_tlxs:
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     runs = None  # [20, 33, 8, 37, 7, 23, 13, 27]
     filter_ = None  # {'Run #': runs}  # None
     mc_scenarios = ['offset', 'straight-in']
     levels_colors = {'baseline': 'grey', 'delay=0.048': 'yellow', 'delay=0.096': 'orange', 'delay=0.192': 'red'}
-    dir_out_tlx = os.path.join(dir_out, 'tlx-scores')
+    dir_out_tlx = os.path.join(dir_out_, 'tlx-scores')
     os.makedirs(dir_out_tlx, exist_ok=True)
     for scenario in mc_scenarios:
         dir_out_mc = os.path.join(dir_out_tlx, scenario)
@@ -953,7 +969,7 @@ if make_boxplots_algs:
     filter_ = {'model-name': ['modname=roll_stick', 'modname=pitch_stick']}  # roll_stick
     algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}
     features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
     delays_order = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
     hz = '16.67'
@@ -1006,7 +1022,7 @@ if make_boxplots_algs:
         15: '_mfr',
         26: '_mfr'
     }
-    dir_out_boxes = os.path.join(dir_out, 'wl_by_comp')
+    dir_out_boxes = os.path.join(dir_out_, 'wl_by_comp')
     os.makedirs(dir_out_boxes, exist_ok=True)
     for mc_scenario in mc_scenarios:
         dir_out_mc = os.path.join(dir_out_boxes, mc_scenario)
@@ -1017,7 +1033,7 @@ if make_boxplots_algs:
         df_tlx = pd.read_csv(path_tlx)
         compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features,
                                                                         mc_scenario, filter_, feat_groupby,
-                                                                        compalgs_order, delays_order, dir_out)
+                                                                        compalgs_order, delays_order, dir_out_)
         for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
             fig = plt.figure()
             axs_tup = fig.subplots(len(wlalgs_wllevelsdata), sharex=True)
@@ -1047,9 +1063,9 @@ if make_tlx_overlaps:
     features = 'pitch_stick.roll_stick.rudder_pedals.throttle'
     delays_order = ['baseline', 'delay=0.048', 'delay=0.096', 'delay=0.192']
     algs_colors = {'HTM': 'blue', 'PSD': 'green', 'TLX': 'red'}  # 'SteeringEntropy': 'purple'
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc"
     dir_in = "/Users/samheiserman/Desktop/repos/workload_assessor/data"
-    dir_out_tlx = os.path.join(dir_out, 'tlx-overlaps')
+    dir_out_tlx = os.path.join(dir_out_, 'tlx-overlaps')
     os.makedirs(dir_out_tlx, exist_ok=True)
     groups_legendnames = {'nc': 'No Compensation',
                           'mc': 'McFarland Predictor',
@@ -1112,7 +1128,7 @@ if make_tlx_overlaps:
             features = '.'.join([f.replace('modname=', '') for f in sorted(filter_['model-name'])]) + ' - MEGA'
         compalgs_wlalgs_wllevelsdata = get_compalgs_wlalgs_wllevelsdata(runs_comps, df_tlx, algs_colors, hz, features,
                                                                         mc_scenario, filter__, feat_groupby,
-                                                                        compalgs_order, delays_order, dir_out)
+                                                                        compalgs_order, delays_order, dir_out_)
         wlalgs_comps_wlvariations = {alg: {} for alg in wl_algs}
         for comp, wlalgs_wllevelsdata in compalgs_wlalgs_wllevelsdata.items():
             for wl_alg, wllevelsdata in wlalgs_wllevelsdata.items():
@@ -1565,7 +1581,7 @@ if make_table_3:
     df.to_csv(path_out)
 
 if make_boxplots_table23:
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%"
+    dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%"
     path_t2 = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
     table2 = pd.read_csv(path_t2)
     algs_colors = {
@@ -1635,7 +1651,7 @@ if make_boxplots_table23:
                   title="% Change in Workload from Compensated to Non-Compensated Runs",
                   # suptitle=#"% Drop in Workload",
                   xtickrotation=90,
-                  path_out=os.path.join(dir_out, "percentdrops--box.png"),
+                  path_out=os.path.join(dir_out_, "percentdrops--box.png"),
                   ylim=(-125, 75),
                   showmeans=True)
 
@@ -1647,7 +1663,7 @@ if make_boxplots_table23:
                   # "for Significant Difference between Compensated & Non-Compensated Behavior",
                   # suptitle="P-values of Paried T-Tests",
                   xtickrotation=90,
-                  path_out=os.path.join(dir_out, "pvalues--box.png"),
+                  path_out=os.path.join(dir_out_, "pvalues--box.png"),
                   ylim=None,
                   showmeans=True)
 
@@ -1682,10 +1698,7 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    windows_ascores_str = 'recent=15; previous=35; change_thresh_percent=200; change_detection_window=20; '
-    # windows_ascores_str = 'recent=5; previous=15; change_thresh_percent=200; change_detection_window=15; '
-    # windows_ascores_str = 'recent=5; previous=25; change_thresh_percent=100; change_detection_window=15; '
-    dir_out = "/Users/samheiserman/Desktop/repos/workload_assessor/results/real-time"
+    windows_ascores_str = f'recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
     dir_out_ = os.path.join(dir_out, 'scores')
     dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     os.makedirs(dir_out_, exist_ok=True)
@@ -1693,8 +1706,8 @@ if make_boxplots_realtime:
     algs_colors = {
         'HTM': 'blue',
         'Fessonia': 'red',
+        'Naive': 'grey',
         # 'DNDEB': 'orange',
-
         # 'SE': 'red',
         # 'ARIMA': 'orange',
         # 'LSTM': 'orange',
@@ -1706,10 +1719,11 @@ if make_boxplots_realtime:
         # 'KNN': 'green'
     }
     algs_paths = {
-        'HTM': os.path.join(dir_out, 'HTM', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
-        'Fessonia': os.path.join(dir_out, 'Fessonia', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
-        # 'DNDEB': os.path.join(dir_out, 'DNDEB', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
-
+        alg: os.path.join(ALGS_DIRS_IN[alg], 'classification_scores.csv') for alg in ALGS_DIRS_IN
+        # 'HTM': os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv'),
+        # 'Fessonia': os.path.join(ALGS_DIRS_IN['Fessonia'], 'classification_scores.csv'),
+        # 'Naive': os.path.join(ALGS_DIRS_IN['Naive'], 'classification_scores.csv'),
+        # 'DNDEB': os.path.join(ALGS_DIRS_IN['DNDEB'], 'classification_scores.csv'),
         # 'SE': os.path.join(dir_out, 'SteeringEntropy', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         # 'ARIMA': os.path.join(dir_out, 'ARIMA', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
         # 'LSTM': os.path.join(dir_out, 'RNNModel', 'hz=5; features=steering angle', windows_ascores_str, 'modname=steering angle', 'classification_scores.csv'),
@@ -1733,6 +1747,34 @@ if make_boxplots_realtime:
         title = f'{scorecols_conv[cl_score]} by {xlabel}'
         make_boxplots(algs_scores, algs_colors, xlabel, scorecols_conv[cl_score], title, path_out, xtickrotation=0, suptitle=None,
                       ylim=None, showmeans=True)
+
+if do_hypothesistests_realtime:
+    test_functions = [ttest_ind, mannwhitneyu]  #kstest
+    windows_ascores_str = f'recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
+    dir_out_ = os.path.join(dir_out, 'scores')
+    dir_out__ = os.path.join(dir_out_, windows_ascores_str)
+    path_out = os.path.join(dir_out__, 'hypothesis_tests.csv')
+    os.makedirs(dir_out_, exist_ok=True)
+    os.makedirs(dir_out__, exist_ok=True)
+    algs_competing = [alg for alg in ALGS_DIRS_IN if alg!='HTM']
+    scores_htm = pd.read_csv( os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv') )
+    score_metrics = ['precision','recall','cl_accuracy','f1_score']
+    metrics_pathsout = [os.path.join(dir_out__, f"{metric}.csv") for metric in score_metrics]
+    algs_metrics_tests_pvals = {alg: {} for alg in algs_competing}
+    for alg in algs_competing:
+        dir_in = ALGS_DIRS_IN[alg]
+        scores_alg = pd.read_csv(os.path.join(ALGS_DIRS_IN[alg], 'classification_scores.csv'))
+        for metric in score_metrics:
+            algs_metrics_tests_pvals[alg][metric] = {}
+            score_metric = [v for v in scores_alg[metric].values if not np.isnan(v)]
+            score_htm = [v for v in scores_htm[metric].values if not np.isnan(v)]
+            for test in test_functions:
+                pval = test(score_metric, score_htm)[1]
+                algs_metrics_tests_pvals[alg][metric][test.__name__] = pval
+    results_total = pd.DataFrame(algs_metrics_tests_pvals)
+    results_total.to_csv(path_out)
+    print(f"\npath_out = {path_out}")
+
 
 # if __name__ == "__main__":
 #     main()

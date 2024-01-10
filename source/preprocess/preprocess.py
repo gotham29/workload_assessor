@@ -1,6 +1,7 @@
 import copy
 import os
 import sys
+import yaml
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,6 @@ sys.path.append(_TS_SOURCE_DIR)
 
 from ts_source.utils.utils import add_timecol
 from source.utils.utils import load_files
-
 
 FILETYPES_READFUNCS = {
     'xls': pd.read_excel,
@@ -92,20 +92,23 @@ def get_psd_peak(data_1d, sample_rate):
     psd = np.abs(np.fft.fft(data_1d)) ** 2
     # Create a frequency array that corresponds to the PSD values
     # The sampling frequency (Fs) is assumed to be 1. If your signal has a different Fs, adjust accordingly.
-    freqs = np.fft.fftfreq(n=len(data_1d), d=1/sample_rate)
+    freqs = np.fft.fftfreq(n=len(data_1d), d=1 / sample_rate)
     # Find the index of the highest peak in the PSD
     highest_peak_index = np.argmax(psd)
     # Calculate the corresponding frequency of the highest peak
     highest_peak_frequency = np.abs(freqs[highest_peak_index])
     return highest_peak_frequency, freqs, psd
 
-def get_pds_peaks(dir_input, dir_output, file_type, file_substr, column_names, column_behavior, sample_rate, autocorr_thresh=5):
+
+def get_pds_peaks(dir_input, dir_output, file_type, file_substr, column_names, column_behavior, sample_rate,
+                  autocorr_thresh=5):
     subjs_psdpeaks = {}
     subjs = [f for f in os.listdir(dir_input) if '.' not in f and '--drop' not in f]
     for subj in subjs:
         dir_input_subj = os.path.join(dir_input, subj)
         filenames = [f for f in os.listdir(dir_input_subj) if file_substr in f]
-        filenames_data = load_files(dir_input=dir_input_subj, file_type=file_type, read_func=FILETYPES_READFUNCS[file_type],
+        filenames_data = load_files(dir_input=dir_input_subj, file_type=file_type,
+                                    read_func=FILETYPES_READFUNCS[file_type],
                                     filenames=filenames)
         filenames_data = update_colnames(filenames_data=filenames_data, colnames=column_names)
         subj_data = pd.concat(filenames_data.values(), axis=0)
@@ -267,3 +270,130 @@ def movingavg_data(data, window):
         df_dict[c] = rolling.mean()
     df = pd.DataFrame(df_dict)
     return df.dropna(axis=0, how='all')
+
+
+def get_run_number(f):
+    return int(f.split('run_')[1].replace('.csv', '').replace('0', ''))
+
+
+def prep_nasa(df):
+    df.drop(index=df.index[0], axis=0, inplace=True)
+    df = df.apply(pd.to_numeric, errors='ignore')
+    altitude_base = float(df['ALTITUDE'].values[0])
+    altitudes_normed = [v - altitude_base for v in df['ALTITUDE'].values]
+    df['ALTITUDE'] = pd.Series(altitudes_normed)
+    return df
+
+
+def save_config(cfg: dict, yaml_path: str) -> dict:
+    """
+    Purpose:
+        Save config to path
+    Inputs:
+        cfg
+            type: dict
+            meaning: config (yaml)
+        yaml_path
+            type: str
+            meaning: .yaml path to save to
+    Outputs:
+        cfg
+            type: dict
+            meaning: config (yaml) -- saved
+    """
+    with open(yaml_path, 'w') as outfile:
+        yaml.dump(cfg, outfile, default_flow_style=False)
+    return cfg
+
+
+def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_convertto=6.67, features_meta=['RUN_rpt1', 'TIME', 'ALTITUDE']):
+    path_runsdata = os.path.join(dir_nasa, 'runs_metadata.csv')
+    runsdata = pd.read_csv(path_runsdata)
+    # set type for each run
+    ## drop --> those with 'Compensation'==0 if 'Delay (msec)'>0
+    ## train --> those with 'Failure'==0 AND 'Compensation'==1 if 'Delay (msec)'>0
+    ## test --> those with 'Failure'!=0 AND 'Compensation'==1 if 'Delay (msec)'>0
+    runs_types = {}
+    testruns_altitudes = {}
+    for _, row in runsdata.iterrows():
+        # check for drop
+        if row['Delay (msec)'] > 0 and row['Compensation'] == 0:
+            runs_types[row['Run']] = 'drop'
+        # check for train or test
+        elif row['Failure'] == 0:
+            if row['Delay (msec)'] > 0 and row['Compensation'] == 0:
+                continue
+            else:
+                runs_types[row['Run']] = 'train'
+        else:
+            if row['Delay (msec)'] > 0 and row['Compensation'] == 0:
+                continue
+            else:
+                runs_types[row['Run']] = 'test'
+    # get altitude of engine failure for all test runs
+    for run, run_type in runs_types.items():
+        if run_type == 'test':
+            row = runsdata[runsdata['Run'] == run].iloc[0]
+            testruns_altitudes[run] = row['Altitude']
+    subjects_testfiles_wltogglepoints = {}
+    dirs_subj = [os.path.join(dir_nasa, f) for f in os.listdir(dir_nasa) if os.path.isdir(os.path.join(dir_nasa, f))]
+    runs_train = [r for r in runs_types if runs_types[r] == 'train']
+    runs_test = [r for r in runs_types if runs_types[r] == 'test']
+    features = features_meta + features_model
+    # for each subject
+    for dir_subj in dirs_subj:
+        subj = dir_subj.split('/')[-1]
+        subjects_testfiles_wltogglepoints[subj] = {}
+        dir_subj_date = \
+        [os.path.join(dir_subj, f) for f in os.listdir(dir_subj) if os.path.isdir(os.path.join(dir_subj, f))][0]
+        paths_train = [os.path.join(dir_subj_date, f) for f in os.listdir(dir_subj_date) if '_run_' in f and get_run_number(f) in runs_train]
+        paths_test = [os.path.join(dir_subj_date, f) for f in os.listdir(dir_subj_date) if '_run_' in f and get_run_number(f) in runs_test]
+        # make 1 train.csv using all runs combined
+        dfs_train = [pd.read_csv(p) for p in paths_train]
+        df_train = pd.concat(dfs_train, axis=0)[features]
+        df_train = prep_nasa(df_train)
+        path_train = os.path.join(dir_subj, 'train.csv')
+        df_train.to_csv(path_train, index=False)
+        # make test_x.csv files for all runs
+        for p in paths_test:
+            df_test = pd.read_csv(p)[features]
+            df_test = prep_nasa(df_test)
+            # agg data to 6.67 Hz
+            agg = int(hz_baseline / hz_convertto)
+            df_test = df_test.groupby(df_test.index // agg).mean()
+            altitude_enginefail = testruns_altitudes[get_run_number(p)]
+            # get timestep_enginefail
+            for ind,altitude in enumerate(df_test['ALTITUDE']):
+                if altitude > altitude_enginefail:
+                    timestep_enginefail = ind
+                    break
+            filename = p.replace(dir_subj_date,'')[1:]
+            subjects_testfiles_wltogglepoints[subj][filename] = {}
+            subjects_testfiles_wltogglepoints[subj][filename]['time_total'] = len(df_test)
+            subjects_testfiles_wltogglepoints[subj][filename]['times_wltoggle'] = [timestep_enginefail]
+            path_test = os.path.join(dir_subj, f'{filename}')
+            df_test.to_csv(path_test, index=False)
+    path_cfg = os.path.join(dir_nasa, 'subjects_testfiles_wltogglepoints.yaml')
+    save_config(subjects_testfiles_wltogglepoints, path_cfg)
+
+
+if __name__ == '__main__':
+    dir_nasa = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/NASA"
+    features_meta = [
+        'RUN_rpt1',
+        'TIME',
+        'ALTITUDE'
+    ]
+    features_model = [
+        'ROLL_STICK',
+        'ROLLSTK',
+        'ROLL',
+        'PITCH_STIC',
+        'PITCHSTK',
+        'PITCH',
+        'RUDDER_PED',
+        'X_MOTION',
+        'Y_MOTION',
+        'Z_MOTION',
+    ]
+    make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_convertto=6.67, features_meta=features_meta)
