@@ -25,6 +25,7 @@ from source.analyze.tlx import make_boxplots
 # MAKE PLOTS
 make_boxplots_realtime = True
 do_hypothesistests_realtime = True
+summarize_perf_hyperparams = False
 
 make_master_results = False
 make_table_1_fold = False
@@ -59,16 +60,10 @@ features_htm = '.'.join(features_htm)  # 'ROLL_STICK.PITCH_STIC'
 #     features_htm = modname
 
 
-Hz = '6.67'
-change_thresh_percent = '200'
-window_recent = '15'
-window_previous = '30'
-change_detection_window = '27'
-
 ALGS_DIRS_IN = {
-    'HTM': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz={Hz}; features={features_htm}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={modname_htm}",
-    'Fessonia': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz={Hz}; features={features}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={features}",
-    'Naive': f"/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz={Hz}; features={features}/recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; /modname={features}",
+    'HTM': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features=ROLL_STICK/recent=5; previous=10; change_thresh_percent=200; change_detection_window=25; /modname=megamodel_features=1",
+    'Fessonia': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz=5; features=PITCH_STIC/recent=15; previous=30; change_thresh_percent=100; change_detection_window=25; /modname=PITCH_STIC",
+    'Naive': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz=5; features=ROLL_STICK/recent=5; previous=10; change_thresh_percent=200; change_detection_window=25; /modname=ROLL_STICK",
 }
 dir_out = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time"
 
@@ -1712,10 +1707,10 @@ if print_nullreject_scores:
     print(wls_alpha01counts)
 
 if make_boxplots_realtime:
-    windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
-    dir_out_ = os.path.join(dir_out, 'scores')
-    dir_out__ = os.path.join(dir_out_, windows_ascores_str)
-    os.makedirs(dir_out_, exist_ok=True)
+    # windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
+    dir_out__ = os.path.join(dir_out, 'scores')
+    # dir_out__ = os.path.join(dir_out_, windows_ascores_str)
+    # os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
     algs_colors = {
         'HTM': 'blue',
@@ -1732,6 +1727,9 @@ if make_boxplots_realtime:
         # 'LOF': 'green',
         # 'KNN': 'green'
     }
+    """
+    change ALGS_DIRS_IN to choose best result for each alg (not same hyperparams as currently)
+    """
     algs_paths = {
         alg: os.path.join(ALGS_DIRS_IN[alg], 'classification_scores.csv') for alg in ALGS_DIRS_IN
         # 'HTM': os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv'),
@@ -1764,11 +1762,11 @@ if make_boxplots_realtime:
 
 if do_hypothesistests_realtime:
     test_functions = [ttest_ind, mannwhitneyu]  #kstest
-    windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
-    dir_out_ = os.path.join(dir_out, 'scores')
-    dir_out__ = os.path.join(dir_out_, windows_ascores_str)
+    # windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
+    dir_out__ = os.path.join(dir_out, 'scores')
+    # dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     path_out = os.path.join(dir_out__, 'hypothesis_tests.csv')
-    os.makedirs(dir_out_, exist_ok=True)
+    # os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
     algs_competing = [alg for alg in ALGS_DIRS_IN if alg!='HTM']
     scores_htm = pd.read_csv( os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv') )
@@ -1788,6 +1786,40 @@ if do_hypothesistests_realtime:
     results_total = pd.DataFrame(algs_metrics_tests_pvals)
     results_total.to_csv(path_out)
     print(f"\npath_out = {path_out}")
+
+if summarize_perf_hyperparams:
+    modname_ = 'ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'ROLL_STICK.PITCH_STIC'
+    feature_count = len(modname_.split('.'))
+    algs_dirs = {
+        'HTM': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features={modname_}',  #ROLL_STICK
+        'Fessonia': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz=5; features={modname_}',
+        'Naive': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz=5; features={modname_}',
+    }
+    if feature_count > 1:
+        algs_dirs = {k:v for k,v in algs_dirs.items() if k=='HTM'}
+    for alg, alg_dir in algs_dirs.items():
+        print(f"\nalg={alg}")
+        modname = f"megamodel_features={feature_count}" if alg == 'HTM' else modname_
+        path_out = os.path.join(alg_dir, 'summarize_perf_hyperparams.csv')
+        df_dict = {
+            'window_recent': [],
+            'window_previous': [],
+            'change_thresh_percent': [],
+            'mean f1 score': []
+        }
+        dirs = [os.path.join(alg_dir,d,f"modname={modname}") for d in os.listdir(alg_dir) if os.path.isdir(os.path.join(alg_dir,d,f"modname={modname}"))]
+        for d in dirs:
+            df_scores = pd.read_csv(os.path.join(d,'classification_scores.csv') )
+            mean_f1 = df_scores['f1_score'].mean()
+            recent = int(d.split('recent=')[1].split(';')[0])
+            previous = int(d.split('previous=')[1].split(';')[0])
+            changethresh = int(d.split('change_thresh_percent=')[1].split(';')[0])
+            df_dict['window_recent'].append(recent)
+            df_dict['window_previous'].append(previous)
+            df_dict['change_thresh_percent'].append(changethresh)
+            df_dict['mean f1 score'].append(mean_f1)
+        df = pd.DataFrame(df_dict).sort_values(by='mean f1 score', ascending=False)
+        df.to_csv(path_out, index=False)
 
 
 # if __name__ == "__main__":

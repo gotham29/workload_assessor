@@ -1,14 +1,14 @@
 mode: real-time
 #post-hoc, real-time
-alg: Naive  #Fessonia, HTM, Naive
+alg: Fessonia  #Fessonia, HTM, Naive
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 windows_ascore:
   recent: 15  #5, 10, 15
-  previous: 30  #15, 25, 35
+  previous: 30  #10, 20, 30
   change_thresh_percent: 200  #50, 100, 200
-  change_detection_window: 27  #10, 15, 20
+  change_detection_window: 25
 
 preprocess:
   difference: false  #1
@@ -2811,15 +2811,15 @@ colnames:
   - TIME
   - ALTITUDE
   - ROLL_STICK
-  - ROLLSTK
-  - ROLL
+#  - ROLLSTK
+#  - ROLL
   - PITCH_STIC
-  - PITCHSTK
-  - PITCH
+#  - PITCHSTK
+#  - PITCH
   - RUDDER_PED
-  - X_MOTION
-  - Y_MOTION
-  - Z_MOTION
+#  - X_MOTION
+#  - Y_MOTION
+#  - Z_MOTION
 #features_model = ['ROLL_STICK','ROLLSTK','ROLL','PITCH_STIC','PITCHSTK','PITCH','RUDDER_PED','X_MOTION','Y_MOTION','Z_MOTION']
 
 columns_model:
@@ -2828,8 +2828,8 @@ columns_model:
 #  - steering angle
 
 hzs:
-  baseline: 6.67  #18, 100
-  convertto: 6.67  #18, 5, 6.67
+  baseline: 5  #18, 100
+  convertto: 5  #18, 5, 6.67
 
 clip_percents:
   start: 0

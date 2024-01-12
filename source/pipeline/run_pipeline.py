@@ -356,12 +356,6 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 alpha = subjects_features_alphas[subj][modname]
 
             # loop over testfiles
-            print(f"  \n\nsubjects_filenames_data --> {subjects_filenames_data}")
-            for subj, filenames_data in subjects_filenames_data.items():
-                print(f"    subj = {subj}")
-                for fn, data in filenames_data.items():
-                    print(f"      {fn} --> {data.shape}")
-
             model = features_models[modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")

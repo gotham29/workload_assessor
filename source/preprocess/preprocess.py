@@ -389,14 +389,14 @@ if __name__ == '__main__':
     ]
     features_model = [
         'ROLL_STICK',
-        'ROLLSTK',
-        'ROLL',
+        # 'ROLLSTK',
+        # 'ROLL',
         'PITCH_STIC',
-        'PITCHSTK',
-        'PITCH',
+        # 'PITCHSTK',
+        # 'PITCH',
         'RUDDER_PED',
-        'X_MOTION',
-        'Y_MOTION',
-        'Z_MOTION',
+        # 'X_MOTION',
+        # 'Y_MOTION',
+        # 'Z_MOTION',
     ]
-    make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_convertto=6.67, features_meta=features_meta)
+    make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_convertto=5, features_meta=features_meta)
