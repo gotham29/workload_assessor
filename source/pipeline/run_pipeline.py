@@ -109,21 +109,21 @@ def get_filenames_outputs(cfg,
             ascores = get_ascores_pyod(data[modname], modname_model[
                 modname])  # data[cfg['columns_model']], features_models[cfg['columns_model'][0]]
 
-        # else:  # ts_source alg
-        #     for feat, model in features_models.items():  # Assumes single model
-        #         break
-        #     mod_name = get_modname(model)
-        #     features = model.training_series.components
-        #     preds = get_preds_rolling(model=model,
-        #                               df=data,
-        #                               features=features,
-        #                               LAG=max(LAG_MIN, get_model_lag(mod_name, model)),
-        #                               time_col=cfg['time_col'],
-        #                               forecast_horizon=cfg['forecast_horizon'])
-        #     preds_df = pd.DataFrame(preds, columns=list(features))
-        #     data_ = data.tail(preds_df.shape[0])
-        #     ascores = list(abs(data_[cfg['columns_model'][0]].values - preds_df[cfg['columns_model'][
-        #         0]].values))  # list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
+        else:  # ts_source alg
+            for feat, model in features_models.items():  # Assumes single model
+                break
+            mod_name = get_modname(model)
+            features = model.training_series.components
+            preds = get_preds_rolling(model=model,
+                                      df=data,
+                                      features=features,
+                                      LAG=max(LAG_MIN, get_model_lag(mod_name, model)),
+                                      time_col=cfg['time_col'],
+                                      forecast_horizon=cfg['forecast_horizon'])
+            preds_df = pd.DataFrame(preds, columns=list(features))
+            data_ = data.tail(preds_df.shape[0])
+            ascores = list(abs(data_[cfg['columns_model'][0]].values - preds_df[cfg['columns_model'][
+                0]].values))  # list(abs(data_['steering angle'].values - preds_df['steering angle'].values))
 
         filenames_ascores[fn] = ascores
 
@@ -381,7 +381,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                     elif config['alg'] == 'Naive':
                         aScore, pred_prev = get_ascore_naive(_, row, modname, model, data_test, pred_prev)
                     else:
-                        aScore = get_ascore_dndeb()
+                        aScore, pred_prev = get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN)
                     """
                     elif config['alg'] == 'SteeringEntropy':
                         aScore, pred_prev = get_ascore_entropy(_, row, modname, model, data_test, pred_prev)
@@ -882,7 +882,7 @@ def main(config):
     os.makedirs(dir_out, exist_ok=True)
 
     # get subjects
-    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)  #100
+    subjects, subjects_spacesadd = get_subjects(config['dirs']['input'], subjs_lim=100)
 
     ## get inputs
     filenames = list(itertools.chain.from_iterable(config['wllevels_filenames'].values()))

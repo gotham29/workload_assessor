@@ -1,13 +1,13 @@
 mode: real-time
 #post-hoc, real-time
-alg: Fessonia  #Fessonia, HTM, Naive
+alg: RNNModel  #Fessonia, HTM, Naive, RNNModel
 #HTM, Naive, SteeringEntropy, IForest, OCSVM, KNN, KDE, LOF
 #LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 windows_ascore:
-  recent: 15  #5, 10, 15
-  previous: 30  #10, 20, 30
-  change_thresh_percent: 200  #50, 100, 200
+  recent: 5  #5, 10, 15
+  previous: 10  #10, 20, 30
+  change_thresh_percent: 50  #50, 100, 200
   change_detection_window: 25
 
 preprocess:
