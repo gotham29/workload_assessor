@@ -23,9 +23,9 @@ from source.analyze.plot import plot_outputs_bars
 from source.analyze.tlx import make_boxplots
 
 # MAKE PLOTS
-make_boxplots_realtime = True
-do_hypothesistests_realtime = True
-summarize_perf_hyperparams = False
+make_boxplots_realtime = False
+do_hypothesistests_realtime = False
+summarize_perf_hyperparams = True
 
 make_master_results = False
 make_table_1_fold = False
@@ -46,24 +46,11 @@ make_boxplots_algs = False
 make_plots_violin = False
 
 
-features = 'ROLL_STICK'  #'PITCH_STIC'
-features_htm = ['ROLL_STICK','PITCH_STIC']
-
-modname_htm = f'megamodel_features={len(features_htm)}'
-features_htm = '.'.join(features_htm)  # 'ROLL_STICK.PITCH_STIC'
-
-# if len(features_htm) > 1:
-#     modname_htm = f'megamodel_features={len(features_htm)}'
-#     features_htm = '.'.join(features_htm)  # 'ROLL_STICK.PITCH_STIC'
-# else:
-#     modname_htm = modname
-#     features_htm = modname
-
-
 ALGS_DIRS_IN = {
     'HTM': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features=ROLL_STICK/recent=5; previous=10; change_thresh_percent=200; change_detection_window=25; /modname=megamodel_features=1",
-    'Fessonia': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz=5; features=PITCH_STIC/recent=15; previous=30; change_thresh_percent=100; change_detection_window=25; /modname=PITCH_STIC",
+    'Fessonia': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz=5; features=RUDDER_PED/recent=15; previous=30; change_thresh_percent=200; change_detection_window=25; /modname=RUDDER_PED",
     'Naive': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz=5; features=ROLL_STICK/recent=5; previous=10; change_thresh_percent=200; change_detection_window=25; /modname=ROLL_STICK",
+    'DNDEB-LSTM': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/RNNModel/hz=5; features=PITCH_STIC/recent=5; previous=10; change_thresh_percent=100; change_detection_window=25; /modname=PITCH_STIC"
 }
 dir_out = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time"
 
@@ -1788,15 +1775,16 @@ if do_hypothesistests_realtime:
     print(f"\npath_out = {path_out}")
 
 if summarize_perf_hyperparams:
-    modname_ = 'ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'ROLL_STICK.PITCH_STIC'
+    modname_ = 'RUDDER_PED.ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', 'ROLL_STICK.PITCH_STIC', 'RUDDER_PED.ROLL_STICK', 'RUDDER_PED.PITCH_STIC', 'RUDDER_PED.ROLL_STICK.PITCH_STIC'
     feature_count = len(modname_.split('.'))
     algs_dirs = {
-        'HTM': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features={modname_}',  #ROLL_STICK
+        'HTM': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features={modname_}',
         'Fessonia': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Fessonia/hz=5; features={modname_}',
         'Naive': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/Naive/hz=5; features={modname_}',
+        'RNNModel': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/RNNModel/hz=5; features={modname_}'
     }
     if feature_count > 1:
-        algs_dirs = {k:v for k,v in algs_dirs.items() if k=='HTM'}
+        algs_dirs = {k:v for k,v in algs_dirs.items() if k in ['HTM','RNNModel']}
     for alg, alg_dir in algs_dirs.items():
         print(f"\nalg={alg}")
         modname = f"megamodel_features={feature_count}" if alg == 'HTM' else modname_

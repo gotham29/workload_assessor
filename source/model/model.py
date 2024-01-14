@@ -125,14 +125,16 @@ def train_save_models(df_train: pd.DataFrame, alg: str, dir_output: str, config:
                        'results': os.path.join(dir_output, 'anomaly'),
                        'models': dir_output}
         features_model = [f for f in features_model if f != config['time_col']]
+        print(f"\nfeatures_model = {features_model}\n")
+        features_all = features_model + [config['time_col']]
         features_models = {}
-        for feat in features_model:
-            modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
-                                                                         data=df_train[[feat, config['time_col']]],
-                                                                         data_path=False,
-                                                                         output_dir=False,
-                                                                         output_dirs=output_dirs)
-            features_models[feat] = modnames_models[alg]
+        # for feat in features_model:
+        modnames_models, modname_best, modnames_preds = run_pipeline(config=config_ts,
+                                                                     data=df_train[features_all],  #df_train[[feat, config['time_col']]]
+                                                                     data_path=False,
+                                                                     output_dir=False,
+                                                                     output_dirs=output_dirs)
+        features_models[','.join(features_model)] = modnames_models[alg]  #feat
 
     # dir_output_models = os.path.join(dir_output, 'models')
     # save_models(features_models, dir_output)

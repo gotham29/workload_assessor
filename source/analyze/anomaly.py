@@ -50,8 +50,8 @@ def get_entropy_ts(_, model, row, data_test, config, pred_prev, LAG_MIN):
     LAG = max(LAG_MIN, get_model_lag(config['alg'], model))
     if _ < LAG:
         pred_prev, do_pred = None, False
-    if pred_prev:
-        aScore = abs(pred_prev - row[features_model])
+    if pred_prev is not None:
+        aScore = np.sum(abs(pred_prev - row[features_model]))
     if do_pred:
         df_lag = data_test[features][_ - LAG:_]
         ts = TimeSeries.from_dataframe(df_lag, time_col=config['time_col'])

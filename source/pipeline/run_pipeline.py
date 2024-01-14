@@ -709,51 +709,53 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
 
 def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
                         wl_changepoints_detected):
-    for feat in feats_plot:
-        path_out = os.path.join(dir_out_subj,
-                                f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
+    for feats in feats_plot:
+        feats = feats.split(',')
+        for feat in feats:
+            path_out = os.path.join(dir_out_subj,
+                                    f"{feat}--{testfile.replace(file_type, '')}--timeplot.png")
 
-        behavior = data_test[feat]
-        aScores_accum = get_accum(aScores)
-        t = [_ for _ in range(len(behavior))]
+            behavior = data_test[feat]
+            aScores_accum = get_accum(aScores)
+            t = [_ for _ in range(len(behavior))]
 
-        fig, ax1 = plt.subplots()
+            fig, ax1 = plt.subplots()
 
-        color = 'black'
-        ax1.set_xlabel('time')
-        ax1.set_ylabel(feat, color=color)
-        ax1.plot(t, behavior, color=color)
-        ax1.tick_params(axis='y', labelcolor=color)
+            color = 'black'
+            ax1.set_xlabel('time')
+            ax1.set_ylabel(feat, color=color)
+            ax1.plot(t, behavior, color=color)
+            ax1.tick_params(axis='y', labelcolor=color)
 
-        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-        color = 'blue'
-        ax2.set_ylabel('Behavioral Entropy', color=color)  # we already handled the x-label with ax1
-        ax2.plot(t, aScores_accum, color=color)
-        ax2.tick_params(axis='y', labelcolor=color)
+            color = 'blue'
+            ax2.set_ylabel('Behavioral Entropy', color=color)  # we already handled the x-label with ax1
+            ax2.plot(t, aScores_accum, color=color)
+            ax2.tick_params(axis='y', labelcolor=color)
 
-        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+            fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
-        # plot wl changes detected
-        label_done = False
-        for cp in wl_changepoints_detected:
-            if not label_done:
-                ax2.axvline(cp, color='green', lw=0.5, alpha=1, label='WL Change Detected')
-                label_done = True
-            else:
-                ax2.axvline(cp, color='green', lw=0.5, alpha=1)
+            # plot wl changes detected
+            label_done = False
+            for cp in wl_changepoints_detected:
+                if not label_done:
+                    ax2.axvline(cp, color='green', lw=0.5, alpha=1, label='WL Change Detected')
+                    label_done = True
+                else:
+                    ax2.axvline(cp, color='green', lw=0.5, alpha=1)
 
-        # plot detection windows
-        label_done = False
-        for cp, window in wl_changepoints_windows.items():
-            if not label_done:
-                ax2.axvspan(window[0], window[1], alpha=0.5, color='red', label='WL Detection Window')
-                label_done = True
-            else:
-                ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
-        plt.legend()
-        plt.savefig(path_out)
-        plt.close()
+            # plot detection windows
+            label_done = False
+            for cp, window in wl_changepoints_windows.items():
+                if not label_done:
+                    ax2.axvspan(window[0], window[1], alpha=0.5, color='red', label='WL Detection Window')
+                    label_done = True
+                else:
+                    ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
+            plt.legend()
+            plt.savefig(path_out)
+            plt.close()
 
 
 def get_subjects_data(cfg, filenames, subjects, subjects_spacesadd):
