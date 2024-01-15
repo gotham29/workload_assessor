@@ -23,9 +23,9 @@ from source.analyze.plot import plot_outputs_bars
 from source.analyze.tlx import make_boxplots
 
 # MAKE PLOTS
-make_boxplots_realtime = False
-do_hypothesistests_realtime = False
-summarize_perf_hyperparams = True
+make_boxplots_realtime = True
+do_hypothesistests_realtime = True
+summarize_perf_hyperparams = False
 
 make_master_results = False
 make_table_1_fold = False
@@ -1775,7 +1775,7 @@ if do_hypothesistests_realtime:
     print(f"\npath_out = {path_out}")
 
 if summarize_perf_hyperparams:
-    modname_ = 'RUDDER_PED.ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', 'ROLL_STICK.PITCH_STIC', 'RUDDER_PED.ROLL_STICK', 'RUDDER_PED.PITCH_STIC', 'RUDDER_PED.ROLL_STICK.PITCH_STIC'
+    modname_ = 'ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', 'ROLL_STICK.PITCH_STIC', 'RUDDER_PED.ROLL_STICK', 'RUDDER_PED.PITCH_STIC', 'RUDDER_PED.ROLL_STICK.PITCH_STIC'
     feature_count = len(modname_.split('.'))
     algs_dirs = {
         'HTM': f'/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features={modname_}',
@@ -1787,7 +1787,11 @@ if summarize_perf_hyperparams:
         algs_dirs = {k:v for k,v in algs_dirs.items() if k in ['HTM','RNNModel']}
     for alg, alg_dir in algs_dirs.items():
         print(f"\nalg={alg}")
-        modname = f"megamodel_features={feature_count}" if alg == 'HTM' else modname_
+        if alg == 'HTM':
+            modname = f"megamodel_features={feature_count}"
+        else:
+            modname = modname_.replace('.',',')
+            modname = f"{modname.split(',')[1]},{modname.split(',')[0]}"
         path_out = os.path.join(alg_dir, 'summarize_perf_hyperparams.csv')
         df_dict = {
             'window_recent': [],

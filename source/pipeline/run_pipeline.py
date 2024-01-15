@@ -329,7 +329,7 @@ def get_ascore_fessonia(pred_errors, alpha, ind, window_errors, window_alpha):
 def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas):
     subj = list(subjects_features_models.keys())[0]
     modnames = list(subjects_features_models[subj].keys())
-    modnames_df1s = {}
+    # modnames_df1s = {}
     print(f'\nrun_realtime; modnames = {modnames}')
     # make dir - windows_ascore
     windows_ascore_str = ''
@@ -402,37 +402,69 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
 
                 # score detected wl-changepoints
                 print(f"        wl_changepoints_detected = {wl_changepoints_detected}")
+
+                """ OLD Promptness - using detection window
                 scores, wl_changepoints_windows = score_wl_detections(data_test.shape[0],
                                                                       wl_changepoints,
                                                                       wl_changepoints_detected,
                                                                       config['windows_ascore']['change_detection_window'])
                 f1_score, precision, recall, cl_accuracy = get_clscores(scores)
+                
+
+                """
+                """ 
+                NEW Promptness --> how soon is 1st WL spike after WL imposition
+                NEW Precision  --> how many WL spikes were detected before WL imposition
+                """
+                results = {
+                    'first_spike_after_imposition': None,
+                    'promptness_after_imposition': None,
+                    'spikes_before_imposition': []
+                }
+                wlchangepoints_results = {wl_cp: results for wl_cp in wl_changepoints}
+                for wl_cp in wl_changepoints:
+                    spikes_after = [spike for spike in wl_changepoints_detected if spike > wl_cp]
+                    spikes_before = [spike for spike in wl_changepoints_detected if spike < wl_cp]
+                    wlchangepoints_results[wl_cp]['spikes_before_imposition'] = spikes_before
+                    try:
+                        first_spike_after = spikes_after[0]
+                        promptness = first_spike_after - wl_cp
+                        wlchangepoints_results[wl_cp]['first_spike_after_imposition'] = first_spike_after
+                        wlchangepoints_results[wl_cp]['promptness_after_imposition'] = promptness
+                    except:
+                        pass
                 path_out = os.path.join(dir_out_subj,
-                                        f"{modname}--{testfile.replace(config['file_type'], '')}--confusion_matrix.csv")  # feat
-                pd.DataFrame(scores, index=[0]).to_csv(path_out, index=False)
+                                        f"{modname}--{testfile.replace(config['file_type'], '')}--wlchangepoints_results.csv")
+                df_wlchangepoints_results = pd.DataFrame(wlchangepoints_results).T
+                df_wlchangepoints_results.to_csv(path_out, index=True)
 
                 # plot detected wl-changepoints over changepoint windows
                 feats_plot = [modname]
                 if 'megamodel' in modname:
                     feats_plot = [c for c in config['columns_model'] if c != config['time_col']]
-                plot_wlchangepoints(feats_plot,
-                                    config['file_type'],
-                                    aScores,
-                                    testfile,
-                                    data_test,
-                                    dir_out_subj,
-                                    wl_changepoints_windows,
-                                    wl_changepoints_detected)
-                rows.append(
-                    {'subj': subj, 'modname': modname, 'testfile': testfile, 'precision': precision, 'recall': recall,
-                     'cl_accuracy': cl_accuracy, 'f1_score': f1_score})
-        df_f1 = pd.DataFrame(rows)
-        path_out = os.path.join(dir_out_modname, "classification_scores.csv")
-        df_f1.to_csv(path_out, index=False)
-        modnames_df1s[modname] = df_f1
+                plot_wlchangepoints(feats_plot=feats_plot,
+                                    file_type=config['file_type'],
+                                    aScores=aScores,
+                                    testfile=testfile,
+                                    data_test=data_test,
+                                    dir_out_subj=dir_out_subj,
+                                    wl_changepoints=wl_changepoints,
+                                    wl_changepoints_windows=None,
+                                    wl_changepoints_detected=wl_changepoints_detected)
+                # rows.append(
+                #     {'subj': subj, 'modname': modname, 'testfile': testfile, 'precision': precision, 'recall': recall,
+                #      'cl_accuracy': cl_accuracy, 'f1_score': f1_score})
+                # rows.append(
+                #     {'subj': subj, 'modname': modname, 'testfile': testfile, 'precision': precision, 'recall': recall,
+                #      'cl_accuracy': cl_accuracy, 'f1_score': f1_score})
+        # df_f1 = pd.DataFrame(rows)
+        # path_out = os.path.join(dir_out_modname, "classification_scores.csv")
+        # df_f1.to_csv(path_out, index=False)
+        # modnames_df1s[modname] = df_f1
+        # modnames_results[modname] = df_result
 
-    df_f1_concat = pd.concat(modnames_df1s.values(), axis=0)
-    return df_f1_concat
+    # df_f1_concat = pd.concat(modnames_df1s.values(), axis=0)
+    # return df_f1_concat
 
 
 def run_modname(modname, cfg, filenames_wllevels, wllevels_filenames, subjects_dfs_train, subjects_filenames_data,
@@ -707,7 +739,7 @@ def score_wl_detections(data_size, wl_changepoints, wl_changepoints_detected, ch
     return scores, wl_changepoints_windows
 
 
-def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints_windows,
+def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir_out_subj, wl_changepoints, wl_changepoints_windows,
                         wl_changepoints_detected):
     for feats in feats_plot:
         feats = feats.split(',')
@@ -736,6 +768,15 @@ def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir
 
             fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
+            # plot wl impositions
+            label_done = False
+            for cp in wl_changepoints:
+                if not label_done:
+                    ax2.axvline(cp, color='red', lw=2.0, alpha=1, label='WL Imposition')
+                    label_done = True
+                else:
+                    ax2.axvline(cp, color='red', lw=2.0, alpha=1)
+
             # plot wl changes detected
             label_done = False
             for cp in wl_changepoints_detected:
@@ -746,13 +787,14 @@ def plot_wlchangepoints(feats_plot, file_type, aScores, testfile, data_test, dir
                     ax2.axvline(cp, color='green', lw=0.5, alpha=1)
 
             # plot detection windows
-            label_done = False
-            for cp, window in wl_changepoints_windows.items():
-                if not label_done:
-                    ax2.axvspan(window[0], window[1], alpha=0.5, color='red', label='WL Detection Window')
-                    label_done = True
-                else:
-                    ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
+            if wl_changepoints_windows is not None:
+                label_done = False
+                for cp, window in wl_changepoints_windows.items():
+                    if not label_done:
+                        ax2.axvspan(window[0], window[1], alpha=0.5, color='red', label='WL Detection Window')
+                        label_done = True
+                    else:
+                        ax2.axvspan(window[0], window[1], alpha=0.5, color='red')
             plt.legend()
             plt.savefig(path_out)
             plt.close()
@@ -823,7 +865,8 @@ def run_wl(config, subjects_filenames_data, subjects_dfs_train, subjects_feature
         score = run_posthoc(config, dir_out, subjects_filenames_data, subjects_dfs_train, subjects_features_models)
     else:
         print('\nMODE = real-time')
-        score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas)['f1_score'])
+        # score = np.mean(run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas)['f1_score'])
+        run_realtime(config, dir_out, subjects_features_models, subjects_filenames_data, subjects_features_alphas)
 
     # return score
 
