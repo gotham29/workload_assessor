@@ -23,9 +23,9 @@ from source.analyze.plot import plot_outputs_bars
 from source.analyze.tlx import make_boxplots
 
 # MAKE PLOTS
-make_boxplots_realtime = True
-do_hypothesistests_realtime = True
-summarize_perf_hyperparams = False
+make_boxplots_realtime = False
+do_hypothesistests_realtime = False
+summarize_perf_hyperparams = True
 
 make_master_results = False
 make_table_1_fold = False
@@ -44,7 +44,6 @@ make_table_3 = False
 make_boxplots_groups = False
 make_boxplots_algs = False
 make_plots_violin = False
-
 
 ALGS_DIRS_IN = {
     'HTM': "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time/HTM/hz=5; features=ROLL_STICK/recent=5; previous=10; change_thresh_percent=200; change_detection_window=25; /modname=megamodel_features=1",
@@ -1578,7 +1577,7 @@ if make_table_3:
 
 if make_boxplots_table23:
     dir_out_ = "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%"
-    path_t2 = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"  #"/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
+    path_t2 = "/Users/samheiserman/Desktop/PhD/paper2 - guo&cardullo/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"  # "/Users/samheiserman/Desktop/repos/workload_assessor/results/post-hoc/training=40%/table2-wldrop-from-nc.csv"
     table2 = pd.read_csv(path_t2)
     algs_colors = {
         'TLX-Raw': 'lightgrey',
@@ -1744,20 +1743,21 @@ if make_boxplots_realtime:
         path_out = os.path.join(dir_out__, f"{cl_score}.png")
         algs_scores = {alg: scoredf[cl_score].dropna() for alg, scoredf in algs_scoredfs.items()}
         title = f'{scorecols_conv[cl_score]} by {xlabel}'
-        make_boxplots(algs_scores, algs_colors, xlabel, scorecols_conv[cl_score], title, path_out, xtickrotation=0, suptitle=None,
+        make_boxplots(algs_scores, algs_colors, xlabel, scorecols_conv[cl_score], title, path_out, xtickrotation=0,
+                      suptitle=None,
                       ylim=None, showmeans=True)
 
 if do_hypothesistests_realtime:
-    test_functions = [ttest_ind, mannwhitneyu]  #kstest
+    test_functions = [ttest_ind, mannwhitneyu]  # kstest
     # windows_ascores_str = f'features={features}; recent={window_recent}; previous={window_previous}; change_thresh_percent={change_thresh_percent}; change_detection_window={change_detection_window}; '
     dir_out__ = os.path.join(dir_out, 'scores')
     # dir_out__ = os.path.join(dir_out_, windows_ascores_str)
     path_out = os.path.join(dir_out__, 'hypothesis_tests.csv')
     # os.makedirs(dir_out_, exist_ok=True)
     os.makedirs(dir_out__, exist_ok=True)
-    algs_competing = [alg for alg in ALGS_DIRS_IN if alg!='HTM']
-    scores_htm = pd.read_csv( os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv') )
-    score_metrics = ['precision','recall','cl_accuracy','f1_score']
+    algs_competing = [alg for alg in ALGS_DIRS_IN if alg != 'HTM']
+    scores_htm = pd.read_csv(os.path.join(ALGS_DIRS_IN['HTM'], 'classification_scores.csv'))
+    score_metrics = ['precision', 'recall', 'cl_accuracy', 'f1_score']
     metrics_pathsout = [os.path.join(dir_out__, f"{metric}.csv") for metric in score_metrics]
     algs_metrics_tests_pvals = {alg: {} for alg in algs_competing}
     for alg in algs_competing:
@@ -1775,6 +1775,60 @@ if do_hypothesistests_realtime:
     print(f"\npath_out = {path_out}")
 
 if summarize_perf_hyperparams:
+    dir_outer = "/Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/results/real-time"
+    algs_ = ['HTM', 'Fessonia', 'RNNModel', 'Naive']
+    df_dict = {
+        'subject': [],
+        'run': [],
+        'hz': [],
+        'features': [],
+        'alg': [],
+        'recent_window': [],
+        'prior_window': [],
+        'change_thresh': [],
+        'wlspikes_before_wlimposition': [],
+        'first_wlspike_after_wlimposition': [],
+        'promptness': []
+    }
+    algs = [p for p in os.listdir(dir_outer) if p in algs_]
+    for alg in algs:
+        dir_alg = os.path.join(dir_outer, alg)
+        hzs_features = [f for f in os.listdir(dir_alg) if os.path.isdir(os.path.join(dir_alg, f))]
+        for hz_feat in hzs_features:
+            hz = float(hz_feat.split('hz=')[1].split(';')[0])
+            features = hz_feat.split('features=')[1].split('.')
+            dir_features = os.path.join(dir_alg, hz_feat)
+            dirs_windowparams = [f for f in os.listdir(dir_features) if os.path.isdir(os.path.join(dir_features, f))]
+            for windowparams in dirs_windowparams:
+                dir_windowparams = os.path.join(dir_features, windowparams)
+                f_name = [f for f in os.listdir(dir_windowparams) if 'modname=' in f][0]
+                dir_windowparams_ = os.path.join(dir_windowparams, f_name)
+                subjects = [f for f in os.listdir(dir_windowparams_) if
+                            os.path.isdir(os.path.join(dir_windowparams_, f))]
+                for subj in subjects:
+                    dir_subj = os.path.join(dir_windowparams_, subj)
+                    fns_result = [f for f in os.listdir(dir_subj) if 'wlchangepoints_results' in f]
+                    for fn in fns_result:
+                        df = pd.read_csv(os.path.join(dir_subj, fn))
+                        spikes_before = [v.replace('[', '').replace(']', '').strip() for v in
+                             df['wlspikes_before_wlimposition'][0].split(',') if len(v)>0]
+                        df_dict['subject'].append(subj)
+                        df_dict['run'].append(fn.split('--')[1])
+                        df_dict['hz'].append(hz)
+                        df_dict['features'].append(features)
+                        df_dict['alg'].append(alg)
+                        df_dict['recent_window'].append(int(dir_windowparams_.split('recent=')[1].split(';')[0]))
+                        df_dict['prior_window'].append(dir_windowparams_.split('previous=')[1].split(';')[0])
+                        df_dict['change_thresh'].append(dir_windowparams_.split('change_thresh_percent=')[1].split(';')[0])
+                        df_dict['wlspikes_before_wlimposition'].append(spikes_before)
+                        df_dict['first_wlspike_after_wlimposition'].append(df['first_wlspike_after_wlimposition'][0])
+                        df_dict['promptness'].append(df['promptness'][0])
+
+    df_scorestotal = pd.DataFrame(df_dict)
+    path_out = os.path.join(dir_outer, 'results_total.csv')
+    df_scorestotal.to_csv(path_out, index=False)
+
+    """
     modname_ = 'ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', 'ROLL_STICK.PITCH_STIC', 'RUDDER_PED.ROLL_STICK', 'RUDDER_PED.PITCH_STIC', 'RUDDER_PED.ROLL_STICK.PITCH_STIC'
     feature_count = len(modname_.split('.'))
     algs_dirs = {
@@ -1812,7 +1866,7 @@ if summarize_perf_hyperparams:
             df_dict['mean f1 score'].append(mean_f1)
         df = pd.DataFrame(df_dict).sort_values(by='mean f1 score', ascending=False)
         df.to_csv(path_out, index=False)
-
+    """
 
 # if __name__ == "__main__":
 #     main()

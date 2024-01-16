@@ -417,20 +417,20 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                 NEW Precision  --> how many WL spikes were detected before WL imposition
                 """
                 results = {
-                    'first_spike_after_imposition': None,
-                    'promptness_after_imposition': None,
-                    'spikes_before_imposition': []
+                    'first_wlspike_after_wlimposition': None,
+                    'promptness': None,
+                    'wlspikes_before_wlimposition': []
                 }
                 wlchangepoints_results = {wl_cp: results for wl_cp in wl_changepoints}
                 for wl_cp in wl_changepoints:
                     spikes_after = [spike for spike in wl_changepoints_detected if spike > wl_cp]
                     spikes_before = [spike for spike in wl_changepoints_detected if spike < wl_cp]
-                    wlchangepoints_results[wl_cp]['spikes_before_imposition'] = spikes_before
+                    wlchangepoints_results[wl_cp]['wlspikes_before_wlimposition'] = spikes_before
                     try:
                         first_spike_after = spikes_after[0]
                         promptness = first_spike_after - wl_cp
-                        wlchangepoints_results[wl_cp]['first_spike_after_imposition'] = first_spike_after
-                        wlchangepoints_results[wl_cp]['promptness_after_imposition'] = promptness
+                        wlchangepoints_results[wl_cp]['first_wlspike_after_wlimposition'] = first_spike_after
+                        wlchangepoints_results[wl_cp]['promptness'] = promptness  #
                     except:
                         pass
                 path_out = os.path.join(dir_out_subj,
