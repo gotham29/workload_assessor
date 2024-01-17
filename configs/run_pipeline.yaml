@@ -1,11 +1,11 @@
 mode: real-time
 #post-hoc, real-time
-alg: HTM
+alg: RNNModel
 #HTM, Fessonia, Naive, RNNModel, SteeringEntropy, IForest, OCSVM, KNN, KDE,
 #LOF, LightGBMModel, NBEATSModel, TCNModel, TransformerModel, RNNModel, ARIMA
 
 windows_ascore:
-  recent: 5  #5, 10, 15
+  recent: 5 #5, 10, 15
   previous: 10  #10, 20, 30
   change_thresh_percent: 200  #50, 100, 200
   change_detection_window: 25
@@ -2795,13 +2795,13 @@ htm_gridsearch:
 
 features:
   in:
-    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
-#    - ROLL_STICK
-#    - PITCH_STIC
+#    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
+    - ROLL_STICK
+    - PITCH_STIC
   pred:
-    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
-#    - ROLL_STICK
-#    - PITCH_STIC
+#    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
+    - ROLL_STICK
+    - PITCH_STIC
 
 dirs:
   input: /Users/samheiserman/Desktop/PhD/paper3 - driving sim (real-time)/NASA
@@ -2828,9 +2828,9 @@ colnames:
 #  - Z_MOTION
 
 columns_model:
-  - RUDDER_PED  #steering angle
-#  - ROLL_STICK
-#  - PITCH_STIC
+#  - RUDDER_PED  #steering angle
+  - ROLL_STICK
+  - PITCH_STIC
 
 hzs:
   baseline: 5  #18, 100
@@ -3097,21 +3097,21 @@ htm_config_model:
 
 htm_config_user:
   features:
-#    PITCH_STIC:  #steering angle:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
-#    ROLL_STICK:
-#      type: float
-#      min: null
-#      max: null
-#      weight: 1.0
-    RUDDER_PED:
+    PITCH_STIC:  #steering angle:
       type: float
       min: null
       max: null
       weight: 1.0
+    ROLL_STICK:
+      type: float
+      min: null
+      max: null
+      weight: 1.0
+#    RUDDER_PED:
+#      type: float
+#      min: null
+#      max: null
+#      weight: 1.0
     TIME:  #timestamp:
       custom: 0
       dayOfWeek: 0

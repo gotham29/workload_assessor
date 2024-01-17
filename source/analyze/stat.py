@@ -1786,9 +1786,12 @@ if summarize_perf_hyperparams:
         'recent_window': [],
         'prior_window': [],
         'change_thresh': [],
-        'wlspikes_before_wlimposition': [],
+        'wl_imposition_timestep': [],
         'first_wlspike_after_wlimposition': [],
-        'promptness': []
+        'promptness': [],
+        'precision': [],
+        'precision/promptness': [],
+        'wlspikes_before_wlimposition': [],
     }
     algs = [p for p in os.listdir(dir_outer) if p in algs_]
     for alg in algs:
@@ -1798,7 +1801,7 @@ if summarize_perf_hyperparams:
             hz = float(hz_feat.split('hz=')[1].split(';')[0])
             features = hz_feat.split('features=')[1].split('.')
             dir_features = os.path.join(dir_alg, hz_feat)
-            dirs_windowparams = [f for f in os.listdir(dir_features) if os.path.isdir(os.path.join(dir_features, f))]
+            dirs_windowparams = [f for f in os.listdir(dir_features) if 'recent=' in f]
             for windowparams in dirs_windowparams:
                 dir_windowparams = os.path.join(dir_features, windowparams)
                 f_name = [f for f in os.listdir(dir_windowparams) if 'modname=' in f][0]
@@ -1811,7 +1814,11 @@ if summarize_perf_hyperparams:
                     for fn in fns_result:
                         df = pd.read_csv(os.path.join(dir_subj, fn))
                         spikes_before = [v.replace('[', '').replace(']', '').strip() for v in
-                             df['wlspikes_before_wlimposition'][0].split(',') if len(v)>0]
+                                         df['wlspikes_before_wlimposition'][0].split(',') if len(v) > 0]
+                        promptness = df['promptness'][0]
+                        wl_imposition_timestep = df['Unnamed: 0'][0]
+                        precision = (wl_imposition_timestep - (len(spikes_before) - 1)) / wl_imposition_timestep
+                        first_wlspike_after_wlimposition = df['first_wlspike_after_wlimposition'][0]
                         df_dict['subject'].append(subj)
                         df_dict['run'].append(fn.split('--')[1])
                         df_dict['hz'].append(hz)
@@ -1819,11 +1826,14 @@ if summarize_perf_hyperparams:
                         df_dict['alg'].append(alg)
                         df_dict['recent_window'].append(int(dir_windowparams_.split('recent=')[1].split(';')[0]))
                         df_dict['prior_window'].append(dir_windowparams_.split('previous=')[1].split(';')[0])
-                        df_dict['change_thresh'].append(dir_windowparams_.split('change_thresh_percent=')[1].split(';')[0])
+                        df_dict['change_thresh'].append(
+                            dir_windowparams_.split('change_thresh_percent=')[1].split(';')[0])
                         df_dict['wlspikes_before_wlimposition'].append(spikes_before)
-                        df_dict['first_wlspike_after_wlimposition'].append(df['first_wlspike_after_wlimposition'][0])
-                        df_dict['promptness'].append(df['promptness'][0])
-
+                        df_dict['wl_imposition_timestep'].append(wl_imposition_timestep)
+                        df_dict['first_wlspike_after_wlimposition'].append(first_wlspike_after_wlimposition)
+                        df_dict['promptness'].append(promptness)
+                        df_dict['precision'].append(precision)
+                        df_dict['precision/promptness'].append(round(precision / promptness, 2))
     df_scorestotal = pd.DataFrame(df_dict)
     path_out = os.path.join(dir_outer, 'results_total.csv')
     df_scorestotal.to_csv(path_out, index=False)
