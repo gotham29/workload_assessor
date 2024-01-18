@@ -1787,6 +1787,7 @@ if summarize_perf_hyperparams:
         'prior_window': [],
         'change_thresh': [],
         'wl_imposition_timestep': [],
+        'features_windows_changethresh': [],
         'first_wlspike_after_wlimposition': [],
         'promptness': [],
         'precision': [],
@@ -1819,17 +1820,21 @@ if summarize_perf_hyperparams:
                         wl_imposition_timestep = df['Unnamed: 0'][0]
                         precision = (wl_imposition_timestep - (len(spikes_before) - 1)) / wl_imposition_timestep
                         first_wlspike_after_wlimposition = df['first_wlspike_after_wlimposition'][0]
+                        recent_window = int(dir_windowparams_.split('recent=')[1].split(';')[0])
+                        prior_window = dir_windowparams_.split('previous=')[1].split(';')[0]
+                        change_thresh = dir_windowparams_.split('change_thresh_percent=')[1].split(';')[0]
+                        features_windows_changethresh = f"{features}-{recent_window}-{prior_window}-{change_thresh}"
                         df_dict['subject'].append(subj)
                         df_dict['run'].append(fn.split('--')[1])
                         df_dict['hz'].append(hz)
                         df_dict['features'].append(features)
                         df_dict['alg'].append(alg)
-                        df_dict['recent_window'].append(int(dir_windowparams_.split('recent=')[1].split(';')[0]))
-                        df_dict['prior_window'].append(dir_windowparams_.split('previous=')[1].split(';')[0])
-                        df_dict['change_thresh'].append(
-                            dir_windowparams_.split('change_thresh_percent=')[1].split(';')[0])
+                        df_dict['recent_window'].append(recent_window)
+                        df_dict['prior_window'].append(prior_window)
+                        df_dict['change_thresh'].append(change_thresh)
                         df_dict['wlspikes_before_wlimposition'].append(spikes_before)
                         df_dict['wl_imposition_timestep'].append(wl_imposition_timestep)
+                        df_dict['features_windows_changethresh'].append(features_windows_changethresh)
                         df_dict['first_wlspike_after_wlimposition'].append(first_wlspike_after_wlimposition)
                         df_dict['promptness'].append(promptness)
                         df_dict['precision'].append(precision)
@@ -1837,6 +1842,95 @@ if summarize_perf_hyperparams:
     df_scorestotal = pd.DataFrame(df_dict)
     path_out = os.path.join(dir_outer, 'results_total.csv')
     df_scorestotal.to_csv(path_out, index=False)
+
+    # for each WL metric get its best settings (feature-combo & spikedetector hyperparams)
+    nanprop_max = 0.40
+    cols = ['hz', 'promptness', 'precision', 'precision/promptness', 'features_windows_changethresh']
+    gpby_alg = df_scorestotal.groupby('alg')
+    algs_top_settings = {}
+    algs_dfaggs_settings = {}
+    for alg, df_alg in gpby_alg:
+        print(f"\n{alg}")
+        path_out_alg = os.path.join(dir_outer, f'results_settings--{alg}.csv')
+        df_alg.sort_values(by='precision/promptness', ascending=False, inplace=True)
+        gpby_settings = df_alg.groupby('features_windows_changethresh')
+        dfaggs_settings = []
+        for setting, df_setting in gpby_settings:
+            print(f"  --> {setting}")
+            nan_rows_count = df_setting[['promptness']].isna().sum()[0]
+            nan_rows_prop = round(nan_rows_count / len(df_setting), 2)
+            df_setting_ = df_setting[cols].dropna(axis=0, how='any', inplace=False)
+            df_setting_ = pd.DataFrame(df_setting_.mean())
+            df_setting_ = pd.DataFrame(df_setting_).T
+            df_setting_['nan_prop'] = pd.Series([nan_rows_prop])
+            df_setting_['features_windows_changethresh'] = pd.Series([setting])
+            df_setting_['precision/promptness'] = df_setting_['precision'][0] / df_setting_['promptness'][0]
+            dfaggs_settings.append(df_setting_)
+        dfagg_settings = pd.concat(dfaggs_settings, axis=0)
+        dfagg_settings.sort_values(by=['precision/promptness', 'nan_prop'], ascending=False, inplace=True)
+        dfagg_settings = dfagg_settings[cols + ['nan_prop']].round(3)
+        dfagg_settings.to_csv(path_out_alg, index=False)
+        dfagg_settings_nanmax = dfagg_settings[dfagg_settings['nan_prop'] < nanprop_max]
+        algs_dfaggs_settings[alg] = dfagg_settings_nanmax
+        algs_top_settings[alg] = dfagg_settings_nanmax.iloc[0]['features_windows_changethresh']
+
+    # with each WL metric's best settings get distributions (promptness, precisions)
+    algs_colors = {
+        'Fessonia': 'orange',
+        'HTM': 'blue',
+        'Naive': 'grey',
+        'RNNModel': 'green'
+    }
+    algs_promptness = {}
+    algs_precision = {}
+    algs_promptness_mean = {}
+    algs_precision_mean = {}
+    for alg, top_setting in algs_top_settings.items():
+        df_alg_settings = df_scorestotal[
+            (df_scorestotal['alg'] == alg) & (df_scorestotal['features_windows_changethresh'] == top_setting)]
+        algs_precision[alg] = df_alg_settings['precision']
+        algs_promptness[alg] = [v for v in df_alg_settings['promptness'] if not np.isnan(v)]
+        algs_promptness_mean[alg] = round(np.mean(algs_promptness[alg]), 3)
+        algs_precision_mean[alg] = round(np.mean(algs_precision[alg]), 3)
+    path_out_promptness = os.path.join(dir_outer, 'results_promptness.png')
+    path_out_precision = os.path.join(dir_outer, 'results_precision.png')
+    path_out_promptness_mean = os.path.join(dir_outer, 'promptness_algmeans.csv')
+    path_out_precision_mean = os.path.join(dir_outer, 'precision_algmeans.csv')
+    pd.DataFrame(algs_promptness_mean, index=[0]).to_csv(path_out_promptness_mean)
+    pd.DataFrame(algs_precision_mean, index=[0]).to_csv(path_out_precision_mean)
+    algs_promptness = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_promptness.items()}
+    algs_precision = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_precision.items()}
+    algs_colors = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_colors.items()}
+    make_boxplots(algs_promptness, algs_colors, 'WL Metric', 'Promptness', 'Promptness by WL Metric',
+                  path_out_promptness, xtickrotation=0, suptitle=None, ylim=(0, 75), showmeans=True)
+    make_boxplots(algs_precision, algs_colors, 'WL Metric', 'Precision', 'Precision by WL Metric', path_out_precision,
+                  xtickrotation=0, suptitle=None, ylim=None, showmeans=True)
+
+    # for each WL metric get number of runs it had the best promptness
+    algs_toppromptness_counts = {alg: 0 for alg in algs_}
+    gpby_subjruns = df_scorestotal.groupby('run')
+    for subj_run, df_subjrun in gpby_subjruns:
+        gpby_alg = df_subjrun.groupby('alg')
+        algs_promptness = {}
+        for alg, df_alg in gpby_alg:
+            df_alg_opt = df_alg[df_alg['features_windows_changethresh'] == algs_top_settings[alg]]
+            algs_promptness[alg] = df_alg_opt['promptness'].values[0]
+        algs_promptness = {k:v for k,v in algs_promptness.items() if not np.isnan(v)}
+        top_promptness = min(algs_promptness.values())
+        print(f"{subj_run}")
+        print(f"  --> {algs_promptness}")
+        print(f"  --> {top_promptness}")
+        algs_top = [alg for alg in algs_promptness if algs_promptness[alg] == top_promptness]
+        print(f"  --> {algs_top}")
+        for alg_top in algs_top:
+            algs_toppromptness_counts[alg_top] += 1
+    algs_toppromptness_counts = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_toppromptness_counts.items()}
+    title = 'Top Promptness Runs Counts by WL Metric'
+    xlabel = 'WL Metric'
+    ylabel = 'Count of Top Promptness Runs'
+    path_out = os.path.join(dir_outer, 'top_promptness.png')
+    plot_outputs_bars(algs_toppromptness_counts, algs_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=0,
+                      print_barheights=False)
 
     """
     modname_ = 'ROLL_STICK.PITCH_STIC'  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', 'ROLL_STICK.PITCH_STIC', 'RUDDER_PED.ROLL_STICK', 'RUDDER_PED.PITCH_STIC', 'RUDDER_PED.ROLL_STICK.PITCH_STIC'
