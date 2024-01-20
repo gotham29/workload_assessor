@@ -144,7 +144,7 @@ def update_colnames(filenames_data: dict, colnames: list):
 
 
 def agg_data(filenames_data: dict, hz_baseline: int, hz_convertto: int):
-    agg = int(hz_baseline / hz_convertto)
+    agg = hz_baseline / hz_convertto
     for fname, data in filenames_data.items():
         data = data.groupby(data.index // agg).mean()
         filenames_data[fname] = data
@@ -279,12 +279,13 @@ def get_run_number(f):
 def prep_nasa(df, feature_filter_flatline):
     df.drop(index=df.index[0], axis=0, inplace=True)
     df = df.apply(pd.to_numeric, errors='ignore')
-    altitude_base = float(df['ALTITUDE'].values[0])
-    altitudes_normed = [v - altitude_base for v in df['ALTITUDE'].values]
-    df['ALTITUDE'] = pd.Series(altitudes_normed)
     feat_filter = df[feature_filter_flatline].values
     first_nonzero_index = feat_filter.nonzero()[0][0]
     df = df[first_nonzero_index:]
+    altitude_base = float(df['ALTITUDE'].values[0])
+    altitudes_normed = [v - altitude_base for v in df['ALTITUDE'].values]
+    df.drop(columns=['ALTITUDE'], inplace=True)
+    df.insert(loc=0, column='ALTITUDE', value=altitudes_normed)
     return df
 
 
@@ -307,6 +308,13 @@ def save_config(cfg: dict, yaml_path: str) -> dict:
     with open(yaml_path, 'w') as outfile:
         yaml.dump(cfg, outfile, default_flow_style=False)
     return cfg
+
+
+def rename_paths(dir_orig, str_repl):
+    paths_orig = [os.path.join(dir_orig, f) for f in os.listdir(dir_orig)]
+    for p in paths_orig:
+        path_new = p.replace(str_repl,'')
+        os.rename(p, path_new)
 
 
 def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_convertto=6.67, features_meta=['RUN_rpt1', 'TIME', 'ALTITUDE']):
@@ -334,10 +342,15 @@ def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_conve
             else:
                 runs_types[row['Run']] = 'test'
     # get altitude of engine failure for all test runs
+    types_runs = {t: [] for t in set(runs_types.values())}
     for run, run_type in runs_types.items():
         if run_type == 'test':
             row = runsdata[runsdata['Run'] == run].iloc[0]
             testruns_altitudes[run] = row['Altitude']
+        types_runs[run_type].append(run)
+    print("\nTypes Runs")
+    for t, t_runs in types_runs.items():
+        print(f"  {t} --> {t_runs}")
     subjects_testfiles_wltogglepoints = {}
     dirs_subj = [os.path.join(dir_nasa, f) for f in os.listdir(dir_nasa) if os.path.isdir(os.path.join(dir_nasa, f))]
     runs_train = [r for r in runs_types if runs_types[r] == 'train']
@@ -347,11 +360,17 @@ def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_conve
     for dir_subj in dirs_subj:
         subj = dir_subj.split('/')[-1]
         subjects_testfiles_wltogglepoints[subj] = {}
-        dir_subj_date = \
-        [os.path.join(dir_subj, f) for f in os.listdir(dir_subj) if os.path.isdir(os.path.join(dir_subj, f))][0]
+        dir_subj_date = [os.path.join(dir_subj, f) for f in os.listdir(dir_subj) if os.path.isdir(os.path.join(dir_subj, f))][0]
         paths_train = [os.path.join(dir_subj_date, f) for f in os.listdir(dir_subj_date) if '_run_' in f and get_run_number(f) in runs_train]
         paths_test = [os.path.join(dir_subj_date, f) for f in os.listdir(dir_subj_date) if '_run_' in f and get_run_number(f) in runs_test]
         # make 1 train.csv using all runs combined
+        print(f"\nSubj = {subj}")
+        print(f"  paths_train = {len(paths_train)}")
+        for p in sorted(paths_train):
+            print(f"    --> {p.replace(dir_subj_date,'')}")
+        print(f"  paths_test = {len(paths_test)}")
+        for p in sorted(paths_test):
+            print(f"    --> {p.replace(dir_subj_date,'')}")
         dfs_train = [pd.read_csv(p) for p in paths_train]
         df_train = pd.concat(dfs_train, axis=0)[features]
         df_train = prep_nasa(df_train, feature_filter_flatline='ROLL_STICK')
@@ -362,11 +381,11 @@ def make_traintest_files_nasa(dir_nasa, features_model, hz_baseline=16, hz_conve
             df_test = pd.read_csv(p)[features]
             df_test = prep_nasa(df_test, feature_filter_flatline='ROLL_STICK')
             # agg data to 6.67 Hz
-            agg = int(hz_baseline / hz_convertto)
+            agg = hz_baseline / float(hz_convertto)
             df_test = df_test.groupby(df_test.index // agg).mean()
             altitude_enginefail = testruns_altitudes[get_run_number(p)]
             # get timestep_enginefail
-            for ind,altitude in enumerate(df_test['ALTITUDE']):
+            for ind, altitude in enumerate(df_test['ALTITUDE']):
                 if altitude > altitude_enginefail:
                     timestep_enginefail = ind
                     break

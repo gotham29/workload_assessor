@@ -333,7 +333,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
     print(f'\nrun_realtime; modnames = {modnames}')
     # make dir - windows_ascore
     windows_ascore_str = ''
-    for k,v in config['windows_ascore'].items():
+    for k, v in config['windows_ascore'].items():
         windows_ascore_str += f"{k}={v}; "
     dir_out_ = os.path.join(dir_out, windows_ascore_str)
     os.makedirs(dir_out_, exist_ok=True)
@@ -359,6 +359,9 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
             model = features_models[modname]
             for testfile, times in config['subjects_testfiles_wltogglepoints'][subj].items():
                 print(f"      testfile = {testfile}")
+                if testfile not in subjects_filenames_data[subj]:
+                    print("         ** NOT FOUND")
+                    continue
                 data_test = subjects_filenames_data[subj][testfile]
                 data_test.reset_index(drop=True, inplace=True)
 
@@ -413,12 +416,12 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
 
                 """
                 """ 
-                NEW Promptness --> how soon is 1st WL spike after WL imposition
-                NEW Precision  --> how many WL spikes were detected before WL imposition
+                Detection Lag --> how soon is 1st WL spike after WL imposition
+                Precision  --> how many WL spikes were detected before WL imposition
                 """
                 results = {
                     'first_wlspike_after_wlimposition': None,
-                    'promptness': None,
+                    'detection_lag_seconds': None,
                     'wlspikes_before_wlimposition': []
                 }
                 wlchangepoints_results = {wl_cp: results for wl_cp in wl_changepoints}
@@ -428,9 +431,10 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
                     wlchangepoints_results[wl_cp]['wlspikes_before_wlimposition'] = spikes_before
                     try:
                         first_spike_after = spikes_after[0]
-                        promptness = first_spike_after - wl_cp
+                        detection_lag_timesteps = first_spike_after - wl_cp
+                        detection_lag_seconds = detection_lag_timesteps / config['hzs']['convertto']
                         wlchangepoints_results[wl_cp]['first_wlspike_after_wlimposition'] = first_spike_after
-                        wlchangepoints_results[wl_cp]['promptness'] = promptness  #
+                        wlchangepoints_results[wl_cp]['detection_lag_seconds'] = detection_lag_seconds
                     except:
                         pass
                 path_out = os.path.join(dir_out_subj,
