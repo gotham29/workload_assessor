@@ -345,7 +345,7 @@ def run_realtime(config, dir_out, subjects_features_models, subjects_filenames_d
         print(f"  --> {dir_out_modname}")
 
         # loop over subjects
-        rows = list()
+        # rows = list()
         for subj, features_models in subjects_features_models.items():
             print(f"\n  subj = {subj}")
             dir_out_subj = os.path.join(dir_out_modname, subj)

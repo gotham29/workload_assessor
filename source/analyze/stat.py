@@ -1816,7 +1816,7 @@ if summarize_perf_hyperparams:
                         df = pd.read_csv(os.path.join(dir_subj, fn))
                         spikes_before = [v.replace('[', '').replace(']', '').strip() for v in
                                          df['wlspikes_before_wlimposition'][0].split(',') if len(v) > 0]
-                        detection_lag_seconds = df['detection_lag_seconds'][0]  ##CHANGE TO --> detection_lag_seconds
+                        detection_lag_seconds = df['detection_lag_seconds'][0]
                         wl_imposition_timestep = df['Unnamed: 0'][0]
                         precision = (wl_imposition_timestep - (len(spikes_before) - 1)) / wl_imposition_timestep
                         first_wlspike_after_wlimposition = df['first_wlspike_after_wlimposition'][0]
@@ -1844,7 +1844,9 @@ if summarize_perf_hyperparams:
     df_scorestotal.to_csv(path_out, index=False)
 
     # for each WL metric get its best settings (feature-combo & spikedetector hyperparams)
-    nanprop_max = 0.40
+    nanprop_max = 0.30
+    features_fixed = False  #'ROLL_STICK', 'PITCH_STIC', 'RUDDER_PED', False
+    features_fixed_ = features_fixed if type(features_fixed)==str else str(features_fixed)
     cols = ['hz', 'detection_lag_seconds', 'precision', 'precision/detection_lag', 'features_windows_changethresh']
     gpby_alg = df_scorestotal.groupby('alg')
     algs_top_settings = {}
@@ -1856,16 +1858,15 @@ if summarize_perf_hyperparams:
         gpby_settings = df_alg.groupby('features_windows_changethresh')
         dfaggs_settings = []
         for setting, df_setting in gpby_settings:
-            print(f"  --> {setting}")
-            print(f"    COLUMNS = {df_setting.columns}")
             nan_rows_count = df_setting[['detection_lag_seconds']].isna().sum()[0]
             nan_rows_prop = round(nan_rows_count / len(df_setting), 2)
             df_setting_ = df_setting[cols].dropna(axis=0, how='any', inplace=False)
-            df_setting_ = pd.DataFrame(df_setting_.mean())
+            df_setting_ = pd.DataFrame(df_setting_.mean(numeric_only=True))
             df_setting_ = pd.DataFrame(df_setting_).T
             df_setting_['nan_prop'] = pd.Series([nan_rows_prop])
             df_setting_['features_windows_changethresh'] = pd.Series([setting])
-            df_setting_['precision/detection_lag'] = df_setting_['precision'][0] / df_setting_['detection_lag_seconds'][0]
+            df_setting_['precision/detection_lag'] = df_setting_['precision'][0] / df_setting_['detection_lag_seconds'][
+                0]
             dfaggs_settings.append(df_setting_)
         dfagg_settings = pd.concat(dfaggs_settings, axis=0)
         dfagg_settings.sort_values(by=['precision/detection_lag', 'nan_prop'], ascending=False, inplace=True)
@@ -1874,7 +1875,12 @@ if summarize_perf_hyperparams:
         dfagg_settings_nanmax = dfagg_settings[dfagg_settings['nan_prop'] < nanprop_max]
         algs_dfaggs_settings[alg] = dfagg_settings_nanmax
         algs_top_settings[alg] = dfagg_settings_nanmax.iloc[0]['features_windows_changethresh']
-    print(f"\nalgs_top_settings\n    --> {algs_top_settings}\n")
+        if features_fixed:
+            setting = dfagg_settings_nanmax.iloc[0]['features_windows_changethresh']
+            setting_spikeparams = setting.split(']')[1]
+            setting_feat = f"['{features_fixed}']"
+            algs_top_settings[alg] = setting_feat + setting_spikeparams
+    print(f"\nalgs_top_settings\n    --> {algs_top_settings}")
 
     # with each WL metric's best settings get distributions (detection_lag_seconds, precisions)
     algs_colors = {
@@ -1883,56 +1889,66 @@ if summarize_perf_hyperparams:
         'Naive': 'grey',
         'RNNModel': 'green'
     }
-    algs_detection_lags = {}
-    algs_precision = {}
-    algs_detection_lags_mean = {}
-    algs_precision_mean = {}
-    print("\nalgs_precision")
-    for alg, top_setting in algs_top_settings.items():
-        df_alg_settings = df_scorestotal[
-            (df_scorestotal['alg'] == alg) & (df_scorestotal['features_windows_changethresh'] == top_setting)]
-        algs_precision[alg] = [v for v in df_alg_settings['precision'] if not np.isnan(v)]
-        algs_detection_lags[alg] = [v for v in df_alg_settings['detection_lag_seconds'] if not np.isnan(v)]  #1/v for v
-        algs_precision_mean[alg] = round(np.mean(algs_precision[alg]), 3)
-        algs_detection_lags_mean[alg] = round(np.mean(algs_detection_lags[alg]), 3)
-    path_out_detection_lags = os.path.join(dir_outer, 'detection_lags.png')
-    path_out_precision = os.path.join(dir_outer, 'precision.png')
-    path_out_detection_lags_mean = os.path.join(dir_outer, 'detection_lags_algmeans.csv')
-    path_out_precision_mean = os.path.join(dir_outer, 'precision_algmeans.csv')
-    pd.DataFrame(algs_detection_lags_mean, index=[0]).to_csv(path_out_detection_lags_mean)
-    pd.DataFrame(algs_precision_mean, index=[0]).to_csv(path_out_precision_mean)
-    algs_detection_lags = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_detection_lags.items()}
-    algs_precision = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_precision.items()}
-    algs_colors = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_colors.items()}
-    make_boxplots(algs_detection_lags, algs_colors, 'WL Metric', 'Detection Lag (seconds)', 'Detection Lag by WL Metric',
-                  path_out_detection_lags, xtickrotation=0, suptitle=None, ylim=None, showmeans=True)
-    make_boxplots(algs_precision, algs_colors, 'WL Metric', 'Precision', 'Precision by WL Metric', path_out_precision,
-                  xtickrotation=0, suptitle=None, ylim=None, showmeans=True)
+    gpby_subj = df_scorestotal.groupby('subject')
+    dir_subjs = os.path.join(dir_outer, 'subjects')
+    dir_subjs_feat = os.path.join(dir_subjs, features_fixed_)
+    os.makedirs(dir_subjs, exist_ok=True)
+    os.makedirs(dir_subjs_feat, exist_ok=True)
+    for subj, df_subj in gpby_subj:
+        print(f"{subj}")
+        dir_subj = os.path.join(dir_subjs_feat, subj)
+        os.makedirs(dir_subj, exist_ok=True)
+        algs_detection_lags = {}
+        algs_precision = {}
+        algs_detection_lags_mean = {}
+        algs_precision_mean = {}
+        for alg, top_setting in algs_top_settings.items():
+            df_alg_settings = df_subj[(df_subj['alg'] == alg) & (df_subj['features_windows_changethresh'] == top_setting)]  #df_scorestotal
+            algs_precision[alg] = [v for v in df_alg_settings['precision'] if not np.isnan(v)]
+            algs_detection_lags[alg] = [v for v in df_alg_settings['detection_lag_seconds'] if not np.isnan(v)]
+            algs_precision_mean[alg] = round(np.mean(algs_precision[alg]), 3)
+            algs_detection_lags_mean[alg] = round(np.mean(algs_detection_lags[alg]), 3)
+        path_out_detection_lags = os.path.join(dir_subj, 'detection_lags.png')  #dir_outer
+        path_out_precision = os.path.join(dir_subj, 'precision.png')  #dir_outer
+        path_out_detection_lags_mean = os.path.join(dir_subj, 'detection_lags_algmeans.csv')  #dir_outer
+        path_out_precision_mean = os.path.join(dir_subj, 'precision_algmeans.csv')  #dir_outer
+        pd.DataFrame(algs_detection_lags_mean, index=[0]).to_csv(path_out_detection_lags_mean)
+        pd.DataFrame(algs_precision_mean, index=[0]).to_csv(path_out_precision_mean)
+        algs_detection_lags = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_detection_lags.items()}
+        algs_precision = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_precision.items()}
+        algs_colors = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_colors.items()}
+        print("  DONE")
+        make_boxplots(algs_detection_lags, algs_colors, 'WL Metric', 'Detection Lag (seconds)',
+                      'Detection Lag by WL Metric',
+                      path_out_detection_lags, xtickrotation=0, suptitle=None, ylim=None, showmeans=False)
+        make_boxplots(algs_precision, algs_colors, 'WL Metric', 'Precision', 'Precision by WL Metric', path_out_precision,
+                      xtickrotation=0, suptitle=None, ylim=None, showmeans=False)
 
     # for each WL metric get number of runs it had the best detection_lag_seconds
     algs_top_detectionlag_counts = {alg: 0 for alg in algs_}
-    gpby_subjruns = df_scorestotal.groupby('run')
-    for subj_run, df_subjrun in gpby_subjruns:
-        gpby_alg = df_subjrun.groupby('alg')
-        algs_detection_lags = {}
-        for alg, df_alg in gpby_alg:
-            df_alg_opt = df_alg[df_alg['features_windows_changethresh'] == algs_top_settings[alg]]
-            algs_detection_lags[alg] = df_alg_opt['detection_lag_seconds'].values[0]
-        algs_detection_lags = {k:v for k,v in algs_detection_lags.items() if not np.isnan(v)}
-        top_detection_lag = min(algs_detection_lags.values())
-        print(f"{subj_run}")
-        print(f"  --> {algs_detection_lags}")
-        print(f"  --> {top_detection_lag}")
-        algs_top = [alg for alg in algs_detection_lags if algs_detection_lags[alg] == top_detection_lag]
-        print(f"  --> {algs_top}")
-        for alg_top in algs_top:
-            algs_top_detectionlag_counts[alg_top] += 1
-    algs_top_detectionlag_counts = {"DNDEB" if k == 'RNNModel' else k: v for k, v in algs_top_detectionlag_counts.items()}
+    gpby_runs = df_scorestotal.groupby('run')
+    for run, df_run in gpby_runs:
+        gpby_subj = df_run.groupby('subject')
+        for subj, df_subj in gpby_subj:
+            gpby_alg = df_subj.groupby('alg')
+            algs_detection_lags = {}
+            for alg, df_alg in gpby_alg:
+                df_alg_opt = df_alg[df_alg['features_windows_changethresh'] == algs_top_settings[alg]]
+                algs_detection_lags[alg] = df_alg_opt['detection_lag_seconds'].values[0]
+            algs_detection_lags = {k: v for k, v in algs_detection_lags.items() if not np.isnan(v)}
+            top_detection_lag = min(algs_detection_lags.values())
+            algs_top = [alg for alg in algs_detection_lags if algs_detection_lags[alg] == top_detection_lag]
+            for alg_top in algs_top:
+                algs_top_detectionlag_counts[alg_top] += 1
+    algs_top_detectionlag_counts = {"DNDEB" if k == 'RNNModel' else k: v for k, v in
+                                    algs_top_detectionlag_counts.items()}
+    print(f"\nalgs_top_detectionlag_counts\n  --> {algs_top_detectionlag_counts}")
     title = 'Top Detection Lag Runs Counts by WL Metric'
     xlabel = 'WL Metric'
     ylabel = 'Count of Top Detection Lag Runs'
     path_out = os.path.join(dir_outer, 'top_detection_lags.png')
-    plot_outputs_bars(algs_top_detectionlag_counts, algs_colors, title, xlabel, ylabel, path_out, rounddigits=3, xtickrotation=0,
+    plot_outputs_bars(algs_top_detectionlag_counts, algs_colors, title, xlabel, ylabel, path_out, rounddigits=3,
+                      xtickrotation=0,
                       print_barheights=False)
 
     """
@@ -1975,7 +1991,5 @@ if summarize_perf_hyperparams:
         df.to_csv(path_out, index=False)
     """
 
-
 # if __name__ == "__main__":
 #     main()
-

@@ -7,7 +7,7 @@ alg: HTM
 windows_ascore:
   recent: 7  #7, 14, 21
   previous: 14  #14, 28, 42
-  change_thresh_percent: 200  #50, 100, 200
+  change_thresh_percent: 50  #50, 100, 200
 #  change_detection_window: 25
 
 preprocess:
@@ -2853,11 +2853,11 @@ htm_gridsearch:
 
 features:
   in:
-#    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
+#    - RUDDER_PED
 #    - ROLL_STICK
     - PITCH_STIC
   pred:
-#    - RUDDER_PED  #ROLL_STICK,  PITCH_STIC, RUDDER_PED, steering angle
+#    - RUDDER_PED
 #    - ROLL_STICK
     - PITCH_STIC
 
@@ -2886,7 +2886,7 @@ colnames:
 #  - Z_MOTION
 
 columns_model:
-#  - RUDDER_PED  #steering angle
+#  - RUDDER_PED
 #  - ROLL_STICK
   - PITCH_STIC
 
@@ -2902,21 +2902,21 @@ wllevels_filenames:
   training:
     - train.csv
   test:
-    - SUNY_rt_run_0051
-    - SUNY_rt_run_0054
-    - SUNY_rt_run_0057
-    - SUNY_rt_run_0060
-    - SUNY_rt_run_0064
-    - SUNY_rt_run_0071
-    - SUNY_rt_run_0072
-    - SUNY_rt_run_0076
-    - SUNY_rt_run_0077
-    - SUNY_rt_run_0079
-    - SUNY_rt_run_0080
-    - SUNY_rt_run_0082
-    - SUNY_rt_run_0088
-    - SUNY_rt_run_0089
-    - SUNY_rt_run_0095
+    - SUNY_rt_run_0051.csv
+    - SUNY_rt_run_0054.csv
+    - SUNY_rt_run_0057.csv
+    - SUNY_rt_run_0060.csv
+    - SUNY_rt_run_0064.csv
+    - SUNY_rt_run_0071.csv
+    - SUNY_rt_run_0072.csv
+    - SUNY_rt_run_0076.csv
+    - SUNY_rt_run_0077.csv
+    - SUNY_rt_run_0079.csv
+    - SUNY_rt_run_0080.csv
+    - SUNY_rt_run_0082.csv
+    - SUNY_rt_run_0088.csv
+    - SUNY_rt_run_0089.csv
+    - SUNY_rt_run_0095.csv
 #    - SUNY_rt_0513_run_0076.csv
 #    - SUNY_rt_0513_run_0077.csv
 #    - SUNY_rt_0513_run_0079.csv
@@ -3170,7 +3170,7 @@ htm_config_model:
 
 htm_config_user:
   features:
-    PITCH_STIC:  #steering angle:
+    PITCH_STIC:
       type: float
       min: null
       max: null
