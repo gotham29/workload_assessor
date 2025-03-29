@@ -79,3 +79,11 @@ After running the pipeline, the output directory will contain:
 - **Error Messages:**  
   Check the terminal output for any error messages; they may provide guidance on resolving issues.
 
+
+# License
+This project is licensed under the MIT License.
+
+
+#Contact
+For questions or contributions, please contact Sam at sheiser1@binghamton.edu
+
