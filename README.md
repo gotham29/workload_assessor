@@ -74,8 +74,8 @@ After running the pipeline, the output directory will contain:
   ```
   to install all necessary dependencies.
 
-  Path Issues:
+- **Path Issues:**  
   Verify that the paths specified in configs/run_pipeline.yaml are correct and accessible.
-  Error Messages:
+- **Error Messages:**  
   Check the terminal output for any error messages; they may provide guidance on resolving issues.
 
