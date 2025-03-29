@@ -84,6 +84,6 @@ After running the pipeline, the output directory will contain:
 This project is licensed under the MIT License.
 
 
-#Contact
+# Contact
 For questions or contributions, please contact Sam at sheiser1@binghamton.edu
 
